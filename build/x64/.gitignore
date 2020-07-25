@@ -1,8 +1,7 @@
 *.cpp
 *.h
-*.pro
-*.qml
+*.o
 *.qrc
 *.stash
-*.swp
+coleitra
 Makefile

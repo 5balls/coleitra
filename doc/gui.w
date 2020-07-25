@@ -90,11 +90,12 @@ Drawer {
 \section{Train}
 @o ../src/train.qml
 @{
-coleitraPage {
+import QtQuick 2.12
+ColeitraPage {
     title: "Vocable training"
-    coleitraGridLayout {
+    ColeitraGridLayout {
     }
-    footer: coleitraGridLayout {
+    footer: ColeitraGridLayout {
     }
 }
 @}
@@ -102,11 +103,12 @@ coleitraPage {
 \section{About}
 @o ../src/about.qml
 @{
-coleitraPage {
+import QtQuick 2.12
+ColeitraPage {
     title: "About coleitra"
-    coleitraGridLayout {
+    ColeitraGridLayout {
     }
-    footer: coleitraGridLayout {
+    footer: ColeitraGridLayout {
     }
 }
 @}
@@ -114,13 +116,11 @@ coleitraPage {
 \section{Reusable GUI elements}
 \subsection{Page}
 
-@o ../src/coleitraPage.qml
+@o ../src/ColeitraPage.qml
 @{
 import QtQuick 2.12
 import QtQuick.Controls 2.5
 import QtQuick.Layouts 1.3
-import VocTrainLib 1.0
-import SettingsStorageLib 1.0
 
 Page {
 }
@@ -128,12 +128,17 @@ Page {
 
 \subsection{Grid Layout}
 
-@o ../src/coleitraGridLayout.qml
+@o ../src/ColeitraGridLayout.qml
 @{
+import QtQuick 2.12
+import QtQuick.Controls 2.5
+import QtQuick.Layouts 1.3
+
 GridLayout {
     id: body
     visible: true
-    anchors.fill: parent
+    anchors.left: parent.left
+    anchors.right: parent.right
     columns: 12
     columnSpacing: 0
     rowSpacing: 0
