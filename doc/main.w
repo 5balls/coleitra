@@ -9,6 +9,8 @@
 #include <QApplication>
 #include <QQmlApplicationEngine>
 
+#include "settings.h"
+
 #endif // MAIN_H
 @}
 
@@ -19,6 +21,8 @@
 
 int main(int argc, char *argv[])
 {
+    qmlRegisterType<settings>("SettingsStorageLib", 1, 0, "SettingsStorage");
+
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QCoreApplication::setApplicationName("coleitra");
     QCoreApplication::setOrganizationName("coleitra");

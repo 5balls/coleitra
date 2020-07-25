@@ -104,9 +104,33 @@ ColeitraPage {
 @o ../src/about.qml
 @{
 import QtQuick 2.12
+import SettingsStorageLib 1.0
+
 ColeitraPage {
     title: "About coleitra"
+    SettingsStorage {
+        id: settingsstorage
+    }
     ColeitraGridLayout {
+        ColeitraGridLabel {
+            text: "GIT commit:"
+        }
+        ColeitraGridValueText {
+            text: settingsstorage.gitVersion
+        }
+        ColeitraGridLabel {
+            text: "Clean repository?"
+        }
+        ColeitraGridValueText {
+            text: settingsstorage.gitClean
+        }
+        ColeitraGridLabel {
+            text: "Last commit message:"
+        }
+        ColeitraGridValueText {
+            text: settingsstorage.gitLastCommitMessage
+        }
+
     }
     footer: ColeitraGridLayout {
     }
@@ -135,7 +159,6 @@ import QtQuick.Controls 2.5
 import QtQuick.Layouts 1.3
 
 GridLayout {
-    id: body
     visible: true
     anchors.left: parent.left
     anchors.right: parent.right
@@ -146,3 +169,28 @@ GridLayout {
 }
 @}
 
+\subsection{Grid Label}
+@o ../src/ColeitraGridLabel.qml
+@{
+
+import QtQuick 2.12
+import QtQuick.Controls 2.5
+import QtQuick.Layouts 1.3
+
+Label {
+    Layout.columnSpan: 6
+}
+@}
+
+\subsection{Grid Values}
+\subsubsection{Text}
+@o ../src/ColeitraGridValueText.qml
+@{
+import QtQuick 2.12
+import QtQuick.Controls 2.5
+import QtQuick.Layouts 1.3
+
+Label {
+    Layout.columnSpan: 6
+}
+@}

@@ -26,11 +26,13 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
         main.cpp \
+        settings.cpp \
 
 RESOURCES += qml.qrc
 
 HEADERS += \
-    main.h
+    main.h \
+    settings.h \
 
 DISTFILES += \
     android/AndroidManifest.xml \
@@ -54,6 +56,8 @@ ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
     <qresource prefix="/">
         <file>ColeitraGridLayout.qml</file>
         <file>ColeitraPage.qml</file>
+        <file>ColeitraGridLabel.qml</file>
+        <file>ColeitraGridValueText.qml</file>
         <file>main.qml</file>
         <file>settings.svg</file>
         <file>back.svg</file>

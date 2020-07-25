@@ -11,6 +11,8 @@
 
 @i main.w
 
+@i settings.w
+
 @i database.w
 
 \section{Algorithm}
