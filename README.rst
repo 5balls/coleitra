@@ -14,9 +14,29 @@ Instructions assume you have a linux shell available and are familiar with using
 
 The documentation, the program source code and some other necessary files are contained in the doc directory in the format for the "nuweb" program and you need the nuweb program to get both documentation and the binary of the program. The nuweb program is not to be confused with the noweb program which is also used for literate programming.
 
-Compile nuweb
-.............
-Download the latest release from the `nuweb webpage <http://nuweb.sourceforge.net/>`_ and follow the instructions in the README file (They probably tell you to run make nuweb on your shell to build an executable file called "nuweb").
+Requirements
+............
+
+nuweb
+_____
+Download the latest release from the `nuweb webpage <http://nuweb.sourceforge.net/>`_ and follow the instructions in the README file (They probably tell you to run `make nuweb` on your shell to build an executable file called "nuweb").
+
+pdflatex
+________
+Get some variant of pdflatex from your operating system. You probaby need to install some packages which names start with "texlive".
 
 Compile documentation and create coleitra source code
 .....................................................
+
+Run the following code in your shell (pdflatex needs to be run twice as well as nuweb):
+
+.. code-block:: bash
+   
+   cd doc
+   nuweb coleitra.w
+   pdflatex coleitra.tex
+   pdflatex coleitra.tex
+   nuweb coleitra.w
+   cd ..
+
+
