@@ -17,7 +17,7 @@ execute_process(
 
 
 execute_process(
-    COMMAND bash "-c" "if cleanstring=$(git --git-dir ${CMAKE_CURRENT_LIST_DIR}/../.git status --untracked-files=no --porcelain) && [ -z \"$cleanstring\" ]; then echo 'yes'; else echo 'no'; fi | tr -d '\n'"
+    COMMAND bash "-c" "if cleanstring=$(git --git-dir ${CMAKE_CURRENT_LIST_DIR}/../.git --work-tree ${CMAKE_CURRENT_LIST_DIR}/.. status --untracked-files=no --porcelain) && [ -z \"$cleanstring\" ]; then echo 'yes'; else echo 'no'; fi | tr -d '\n'"
     OUTPUT_VARIABLE GIT_CLEAN
 )
 
@@ -29,6 +29,12 @@ execute_process(
 cmake_print_variables(GIT_VERSION)
 cmake_print_variables(GIT_CLEAN)
 cmake_print_variables(GIT_LAST_COMMIT_MESSAGE)
+
+add_definitions(
+    -DGIT_VERSION=${GIT_VERSION}
+    -DGIT_CLEAN=${GIT_CLEAN}
+    -DGIT_LAST_COMMIT_MESSAGE=${GIT_LAST_COMMIT_MESSAGE}
+)
 
 if(ANDROID)
     add_library(coleitra SHARED

@@ -10,7 +10,7 @@ _______
 
 The program is written following the programming paradigm of literate programming introduced by the computer scientist and mathematician Donald Knuth.
 
-Instructions assume you have a linux shell available and are familiar with using it (If not it is easy to learn though). It should be possible to compile this program on other operating systems as well but I currently only use linux so I can't provide any help there.
+Instructions assume you have a linux shell available and are familiar with using it (If not it is easy to learn though - search for `bash tutorial` and there should be plenty available to get you started.). It should be possible to compile this program on other operating systems as well but I currently only use linux so I can't provide any help there.
 
 The documentation, the program source code and some other necessary files are contained in the doc directory in the format for the "nuweb" program and you need the nuweb program to get both documentation and the binary of the program. The nuweb program is not to be confused with the noweb program which is also used for literate programming.
 
@@ -19,11 +19,24 @@ Requirements
 
 nuweb
 _____
-Download the latest release from the `nuweb webpage <http://nuweb.sourceforge.net/>`_ and follow the instructions in the README file (They probably tell you to run `make nuweb` on your shell to build an executable file called "nuweb").
+
+Unfortunately nuweb does not seem to be included in major linux distributions. Download the latest release from the `nuweb webpage <http://nuweb.sourceforge.net/>`_ and follow the instructions in the README file (They probably tell you to run `make nuweb` on your shell to build an executable file called "nuweb").
 
 pdflatex
 ________
-Get some variant of pdflatex from your operating system. You probaby need to install some packages which names start with "texlive".
+
+Install some variant of pdflatex from your operating system. You probaby need to install some packages which names start with "texlive".
+
+Qt5
+___
+
+Install either the development packages for Qt5 or compile them yourself from source. Unfortunately I can't recommend using the installer from Qt itself as it requires registering with a seperate account and I strongly disagree with this decision of the Qt team to forcefully collect user data.
+
+cmake
+_____
+
+Install the cmake package from your operation system.
+
 
 Compile documentation and create coleitra source code
 .....................................................
@@ -38,5 +51,27 @@ Run the following code in your shell (pdflatex needs to be run twice as well as 
    pdflatex coleitra.tex
    nuweb coleitra.w
    cd ..
+
+Compile desktop version of coleitra
+...................................
+
+Run the following code in your shell (the command line tools git and tr are expected to be available):
+
+.. code-block:: bash
+
+   cd build/x64
+   cmake ..
+   make
+
+If you have compiled Qt5 at a nonstandard location or in addition to your system libraries (which is not a problem) you have to pass the correct path to the file `Qt5Config.cmake`, for example (don't forget `..` at the end):
+
+.. code-block:: bash
+
+   cd build/x64
+   cmake -DQt5_DIR=~/src/foreign/qt5-shadow-build/qtbase/lib/cmake/Qt5/ ..
+   make
+
+Compile android version of coleitra
+...................................
 
 
