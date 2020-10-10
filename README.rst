@@ -8,7 +8,7 @@ In principle the used toolkit Qt also compiles for iOS but I can't support this 
 This document is written in the markup language called "reStructuredText". This language is used in the python programming language for documentation, you can use the `Docutils text processing system <https://docutils.sourceforge.io/>`_ to create a nicely formatted version of this document but it should be readable in plain text as it is.
 
 Install
-_______
+-------
 
 The program is written following the programming paradigm of literate programming introduced by the computer scientist and mathematician Donald Knuth.
 
