@@ -58,10 +58,11 @@ Run the following code in your shell (pdflatex needs to be run twice as well as 
 .. code-block:: bash
    
    cd doc
-   nuweb coleitra.w
+   nuweb -lr coleitra.w
    pdflatex coleitra.tex
+   makeindex coleitra.idx
    pdflatex coleitra.tex
-   nuweb coleitra.w
+   nuweb -lr coleitra.w
    cd ..
 
 Compile desktop version of coleitra

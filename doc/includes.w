@@ -1,4 +1,7 @@
-\documentclass[a4paper, twocolumn]{article}
+\documentclass[a4paper]{book}
 \usepackage{listings}
-\usepackage[colorlinks=true]{hyperref}
+\usepackage{imakeidx}
 \usepackage[margin=2cm]{geometry}
+\usepackage[nottoc]{tocbibind}
+\usepackage[colorlinks=true]{hyperref}
+\makeindex

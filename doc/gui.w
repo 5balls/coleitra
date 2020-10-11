@@ -1,6 +1,6 @@
-\section{GUI-Elements}
-
-\subsection{Main}
+\chapter{GUI-Elements}
+\index{GUI}
+\section{Main}
 \codeqml
 @o ../src/main.qml
 @{
@@ -32,8 +32,8 @@ ApplicationWindow {
 
 @}
 
-\subsubsection{Header}
-
+\subsection{Header}
+\index{GUI!Header}
 @d Main header
 @{
 header: ToolBar {
@@ -63,8 +63,8 @@ header: ToolBar {
 }
 @}
 
-\subsubsection{Drawer}
-
+\subsection{Drawer}
+\index{GUI!Menu}
 @d Main drawer
 @{
 Drawer {
@@ -130,6 +130,12 @@ ColeitraPage {
         ColeitraGridValueText {
             text: settingsstorage.gitLastCommitMessage
         }
+        ColeitraGridLabel {
+            text: "Qt version"
+        }
+        ColeitraGridValueText {
+            text: settingsstorage.qtVersion
+        }
 
     }
     footer: ColeitraGridLayout {
@@ -179,6 +185,9 @@ import QtQuick.Layouts 1.3
 
 Label {
     Layout.columnSpan: 6
+    Layout.preferredWidth: parent.width / 2.0
+    Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+    wrapMode: Text.WordWrap
 }
 @}
 
@@ -192,5 +201,8 @@ import QtQuick.Layouts 1.3
 
 Label {
     Layout.columnSpan: 6
+    Layout.preferredWidth: parent.width / 2.0
+    Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+    wrapMode: Text.WordWrap
 }
 @}

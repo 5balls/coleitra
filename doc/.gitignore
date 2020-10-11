@@ -6,3 +6,6 @@
 *.toc
 *.swp
 *.dvi
+*.idx
+*.ilg
+*.ind

@@ -1,4 +1,4 @@
-\section{Main}
+\chapter{Main}
 
 \codecpp
 @o ../src/main.h
