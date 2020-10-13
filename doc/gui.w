@@ -21,10 +21,10 @@
 \codeqml
 @o ../src/main.qml
 @{
-import QtQuick 2.12
-import QtQuick.Controls 2.5
+import QtQuick 2.11
+import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.3
-import QtQuick.Window 2.12
+import QtQuick.Window 2.11
 
 ApplicationWindow {
     id: window
@@ -107,7 +107,7 @@ Drawer {
 \section{Train}
 @o ../src/train.qml
 @{
-import QtQuick 2.12
+import QtQuick 2.11
 ColeitraPage {
     title: "Vocable training"
     ColeitraGridLayout {
@@ -120,7 +120,7 @@ ColeitraPage {
 \section{About}
 @o ../src/about.qml
 @{
-import QtQuick 2.12
+import QtQuick 2.11
 import SettingsStorageLib 1.0
 
 ColeitraPage {
@@ -165,8 +165,8 @@ ColeitraPage {
 
 @o ../src/ColeitraPage.qml
 @{
-import QtQuick 2.12
-import QtQuick.Controls 2.5
+import QtQuick 2.11
+import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.3
 
 Page {
@@ -177,8 +177,8 @@ Page {
 
 @o ../src/ColeitraGridLayout.qml
 @{
-import QtQuick 2.12
-import QtQuick.Controls 2.5
+import QtQuick 2.11
+import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.3
 
 GridLayout {
@@ -196,8 +196,8 @@ GridLayout {
 @o ../src/ColeitraGridLabel.qml
 @{
 
-import QtQuick 2.12
-import QtQuick.Controls 2.5
+import QtQuick 2.11
+import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.3
 
 Label {
@@ -212,8 +212,8 @@ Label {
 \subsubsection{Text}
 @o ../src/ColeitraGridValueText.qml
 @{
-import QtQuick 2.12
-import QtQuick.Controls 2.5
+import QtQuick 2.11
+import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.3
 
 Label {
