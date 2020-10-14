@@ -97,3 +97,25 @@ Finally we can create a connection for the database and open the database file.
     }
 }
 @}
+
+\section{Table}
+QSQLIndex?
+\subsection{Interface}
+@o ../src/databasetable.h -d
+@{
+#ifndef DATABASETABLE_H
+#define DATABASETABLE_H
+#include <QObject>
+class databasetable : public QObject
+{
+    Q_OBJECT
+public:
+    explicit databasetable(QObject *parent = nullptr);
+
+private:
+    QSqlDatabase vocableDatabase;
+public:
+};
+#endif // DATABASETABLE_H
+@}
+
