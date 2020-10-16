@@ -15,20 +15,16 @@
 % You should have received a copy of the GNU General Public License
 % along with coleitra.  If not, see <https://www.gnu.org/licenses/>.
 
-\chapter{Main}
+\section{Main}
 
 \codecpp
 @o ../src/main.h
 @{
-#ifndef MAIN_H
-#define MAIN_H
-
+@<Start of @'MAIN@' header@>
 #include <QApplication>
 #include <QQmlApplicationEngine>
-
 #include "settings.h"
-
-#endif // MAIN_H
+@<End of header@>
 @}
 
 \codecpp

@@ -15,42 +15,45 @@
 % You should have received a copy of the GNU General Public License
 % along with coleitra.  If not, see <https://www.gnu.org/licenses/>.
 
-@i includes.w
-@i defines.w
+\section{Boilerplate fragments}
+\subsection{Headerfiles}
+\codecpp
+@d Start of @'classname@' header
+@{
+#ifndef @1_H
+#define @1_H
+#include <QObject>
+@}
 
-\makeindex
+@d Start of class @'classname@'
+@{
+class @1 : public QObject
+{
+    Q_OBJECT
+@}
 
-\begin{document}
+@d End of header
+@{
+#endif 
+@}
 
-@i title.w
+@d End of class and header
+@{
+};
+#endif
+@}
 
-\tableofcontents
+\subsection{Qt property system}
+@d Qt readonly property @'propertyname@'
+@{
+Q_PROPERTY(QString @1 READ @1 CONSTANT)
+@}
 
-@i abstract.w
+@d Function @'functionname@' return string @'string@'
+@{
+QString @1()
+{
+    return QString(@2);
+}
+@}
 
-@i infrastructure.w
-
-@i settings.w
-
-@i database.w
-
-\chapter{Algorithm}
-
-@i gui.w
-
-@i qt.w
-
-\begin{appendix}
-\chapter{Code indices}
-\section{Files}
-@f
-
-\section{Fragments}
-@m
-
-\section{User identifiers}
-@u
-
-\cleardoublepage\printindex
-\end{appendix}
-\end{document}

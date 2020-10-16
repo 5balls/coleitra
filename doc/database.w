@@ -20,23 +20,17 @@
 \section{Interface}
 The database class defines an interface for creating the different database connections used at other places in the code.
 
-\codecpp
+
+
 @o ../src/database.h -d
 @{
-#ifndef DATABASE_H
-#define DATABASE_H
-#include <QObject>
-class database : public QObject
-{
-    Q_OBJECT
+@<Start of @'DATABASE@' header@>
+@<Start of class @'database@'@>
 public:
     explicit database(QObject *parent = nullptr);
-
 private:
     QSqlDatabase vocableDatabase;
-public:
-};
-#endif // DATABASE_H
+@<End of class and header @>
 @}
 
 @o ../src/database.cpp -d
@@ -103,19 +97,12 @@ QSQLIndex?
 \subsection{Interface}
 @o ../src/databasetable.h -d
 @{
-#ifndef DATABASETABLE_H
-#define DATABASETABLE_H
-#include <QObject>
-class databasetable : public QObject
-{
-    Q_OBJECT
+@<Start of @'DATABASETABLE@' header@>
+@<Start of class @'databasetable@'@>
 public:
     explicit databasetable(QObject *parent = nullptr);
-
 private:
     QSqlDatabase vocableDatabase;
-public:
-};
-#endif // DATABASETABLE_H
+@<End of class and header@>
 @}
 

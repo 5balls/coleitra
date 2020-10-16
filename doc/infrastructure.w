@@ -15,42 +15,9 @@
 % You should have received a copy of the GNU General Public License
 % along with coleitra.  If not, see <https://www.gnu.org/licenses/>.
 
-@i includes.w
-@i defines.w
+\chapter{Program infrastructure}
+@i main.w
 
-\makeindex
+@i cmake.w
 
-\begin{document}
-
-@i title.w
-
-\tableofcontents
-
-@i abstract.w
-
-@i infrastructure.w
-
-@i settings.w
-
-@i database.w
-
-\chapter{Algorithm}
-
-@i gui.w
-
-@i qt.w
-
-\begin{appendix}
-\chapter{Code indices}
-\section{Files}
-@f
-
-\section{Fragments}
-@m
-
-\section{User identifiers}
-@u
-
-\cleardoublepage\printindex
-\end{appendix}
-\end{document}
+@i boilerplate.w
