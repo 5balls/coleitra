@@ -22,6 +22,8 @@
 
 @i gui_train.w
 
+@i gui_about.w
+
 \section{Reusable GUI elements}
 \subsection{Page}
 
