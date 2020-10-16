@@ -16,6 +16,7 @@
 % along with coleitra.  If not, see <https://www.gnu.org/licenses/>.
 
 \section{cmake}
+\codecmake
 @o ../src/CMakeLists.txt
 @{
 cmake_minimum_required(VERSION 3.7.0)
@@ -31,7 +32,12 @@ project(coleitra)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
+@}
 
+This bash scripts gather some information about the git repository and then we make them available to the program via preprocessor definitions:
+
+@o ../src/CMakeLists.txt
+@{
 execute_process(
     COMMAND bash "-c" "git --git-dir ${CMAKE_CURRENT_LIST_DIR}/../.git --work-tree ${CMAKE_CURRENT_LIST_DIR}/.. describe --always --tags | tr -d '\n'"
     OUTPUT_VARIABLE GIT_VERSION
@@ -57,31 +63,43 @@ add_definitions(
     -DGIT_CLEAN=${GIT_CLEAN}
     -DGIT_LAST_COMMIT_MESSAGE=${GIT_LAST_COMMIT_MESSAGE}
 )
+@}
 
 
+We need to define all needed Qt5 components here:
+
+@o ../src/CMakeLists.txt
+@{
 find_package(Qt5 COMPONENTS Quick QuickControls2 QuickWidgets Sql Svg Qml Widgets REQUIRED)
 set(QT_LIBS Qt5::Quick Qt5::QuickControls2 Qt5::QuickWidgets Qt5::Sql Qt5::Svg Qt5::Qml Qt5::Widgets)
 
-
 include_directories(${Qt5Widgets_INCLUDE_DIRS} ${QtQml_INCLUDE_DIRS})
 add_definitions(${Qt5Widgets_DEFINITIONS} ${QtQml_DEFINITIONS} ${${Qt5Quick_DEFINITIONS}})
+@}
 
+A slightly different command is needed if we compile for android as the program entry point is a java function and not our C++ main function:
+
+@o ../src/CMakeLists.txt
+@{
 if(ANDROID)
     add_library(coleitra SHARED
-        ../src/main.cpp
-        ../src/settings.cpp
-        ../src/qml.qrc
+    @<C++ files@>
+    @<Ressource files@>
     )
 else()
     add_executable(coleitra
-        ../src/main.cpp
-        ../src/settings.cpp
-        ../src/qml.qrc
+    @<C++ files@>
+    @<Ressource files@>
     )
 endif()
 
 target_link_libraries(coleitra PUBLIC ${QT_LIBS})
+@}
 
+In this step we finally can produce the APK file. For a new release we should probably increase the VERSION\_CODE.
+
+@o ../src/CMakeLists.txt
+@{
 if(ANDROID)
     include(${CMAKE_CURRENT_LIST_DIR}/qt-android-cmake/AddQtAndroidApk.cmake)
     add_qt_android_apk(coleitra.apk coleitra

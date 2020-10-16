@@ -20,11 +20,15 @@
 \section{Interface}
 The database class defines an interface for creating the different database connections used at other places in the code.
 
-
-
 @o ../src/database.h -d
 @{
 @<Start of @'DATABASE@' header@>
+#include <QSqlDatabase>
+#include <QStandardPaths>
+#include <QDir>
+#include <QFileInfo>
+#include <QSqlField>
+#include "databasetable.h"
 @<Start of class @'database@'@>
 public:
     explicit database(QObject *parent = nullptr);
@@ -80,29 +84,67 @@ If the path for the database file does not exist, we create it first.
     }
 @}\index{Database!Path|)}
 
-Finally we can create a connection for the database and open the database file.
+Now we can create a connection for the database and open the database file.
 
 @o ../src/database.cpp -d
 @{
     vocableDatabase = QSqlDatabase::addDatabase("QSQLITE", "vocableDatabase");
-    vocableDatabase.setDatabaseName(dbFile);
+    vocableDatabase.setDatabaseName(dbFileName);
     if(!vocableDatabase.open()){
         qDebug("Could not open database file!");
+    }
+@}
+
+Finally we create our tables if they don't exist already:
+@o ../src/database.cpp -d
+@{
+    {
+        databasetable("lexem",{QSqlField("id",QVariant::Int)});
     }
 }
 @}
 
+\section{Field}
+\subsection{Interface}
+@o ../src/databasefield.h -d
+@{
+@<Start of @'DATABASEFIELD@' header@>
+#include <QSqlField>
+class databasefield : public QObject, QSqlField
+{
+    Q_OBJECT
+public:
+
+}
+@<End of class and header@>
+@}
+
 \section{Table}
-QSQLIndex?
 \subsection{Interface}
 @o ../src/databasetable.h -d
 @{
 @<Start of @'DATABASETABLE@' header@>
-@<Start of class @'databasetable@'@>
+#include <QSqlRecord>
+#include <QSqlField>
+#include <QString>
+#include <QSqlDatabase>
+
+class databasetable : public QObject, QSqlRecord
+{
+    Q_OBJECT
 public:
-    explicit databasetable(QObject *parent = nullptr);
+    explicit databasetable(QString name, QList<QSqlField> fields);
 private:
-    QSqlDatabase vocableDatabase;
+    QSqlDatabase* vocableDatabase;
 @<End of class and header@>
 @}
 
+\subsection{Implementation}
+@o ../src/databasetable.cpp -d
+@{
+#include "databasetable.h"
+databasetable::databasetable(QString name, QList<QSqlField> fields){
+    qDebug(name.toLatin1());
+}
+
+@}

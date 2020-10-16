@@ -18,23 +18,25 @@
 \section{Main}
 
 \codecpp
-@o ../src/main.h
+@o ../src/main.h -d
 @{
 @<Start of @'MAIN@' header@>
 #include <QApplication>
 #include <QQmlApplicationEngine>
 #include "settings.h"
+#include "database.h"
 @<End of header@>
 @}
 
 \codecpp
-@o ../src/main.cpp
+@o ../src/main.cpp -d
 @{
 #include "main.h"
 
 int main(int argc, char *argv[])
 {
     qmlRegisterType<settings>("SettingsStorageLib", 1, 0, "SettingsStorage");
+    qmlRegisterType<database>("DatabaseLib", 1, 0, "Database");
 
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QCoreApplication::setApplicationName("coleitra");
@@ -55,5 +57,4 @@ int main(int argc, char *argv[])
 
     return app.exec();
 }
-
 @}

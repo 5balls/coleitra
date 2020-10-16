@@ -39,7 +39,23 @@
   sensitive=true
 }
 
+\lstdefinelanguage{CMake}{
+  keywords={cmake_minimum_required, if, endif, include, project, set, execute\_process, cmake\_print\_variables, add\_definitions, find\_package, include\_directories, add\_library, else, add\_executable, target\_link\_libraries},
+  morecomment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  morestring=[b]',
+  morestring=[b]",
+  ndkeywords={},
+  keywordstyle=\bfseries,
+  ndkeywordstyle=\bfseries,
+  identifierstyle=\color{black},
+  commentstyle=\ttfamily,
+  stringstyle=\ttfamily,
+  sensitive=true
+}
+
 \newcommand\codecpp{\lstset{language=C++,breaklines=true}}
 \newcommand\codeqtproject{\lstset{language=QtProject,breaklines=true}}
 \newcommand\codeqml{\lstset{language=QML,breaklines=true}}
 \newcommand\codeqrc{\lstset{language=XML,breaklines=true}}
+\newcommand\codecmake{\lstset{language=CMake,breaklines=true}}

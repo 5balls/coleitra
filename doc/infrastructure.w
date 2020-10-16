@@ -16,6 +16,8 @@
 % along with coleitra.  If not, see <https://www.gnu.org/licenses/>.
 
 \chapter{Program infrastructure}
+@i filelists.w
+
 @i main.w
 
 @i cmake.w
