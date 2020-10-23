@@ -60,15 +60,34 @@ ___
 
 Install either the development packages for Qt5 (these are usually different from the "regular" library packages) or compile them yourself from source. Unfortunately I can't recommend using the installer from Qt itself as it requires registering with a seperate account and I strongly disagree with this decision of the Qt team to forcefully collect user data.
 
-You should follow the instructions of Qt - either on their webpage or in the source tarball, but for personal reference, this are the commands I used last for compiling the libraries for cross compiling for android:
+You should follow the instructions of Qt - either on their webpage or in the source tarball, but for personal reference, this are the commands I used last for compiling the libraries for cross compiling for android (you need the android SDK and NDK for cross compiling the android app, see below):
 
 .. code-block:: bash
 
-   ./configure -xplatform android-clang --disable-rpath -nomake tests -nomake examples -android-ndk ~/src/foreign/android-ndk-r21 -android-sdk ~/src/foreign/android-sdk-tools -no-warnings-are-errors --prefix=~/src/foreign/qt5-android-install-20201009
+   ./configure -xplatform android-clang --disable-rpath -nomake tests -nomake examples -android-ndk ~/src/foreign/android-sdk/ndk-bundle -android-sdk ~/src/foreign/android-sdk -no-warnings-are-errors --prefix=/home/user/src/foreign/qt5-android-install-20201022
    make
    su
    make install
    exit
+
+Choose the open source license and accept the LGPLv3 offer. It may take quite some time to compile Qt as it is a large library (expect several hours of compile time depending on your setup).
+
+Android SDK and NDK
+___________________
+
+You don't need Android Studio to compile coleitra. Download just the commandlinetools package (it is usually a bit hidden on googles webpage, you might need to scroll down quite  bit), at the time of this writing the file was called `commandlinetools-linux-6858069_latest.zip` but that may change.
+
+.. code-block:: bash
+   
+   mkdir ~/src/foreign/android-sdk
+   unzip commandlinetools-linux-6858069_latest.zip
+   mv cmdline-tools ~/src/foreign/android-sdk
+   export PATH=$PATH:~/src/foreign/android-sdk/cmdline-tools/tools/bin
+   export ANDROID_SDK_ROOT=~/src/foreign/android-sdk
+   sdkmanager ndk-bundle
+
+Directory structure seems to have changed, but this seems to work for the current version.
+
 
 cmake
 _____
@@ -120,10 +139,11 @@ This requires a local installation of the android ndk and sdk. You can download 
 
    cd build/android
    rm -r *
-   export ANDROID_SDK=/home/flo/src/foreign/android-sdk-tools/
-   export ANDROID_NDK=/home/flo/src/foreign/android-ndk-r21/
+   export ANDROID_SDK=/home/user/src/foreign/android-sdk
+   export ANDROID_NDK=/home/user/src/foreign/android-sdk/ndk-bundle
    export JAVA_HOME=/usr/lib/jvm/default-java
-   cmake -DANDROID_PLATFORM=21 -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH -DCMAKE_TOOLCHAIN_FILE=~/src/foreign/android-ndk-r21/build/cmake/android.toolchain.cmake -DCMAKE_PREFIX_PATH=~/src/foreign/qt5-android-install-20201010/ ../../src
+   cmake -DANDROID_PLATFORM=21 -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH -DCMAKE_TOOLCHAIN_FILE=~/src/foreign/android-sdk/ndk-bundle/build/cmake/android.toolchain.cmake -DCMAKE_PREFIX_PATH=~/src/foreign/qt5-android-install-20201022/ ../../src
+   make
 
-You might not need to set `CMAKE_PREFIX_PATH` and `CMAKE_FIND_ROOT_PATH_MODE_PACKAGE` if you have installed thq Qt5 libraries for cross compiling for android system wide.
+You might not need to set `CMAKE_PREFIX_PATH` and `CMAKE_FIND_ROOT_PATH_MODE_PACKAGE` if you have installed thq Qt5 libraries for cross compiling for android system wide. Also this might download quite some android stuff on the first run. Subsequent runs should be faster.
 
