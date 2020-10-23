@@ -128,6 +128,7 @@ public:
 #include <QSqlField>
 #include <QString>
 #include <QSqlDatabase>
+#include <QDebug>
 
 class databasetable : public QObject, QSqlRecord
 {
@@ -144,7 +145,7 @@ private:
 @{
 #include "databasetable.h"
 databasetable::databasetable(QString name, QList<QSqlField> fields){
-    qDebug(name.toLatin1());
+    qDebug() << name;
 }
 
 @}
