@@ -21,6 +21,9 @@
 @{
 cmake_minimum_required(VERSION 3.7.0)
 
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 if(ANDROID)
     set(ANDROID_PLATFORM "20")
 endif()

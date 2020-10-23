@@ -22,6 +22,7 @@
 database.h
 settings.h
 databasetable.h
+databasefield.h
 main.h
 @}
 
@@ -32,6 +33,7 @@ settings.cpp
 main.cpp
 database.cpp
 databasetable.cpp
+databasefield.cpp
 @}
 
 \subsection{Ressource files}

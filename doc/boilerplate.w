@@ -43,6 +43,29 @@ class @1 : public QObject
 #endif
 @}
 
+@d Start of db constraint class @'classname@'
+@{
+class @1
+{
+public:
+    @1() = default;
+    ~@1() = default;
+    @1(const @1 &) = default;
+    @1 &operator=(const @1 &) = default;
+@}
+
+@d End of db constraint class @'classname@'
+@{
+};
+Q_DECLARE_METATYPE(@1)
+@}
+
+@d Valueless db constraint class @'classname@'
+@{
+@<Start of db constraint class @1 @>
+@<End of db constraint class @1 @>
+@}
+
 \subsection{Qt property system}
 @d Qt readonly property @'propertyname@'
 @{

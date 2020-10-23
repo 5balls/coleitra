@@ -34,6 +34,7 @@ public:
     explicit database(QObject *parent = nullptr);
 private:
     QSqlDatabase vocableDatabase;
+    QList < databasetable* > tables;
 @<End of class and header @>
 @}
 
@@ -96,10 +97,26 @@ Now we can create a connection for the database and open the database file.
 @}
 
 Finally we create our tables if they don't exist already:
+
 @o ../src/database.cpp -d
 @{
     {
-        databasetable("lexem",{QSqlField("id",QVariant::Int)});
+        databasetable* languagetable = new databasetable("language",{new databasefield("id",QVariant::Int),new databasefield("locale",QVariant::String)});
+        tables.push_back(languagetable);
+        QVariant* lexemtable_fk = new QVariant();
+        lexemtable_fk->setValue(databasefield_constraint_foreign_key(languagetable,"id"));
+        databasetable* lexemtable = new databasetable("lexem",
+                {new databasefield("id",QVariant::Int),
+                new databasefield("language",QVariant::Int,
+                        {lexemtable_fk})});
+        tables.push_back(lexemtable);
+        QVariant* formtable_fk = new QVariant();
+        formtable_fk->setValue(databasefield_constraint_foreign_key(lexemtable,"id"));
+        databasetable* formtable = new databasetable("form",
+                {new databasefield("id",QVariant::Int),
+                new databasefield("lexem",QVariant::Int,
+                        {formtable_fk})});
+        tables.push_back(formtable);
     }
 }
 @}
@@ -110,13 +127,55 @@ Finally we create our tables if they don't exist already:
 @{
 @<Start of @'DATABASEFIELD@' header@>
 #include <QSqlField>
-class databasefield : public QObject, QSqlField
-{
-    Q_OBJECT
-public:
+@}
 
-}
+We need to predeclare databasetable, because we have a circular dependency between databasefield and databasetable here:
+
+@o ../src/databasefield.h -d
+@{
+class databasetable;
+@}
+
+Constrains on the column of a database table are handled as QVariant. The basis to make such a QVariant is defined by the fragments for the constraint classes.
+
+@o ../src/databasefield.h -d
+@{
+@<Valueless db constraint class @'databasefield_constraint_not_null@' @>
+@<Valueless db constraint class @'databasefield_constraint_unique@' @>
+@<Valueless db constraint class @'databasefield_constraint_primary_key@' @>
+
+@<Start of db constraint class @'databasefield_constraint_foreign_key@' @>
+public:
+    databasefield_constraint_foreign_key(databasetable* fKT, QString fFN) : m_foreignKeyTable(fKT), m_foreignFieldName(fFN){};
+    databasetable* foreignKeyTable(){return m_foreignKeyTable;};
+    QString foreignFieldName(){return m_foreignFieldName;};
+private:
+    databasetable* m_foreignKeyTable;
+    QString m_foreignFieldName;
+@<End of db constraint class @'databasefield_constraint_foreign_key@' @>
+
+class databasefield 
+{
+public:
+    explicit databasefield(const QString& fieldname,
+            QVariant::Type type,
+            QList<QVariant*> constraints = {});
+
+private:
+    QSqlField m_field;
+    QList<QVariant*> m_constraints;
 @<End of class and header@>
+@}
+
+\subsection{Implementation}
+@o ../src/databasefield.cpp -d
+@{
+#include "databasefield.h"
+
+databasefield::databasefield(const QString& fieldname,
+        QVariant::Type type,
+        QList<QVariant*> constraints) : m_field(fieldname, type), m_constraints(constraints){
+}
 @}
 
 \section{Table}
@@ -129,12 +188,14 @@ public:
 #include <QString>
 #include <QSqlDatabase>
 #include <QDebug>
+#include "databasefield.h"
 
 class databasetable : public QObject, QSqlRecord
 {
     Q_OBJECT
 public:
-    explicit databasetable(QString name, QList<QSqlField> fields);
+    explicit databasetable(QString name = "", QList<databasefield*> fields = {});
+    bool tableWasNewlyCreated;
 private:
     QSqlDatabase* vocableDatabase;
 @<End of class and header@>
@@ -144,7 +205,7 @@ private:
 @o ../src/databasetable.cpp -d
 @{
 #include "databasetable.h"
-databasetable::databasetable(QString name, QList<QSqlField> fields){
+databasetable::databasetable(QString name, QList<databasefield*> fields) : tableWasNewlyCreated(false){
     qDebug() << name;
 }
 
