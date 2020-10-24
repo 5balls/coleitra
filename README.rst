@@ -65,7 +65,6 @@ Install either the development packages for Qt5 (these are usually different fro
 You should follow the instructions of Qt - either on their webpage or in the source tarball, but for personal reference, this are the commands I used last for compiling the libraries for cross compiling for android (you need the android SDK and NDK for cross compiling the android app, see below):
 
 .. code-block:: bash
-   :linenos:
 
    ./configure -xplatform android-clang \
    --disable-rpath \
@@ -87,7 +86,6 @@ ___________________
 You don't need Android Studio to compile coleitra. Download just the commandlinetools package (it is usually a bit hidden on googles webpage, you might need to scroll down quite  bit), at the time of this writing the file was called `commandlinetools-linux-6858069_latest.zip` but that may change.
 
 .. code-block:: bash
-   :linenos:
    
    mkdir ~/src/foreign/android-sdk
    mkdir ~/src/foreign/android-sdk/cmdline-tools
@@ -114,7 +112,6 @@ _____________________________________________________
 Run the following code in your shell (pdflatex needs to be run twice as well as nuweb):
 
 .. code-block:: bash
-   :linenos:
    
    cd doc
    nuweb -lr coleitra.w
@@ -130,7 +127,6 @@ ___________________________________
 Run the following code in your shell (the command line tools git and tr are expected to be available):
 
 .. code-block:: bash
-   :linenos:
 
    cd build/x64
    cmake ../../src
@@ -139,7 +135,6 @@ Run the following code in your shell (the command line tools git and tr are expe
 If you have compiled Qt5 at a nonstandard location or in addition to your system libraries (which is not a problem) you have to pass the correct path to the file `Qt5Config.cmake`, for example (don't forget `..` at the end):
 
 .. code-block:: bash
-   :linenos:
 
    cd build/x64
    rm -r *
@@ -153,7 +148,6 @@ ___________________________________
 This requires a local installation of the android ndk and sdk. You can download those seperate from the android studio which you don't need for compiling coleitra.
 
 .. code-block:: bash
-   :linenos:
 
    cd build/android
    rm -r *
