@@ -15,6 +15,21 @@
 % You should have received a copy of the GNU General Public License
 % along with coleitra.  If not, see <https://www.gnu.org/licenses/>.
 
+\chapter{Errorhandling}
+@o ../src/error.h -d
+@{
+@<Start of @'ERROR@' header@>
+enum class sql_error {
+    create_table,
+    insert_record,
+    update_record,
+    delete_record,
+    select_empty,
+    select,
+};
+@<End of header@>
+@}
+
 \chapter{Database}
 \index{Database}
 \section{Interface}
@@ -29,6 +44,7 @@ The database class defines an interface for creating the different database conn
 #include <QFileInfo>
 #include <QSqlField>
 #include "databasetable.h"
+
 @<Start of class @'database@'@>
 public:
     explicit database(QObject *parent = nullptr);
@@ -101,22 +117,110 @@ Finally we create our tables if they don't exist already:
 @o ../src/database.cpp -d
 @{
     {
-        databasetable* languagetable = new databasetable("language",{new databasefield("id",QVariant::Int),new databasefield("locale",QVariant::String)});
-        tables.push_back(languagetable);
-        QVariant* lexemtable_fk = new QVariant();
-        lexemtable_fk->setValue(databasefield_constraint_foreign_key(languagetable,"id"));
-        databasetable* lexemtable = new databasetable("lexem",
-                {new databasefield("id",QVariant::Int),
-                new databasefield("language",QVariant::Int,
-                        {lexemtable_fk})});
-        tables.push_back(lexemtable);
-        QVariant* formtable_fk = new QVariant();
-        formtable_fk->setValue(databasefield_constraint_foreign_key(lexemtable,"id"));
-        databasetable* formtable = new databasetable("form",
-                {new databasefield("id",QVariant::Int),
-                new databasefield("lexem",QVariant::Int,
-                        {formtable_fk})});
-        tables.push_back(formtable);
+
+        auto d = [this](QString name, QList<databasefield*> fields){
+            databasetable* table = new databasetable(name,fields);
+            tables.push_back(table);
+            return table;
+        };
+        auto f = [](const QString& fieldname,
+                QVariant::Type type){
+            return new databasefield(fieldname, type);};
+        auto fc = [](const QString& fieldname,
+                QVariant::Type type,
+                QList<QVariant*> constraints = {}){
+            return new databasefield(fieldname, type, constraints);};
+
+        auto c_nn = [](){
+            QVariant* variant = new QVariant();
+            variant->setValue(databasefield_constraint_not_null());
+            return variant;
+        };
+        auto c_u = [](){
+            QVariant* variant = new QVariant();
+            variant->setValue(databasefield_constraint_unique());
+            return variant;
+        };
+        auto c_pk = [](){
+            QVariant* variant = new QVariant();
+            variant->setValue(databasefield_constraint_primary_key());
+            return variant;
+        };
+        auto c_fk = [](databasetable* fKT,
+                QString fFN){
+            QVariant* variant = new QVariant();
+            variant->setValue(databasefield_constraint_foreign_key(fKT,fFN));
+            return variant;
+        };
+
+        databasetable* dbversiontable = d("dbversion",
+                {fc("id",QVariant::Int,{c_pk(),c_nn()}),
+                fc("version",QVariant::String,{c_u()})});
+        {
+            QMap<QString, QVariant> version;
+            version["version"] = "3.14";
+            int id = dbversiontable->deleteRecord(qMakePair(QString("id"),QVariant::fromValue(2)));
+            qDebug() << "Delete version with id" << id;
+        }
+
+        databasetable* languagetable = d("language",
+                {fc("id",QVariant::Int,{c_pk(),c_nn()}),
+                fc("locale",QVariant::String,{c_u()})});
+        databasetable* lexemetable = d("lexeme",
+                {fc("id",QVariant::Int,{c_pk(),c_nn()}),
+                fc("language",QVariant::Int,{c_fk(languagetable,"id")})});
+
+        databasetable* lexemetranslationtable = d("lexemetranslation",
+                {fc("id",QVariant::Int,{c_pk(),c_nn()}),
+                fc("lexeme1",QVariant::Int,{c_fk(lexemetable,"id")}),
+                fc("lexeme2",QVariant::Int,{c_fk(lexemetable,"id")})});
+
+        databasetable* grammarexpressiontable = d("grammarexpression",
+                {fc("id",QVariant::Int,{c_pk(),c_nn()}),
+                f("string",QVariant::String)});
+        databasetable* grammarformtable = d("grammarform",
+                {fc("id",QVariant::Int,{c_pk(),c_nn()})});
+        databasetable* grammarformcomponenttable = d("grammarformcomponent",
+                {fc("id",QVariant::Int,{c_pk(),c_nn()}),
+                fc("grammarform",QVariant::Int,{c_fk(grammarformtable,"id")}),
+                fc("grammarexpression",QVariant::Int,{c_fk(grammarexpressiontable,"id")})});
+
+        databasetable* formtable = d("form",
+                {fc("id",QVariant::Int,{c_pk(),c_nn()}),
+                fc("lexeme",QVariant::Int,{c_fk(lexemetable,"id")}),
+                fc("grammarform",QVariant::Int,{c_fk(grammarformtable,"id")}),
+                f("string",QVariant::String)});
+
+        databasetable* compoundformtable = d("compoundform",
+                {fc("id",QVariant::Int,{c_pk(),c_nn()}),
+                fc("lexeme",QVariant::Int,{c_fk(lexemetable,"id")}),
+                fc("grammarform",QVariant::Int,{c_fk(grammarformtable,"id")})});
+        databasetable* compoundformparttable = d("compoundformpart",
+                {fc("id",QVariant::Int,{c_pk(),c_nn()}),
+                fc("compoundform",QVariant::Int,{c_fk(compoundformtable,"id")}),
+                f("part",QVariant::Int),
+                fc("form",QVariant::Int,{c_fk(formtable,"id")})});
+
+        databasetable* sentencetable = d("sentence",
+                {fc("id",QVariant::Int,{c_pk(),c_nn()})});
+        databasetable* punctuationmarktable = d("punctuationmark",
+                {fc("id",QVariant::Int,{c_pk(),c_nn()}),
+                f("string",QVariant::String)});
+        databasetable* sentenceparttable = d("sentencepart",
+                {fc("id",QVariant::Int,{c_pk(),c_nn()}),
+                fc("sentence",QVariant::Int,{c_fk(sentencetable,"id")}),
+                f("part",QVariant::Int),
+                f("capialized",QVariant::Bool),
+                fc("form",QVariant::Int,{c_fk(formtable,"id")}),
+                fc("compoundform",QVariant::Int,{c_fk(compoundformtable,"id")}),
+                fc("punctuationmark",QVariant::Int,{c_fk(punctuationmarktable,"id")})});
+
+        databasetable* sentencetranslationtable = d("sentencetranslation",
+                {fc("id",QVariant::Int,{c_pk(),c_nn()}),
+                fc("sentence1",QVariant::Int,{c_fk(sentencetable,"id")}),
+                fc("sentence2",QVariant::Int,{c_fk(sentencetable,"id")})});
+
+        qDebug() << "Created" << tables.count() << "tables";
     }
 }
 @}
@@ -160,7 +264,9 @@ public:
     explicit databasefield(const QString& fieldname,
             QVariant::Type type,
             QList<QVariant*> constraints = {});
-
+    QSqlField field(){return m_field;};
+    QList<QVariant*> constraints(){return m_constraints;};
+    QString sqLiteType();
 private:
     QSqlField m_field;
     QList<QVariant*> m_constraints;
@@ -176,6 +282,17 @@ databasefield::databasefield(const QString& fieldname,
         QVariant::Type type,
         QList<QVariant*> constraints) : m_field(fieldname, type), m_constraints(constraints){
 }
+
+QString databasefield::sqLiteType(void){
+    switch(m_field.type()){
+        case QVariant::Int:
+        case QVariant::Bool:
+            return "INTEGER";
+        case QVariant::String:
+            return "TEXT";
+    }
+    return "";
+}
 @}
 
 \section{Table}
@@ -187,17 +304,30 @@ databasefield::databasefield(const QString& fieldname,
 #include <QSqlField>
 #include <QString>
 #include <QSqlDatabase>
+#include <QSqlQuery>
 #include <QDebug>
+#include <QMap>
 #include "databasefield.h"
+#include "error.h"
 
 class databasetable : public QObject, QSqlRecord
 {
     Q_OBJECT
 public:
     explicit databasetable(QString name = "", QList<databasefield*> fields = {});
-    bool tableWasNewlyCreated;
+    int insertRecord(const QMap<QString, QVariant>& fields);
+    int updateRecord(const QPair<QString, QVariant>& id, const QMap<QString, QVariant>& fields);
+    int deleteRecord(const QPair<QString, QVariant>& id);
+    QSqlQuery select(const QList<QString>& selection, const QPair<QString, QVariant>& where);
+    QString name(){return m_name;};
 private:
-    QSqlDatabase* vocableDatabase;
+    QString m_name;
+    QSqlDatabase m_vocableDatabase;
+    QList<databasefield*> m_fields;
+    QString s_databasefield_constraint_not_null;
+    QString s_databasefield_constraint_unique;
+    QString s_databasefield_constraint_primary_key;
+    QString s_databasefield_constraint_foreign_key;
 @<End of class and header@>
 @}
 
@@ -205,8 +335,158 @@ private:
 @o ../src/databasetable.cpp -d
 @{
 #include "databasetable.h"
-databasetable::databasetable(QString name, QList<databasefield*> fields) : tableWasNewlyCreated(false){
-    qDebug() << name;
+databasetable::databasetable(QString name, QList<databasefield*> fields) : m_name(name),
+    m_fields(fields),
+    s_databasefield_constraint_not_null("databasefield_constraint_not_null"),
+    s_databasefield_constraint_unique("databasefield_constraint_unique"),
+    s_databasefield_constraint_primary_key("databasefield_constraint_primary_key"),
+    s_databasefield_constraint_foreign_key("databasefield_constraint_foreign_key")
+    {
+    m_vocableDatabase = QSqlDatabase::database("vocableDatabase");
+    if(!m_vocableDatabase.isValid()){
+        qDebug() << "No valid database connection!";
+        return;
+    }
+    QString sqlString = "CREATE TABLE IF NOT EXISTS `" + m_name + "` (";
+    QString sqlStringForeignKeys;
+    foreach(databasefield* field, m_fields){
+      sqlString += "`" + field->field().name() + "` " + field->sqLiteType();
+      foreach(QVariant* constraint, field->constraints()){
+          QString constraintType = constraint->typeName();
+          if(constraintType == s_databasefield_constraint_not_null)
+              sqlString += " NOT NULL";
+          if(constraintType == s_databasefield_constraint_unique)
+              sqlString += " UNIQUE";
+          if(constraintType == s_databasefield_constraint_primary_key)
+              sqlString += " PRIMARY KEY";
+          if(constraintType == s_databasefield_constraint_foreign_key){
+              databasefield_constraint_foreign_key fk_constraint =
+                  qvariant_cast<databasefield_constraint_foreign_key>(*constraint);
+              sqlStringForeignKeys += "FOREIGN KEY ("
+                  + field->field().name()
+                  + ") REFERENCES "
+                  + fk_constraint.foreignKeyTable()->name()
+                  + "("
+                  + fk_constraint.foreignFieldName()
+                  + "), ";
+          }
+      }
+      sqlString += ", ";
+    }
+    sqlString += sqlStringForeignKeys;
+    sqlString.truncate(sqlString.size()-2);
+    sqlString += ")";
+    QSqlQuery sqlQuery(m_vocableDatabase);
+    bool querySuccessful = sqlQuery.exec(sqlString);
+    qDebug() << m_name << querySuccessful;
+}
+
+int databasetable::insertRecord(const QMap<QString, QVariant>& fields){
+    QList < QPair < QString, QVariant > > accepted_fields;
+    QString sqlString = "INSERT INTO " + m_name + " (";
+    QString sqlStringValues = "VALUES (";
+    foreach(databasefield* field, m_fields){
+        bool skip_column = false;
+        QString fieldname = field->field().name();
+        if(fields.contains(fieldname)){
+            foreach(QVariant* constraint, field->constraints()){
+                QString constraintType = constraint->typeName();
+                if(constraintType == s_databasefield_constraint_primary_key){
+                    skip_column = true;
+                    break;
+                }
+            }
+            if(skip_column) continue;
+            sqlString += fieldname + ", ";
+            sqlStringValues += ":" + fieldname + ", ";
+            accepted_fields.push_back(qMakePair(fieldname,fields[fieldname]));
+        }
+    }
+    sqlString.truncate(sqlString.size()-2);
+    sqlString += ") ";
+    sqlStringValues.truncate(sqlStringValues.size()-2);
+    sqlStringValues += ")";
+    sqlString += sqlStringValues;
+
+    QSqlQuery sqlQuery(m_vocableDatabase);
+    sqlQuery.prepare(sqlString);
+    QPair<QString, QVariant> accepted_field;
+    foreach(accepted_field, accepted_fields){
+        sqlQuery.bindValue(":" + accepted_field.first, accepted_field.second);
+    }
+    if(!sqlQuery.exec()) throw sql_error::insert_record;
+    if(!sqlQuery.exec("select last_insert_rowid();")) throw sql_error::select;
+    if(!sqlQuery.first()) throw sql_error::select_empty;
+    return sqlQuery.value(0).toInt();
+}
+
+int databasetable::updateRecord(const QPair<QString, QVariant>& id, const QMap<QString, QVariant>& fields){
+    QList < QPair < QString, QVariant > > accepted_fields;
+    QString sqlString = "UPDATE " + m_name + " SET ";
+    foreach(databasefield* field, m_fields){
+        bool skip_column = false;
+        QString fieldname = field->field().name();
+        if(fields.contains(fieldname)){
+            foreach(QVariant* constraint, field->constraints()){
+                QString constraintType = constraint->typeName();
+                if(constraintType == s_databasefield_constraint_primary_key){
+                    skip_column = true;
+                    break;
+                }
+            }
+            if(skip_column) continue;
+            sqlString += fieldname + "=:" + fieldname + ", ";
+            accepted_fields.push_back(qMakePair(fieldname,fields[fieldname]));
+        }
+    }
+    sqlString.truncate(sqlString.size()-2);
+    sqlString += " WHERE " + id.first + "=:" + id.first;
+
+    QSqlQuery sqlQuery(m_vocableDatabase);
+    sqlQuery.prepare(sqlString);
+    QPair<QString, QVariant> accepted_field;
+    foreach(accepted_field, accepted_fields){
+        sqlQuery.bindValue(":" + accepted_field.first, accepted_field.second);
+    }
+    sqlQuery.bindValue(":" + id.first, id.second);
+    if(!sqlQuery.exec()) throw sql_error::update_record;
+    return id.second.toInt();
+}
+
+int databasetable::deleteRecord(const QPair<QString, QVariant>& id){
+    QString sqlString = "DELETE FROM " + m_name + " WHERE " + id.first + "=:" + id.first;
+    qDebug() << id.second;
+    
+    QSqlQuery sqlQuery(m_vocableDatabase);
+    sqlQuery.bindValue(":" + id.first, id.second);
+    if(!sqlQuery.exec()) throw sql_error::delete_record;
+    return id.second.toInt();
+}
+
+QSqlQuery databasetable::select(const QList<QString>& selection, const QPair<QString, QVariant>& where){
+    QString sqlString = "SELECT ";
+    foreach(databasefield* field, m_fields){
+        bool skip_column = false;
+        QString fieldname = field->field().name();
+        if(selection.contains(fieldname)){
+            foreach(QVariant* constraint, field->constraints()){
+                QString constraintType = constraint->typeName();
+                if(constraintType == s_databasefield_constraint_primary_key){
+                    skip_column = true;
+                    break;
+                }
+            }
+            if(skip_column) continue;
+            sqlString += fieldname + ", ";
+        }
+    }
+    sqlString.truncate(sqlString.size()-2);
+    sqlString += " FROM " + m_name + " WHERE " + where.first + "=:" + where.first;
+    
+    QSqlQuery sqlQuery(m_vocableDatabase);
+    sqlQuery.bindValue(":" + where.first, where.second);
+    if(!sqlQuery.exec()) throw sql_error::select;
+    return sqlQuery;
 }
 
 @}
