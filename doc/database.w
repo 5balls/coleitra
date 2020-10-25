@@ -157,10 +157,13 @@ Finally we create our tables if they don't exist already:
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
                 fc("version",QVariant::String,{c_u()})});
         {
-            QMap<QString, QVariant> version;
-            version["version"] = "3.14";
-            int id = dbversiontable->deleteRecord(qMakePair(QString("id"),QVariant::fromValue(2)));
-            qDebug() << "Delete version with id" << id;
+            QList<QString> selection;
+            selection.push_back("version");
+            selection.push_back("id");
+            QSqlQuery result = dbversiontable->select(selection);
+            while(result.next()){
+                qDebug() << result.value("version").toString() << result.value("id").toInt();
+            }
         }
 
         databasetable* languagetable = d("language",
@@ -307,6 +310,7 @@ QString databasefield::sqLiteType(void){
 #include <QSqlQuery>
 #include <QDebug>
 #include <QMap>
+#include <QSqlError>
 #include "databasefield.h"
 #include "error.h"
 
@@ -318,7 +322,7 @@ public:
     int insertRecord(const QMap<QString, QVariant>& fields);
     int updateRecord(const QPair<QString, QVariant>& id, const QMap<QString, QVariant>& fields);
     int deleteRecord(const QPair<QString, QVariant>& id);
-    QSqlQuery select(const QList<QString>& selection, const QPair<QString, QVariant>& where);
+    QSqlQuery select(const QList<QString>& selection, const QPair<QString, QVariant>& where = qMakePair(QString(),QVariant(0)));
     QString name(){return m_name;};
 private:
     QString m_name;
@@ -449,43 +453,53 @@ int databasetable::updateRecord(const QPair<QString, QVariant>& id, const QMap<Q
         sqlQuery.bindValue(":" + accepted_field.first, accepted_field.second);
     }
     sqlQuery.bindValue(":" + id.first, id.second);
-    if(!sqlQuery.exec()) throw sql_error::update_record;
+    if(!sqlQuery.exec()){
+        QSqlError error = sqlQuery.lastError();
+        qDebug() << error.databaseText();
+        qDebug() << error.driverText();
+        throw sql_error::update_record;
+    }
     return id.second.toInt();
 }
 
 int databasetable::deleteRecord(const QPair<QString, QVariant>& id){
     QString sqlString = "DELETE FROM " + m_name + " WHERE " + id.first + "=:" + id.first;
-    qDebug() << id.second;
     
     QSqlQuery sqlQuery(m_vocableDatabase);
+    sqlQuery.prepare(sqlString);
     sqlQuery.bindValue(":" + id.first, id.second);
-    if(!sqlQuery.exec()) throw sql_error::delete_record;
+    if(!sqlQuery.exec()){
+        QSqlError error = sqlQuery.lastError();
+        qDebug() << error.databaseText();
+        qDebug() << error.driverText();
+        throw sql_error::delete_record;
+    }
     return id.second.toInt();
 }
 
 QSqlQuery databasetable::select(const QList<QString>& selection, const QPair<QString, QVariant>& where){
     QString sqlString = "SELECT ";
     foreach(databasefield* field, m_fields){
-        bool skip_column = false;
         QString fieldname = field->field().name();
         if(selection.contains(fieldname)){
-            foreach(QVariant* constraint, field->constraints()){
-                QString constraintType = constraint->typeName();
-                if(constraintType == s_databasefield_constraint_primary_key){
-                    skip_column = true;
-                    break;
-                }
-            }
-            if(skip_column) continue;
             sqlString += fieldname + ", ";
         }
     }
     sqlString.truncate(sqlString.size()-2);
-    sqlString += " FROM " + m_name + " WHERE " + where.first + "=:" + where.first;
-    
+    sqlString += " FROM " + m_name; 
     QSqlQuery sqlQuery(m_vocableDatabase);
-    sqlQuery.bindValue(":" + where.first, where.second);
-    if(!sqlQuery.exec()) throw sql_error::select;
+    if(!where.first.isEmpty()){
+        sqlString += " WHERE " + where.first + "=:" + where.first;
+        sqlQuery.bindValue(":" + where.first, where.second);
+    }
+    sqlQuery.prepare(sqlString);
+    if(!sqlQuery.exec()){
+        QSqlError error = sqlQuery.lastError();
+        qDebug() << sqlString;
+        qDebug() << error.databaseText();
+        qDebug() << error.driverText();
+        throw sql_error::select;
+    }
     return sqlQuery;
 }
 
