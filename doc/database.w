@@ -223,6 +223,27 @@ Finally we create our tables if they don't exist already:
                 fc("sentence1",QVariant::Int,{c_fk(sentencetable,"id")}),
                 fc("sentence2",QVariant::Int,{c_fk(sentencetable,"id")})});
 
+        databasetable* programminglanguagetable = d("programminglanguage",
+                {fc("id",QVariant::Int,{c_pk(),c_nn()}),
+                f("language",QVariant::String)});
+
+        databasetable* trainingmodetable = d("trainingmode",
+                {fc("id",QVariant::Int,{c_pk(),c_nn()}),
+                fc("programminglanguage",QVariant::Int,{c_fk(programminglanguagetable,"id")}),
+                f("description",QVariant::String,{c_u()}),
+                f("frontcardcode",QVariant::String),
+                f("backcardcode",QVariant::String)});
+        databasetable* trainingdatumtable = d("trainingdatum",
+                {fc("id",QVariant::Int,{c_pk(),c_nn()}),
+                fc("trainingmode",QVariant::Int,{c_fk(trainingmodetable,"id")}),
+                f("timestamp",QVariant::Int),
+                f("knowledge",QVariant::Double)});
+        databasetable* trainingaffecteddatatable = d("trainingaffecteddata",
+                {fc("id",QVariant::Int,{c_pk(),c_nn()}),
+                fc("trainingdatum",QVariant::Int,{c_fk(trainingdatumtable,"id")}),
+                fc("lexeme",QVariant::Int,{c_fk(lexemetable,"id")}),
+                fc("grammarform",QVariant::Int,{c_fk(grammarformtable,"id")})});
+
         qDebug() << "Created" << tables.count() << "tables";
     }
 }
