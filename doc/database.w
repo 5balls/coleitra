@@ -156,7 +156,7 @@ Finally we create our tables if they don't exist already:
         databasetable* dbversiontable = d("dbversion",
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
                 fc("version",QVariant::String,{c_u()})});
-        {
+        /*{
             QList<QString> selection;
             selection.push_back("version");
             selection.push_back("id");
@@ -164,53 +164,75 @@ Finally we create our tables if they don't exist already:
             while(result.next()){
                 qDebug() << result.value("version").toString() << result.value("id").toInt();
             }
-        }
+        }*/
+
+	databasetable* categorytable = d("category",
+                {fc("id",QVariant::Int,{c_pk(),c_nn()}),
+                fc("name",QVariant::String,{c_u()})});
+        databasetable* categoryselectiontable = d("categoryselection",
+                {fc("id",QVariant::Int,{c_pk(),c_nn()})});
+        databasetable* categoryselectionparttable = d("categoryselectionpart",
+                {fc("id",QVariant::Int,{c_pk(),c_nn()}),
+                fc("categoryselection",QVariant::Int,{c_fk(categoryselectiontable,"id")}),
+                fc("category",QVariant::Int,{c_fk(categorytable,"id")})});
 
         databasetable* languagetable = d("language",
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
+                fc("categoryselection",QVariant::Int,{c_fk(categoryselectiontable,"id")}),
                 fc("locale",QVariant::String,{c_u()})});
         databasetable* lexemetable = d("lexeme",
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
+                fc("categoryselection",QVariant::Int,{c_fk(categoryselectiontable,"id")}),
                 fc("language",QVariant::Int,{c_fk(languagetable,"id")})});
 
         databasetable* lexemetranslationtable = d("lexemetranslation",
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
+                fc("categoryselection",QVariant::Int,{c_fk(categoryselectiontable,"id")}),
                 fc("lexeme1",QVariant::Int,{c_fk(lexemetable,"id")}),
                 fc("lexeme2",QVariant::Int,{c_fk(lexemetable,"id")})});
 
         databasetable* grammarexpressiontable = d("grammarexpression",
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
+                fc("categoryselection",QVariant::Int,{c_fk(categoryselectiontable,"id")}),
                 f("string",QVariant::String)});
         databasetable* grammarformtable = d("grammarform",
-                {fc("id",QVariant::Int,{c_pk(),c_nn()})});
+                {fc("id",QVariant::Int,{c_pk(),c_nn()}),
+                fc("categoryselection",QVariant::Int,{c_fk(categoryselectiontable,"id")})});
         databasetable* grammarformcomponenttable = d("grammarformcomponent",
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
+                fc("categoryselection",QVariant::Int,{c_fk(categoryselectiontable,"id")}),
                 fc("grammarform",QVariant::Int,{c_fk(grammarformtable,"id")}),
                 fc("grammarexpression",QVariant::Int,{c_fk(grammarexpressiontable,"id")})});
 
         databasetable* formtable = d("form",
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
+                fc("categoryselection",QVariant::Int,{c_fk(categoryselectiontable,"id")}),
                 fc("lexeme",QVariant::Int,{c_fk(lexemetable,"id")}),
                 fc("grammarform",QVariant::Int,{c_fk(grammarformtable,"id")}),
                 f("string",QVariant::String)});
 
         databasetable* compoundformtable = d("compoundform",
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
+                fc("categoryselection",QVariant::Int,{c_fk(categoryselectiontable,"id")}),
                 fc("lexeme",QVariant::Int,{c_fk(lexemetable,"id")}),
                 fc("grammarform",QVariant::Int,{c_fk(grammarformtable,"id")})});
         databasetable* compoundformparttable = d("compoundformpart",
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
+                fc("categoryselection",QVariant::Int,{c_fk(categoryselectiontable,"id")}),
                 fc("compoundform",QVariant::Int,{c_fk(compoundformtable,"id")}),
                 f("part",QVariant::Int),
                 fc("form",QVariant::Int,{c_fk(formtable,"id")})});
 
         databasetable* sentencetable = d("sentence",
-                {fc("id",QVariant::Int,{c_pk(),c_nn()})});
+                {fc("id",QVariant::Int,{c_pk(),c_nn()}),
+                fc("categoryselection",QVariant::Int,{c_fk(categoryselectiontable,"id")})});
         databasetable* punctuationmarktable = d("punctuationmark",
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
+                fc("categoryselection",QVariant::Int,{c_fk(categoryselectiontable,"id")}),
                 f("string",QVariant::String)});
         databasetable* sentenceparttable = d("sentencepart",
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
+                fc("categoryselection",QVariant::Int,{c_fk(categoryselectiontable,"id")}),
                 fc("sentence",QVariant::Int,{c_fk(sentencetable,"id")}),
                 f("part",QVariant::Int),
                 f("capialized",QVariant::Bool),
@@ -220,6 +242,7 @@ Finally we create our tables if they don't exist already:
 
         databasetable* sentencetranslationtable = d("sentencetranslation",
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
+                fc("categoryselection",QVariant::Int,{c_fk(categoryselectiontable,"id")}),
                 fc("sentence1",QVariant::Int,{c_fk(sentencetable,"id")}),
                 fc("sentence2",QVariant::Int,{c_fk(sentencetable,"id")})});
 
@@ -230,13 +253,15 @@ Finally we create our tables if they don't exist already:
         databasetable* trainingmodetable = d("trainingmode",
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
                 fc("programminglanguage",QVariant::Int,{c_fk(programminglanguagetable,"id")}),
-                f("description",QVariant::String,{c_u()}),
+                fc("description",QVariant::String,{c_u()}),
                 f("frontcardcode",QVariant::String),
                 f("backcardcode",QVariant::String)});
         databasetable* trainingdatumtable = d("trainingdatum",
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
                 fc("trainingmode",QVariant::Int,{c_fk(trainingmodetable,"id")}),
-                f("timestamp",QVariant::Int),
+                f("timestamp_shown",QVariant::Int),
+                f("timestamp_answered",QVariant::Int),
+                f("knowledgesteps",QVariant::Int),
                 f("knowledge",QVariant::Double)});
         databasetable* trainingaffecteddatatable = d("trainingaffecteddata",
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
