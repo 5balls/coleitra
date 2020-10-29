@@ -15,43 +15,23 @@
 % You should have received a copy of the GNU General Public License
 % along with coleitra.  If not, see <https://www.gnu.org/licenses/>.
 
-% Those are latex includes and defines, not for the program:
-@i includes.w
-@i defines.w
+\section{About}
+@o ../src/about.qml
+@{
+import QtQuick 2.11
+import SettingsStorageLib 1.0
+import DatabaseLib 1.0
 
-\makeindex
+ColeitraPage {
+    title: "About coleitra"
+    ColeitraGridLayout {
+        @<Coleitra label @'"GIT commit:"@' with value @'SettingsStorage.gitVersion@'@>
+        @<Coleitra label @'"Clean repository?"@' with value @'SettingsStorage.gitClean@'@>
+        @<Coleitra label @'"Last commit message:"@' with value @'SettingsStorage.gitLastCommitMessage@'@>
+        @<Coleitra label @'"Qt version"@' with value @'SettingsStorage.qtVersion@'@>
+    }
+    footer: ColeitraGridLayout {
+    }
+}
+@}
 
-\begin{document}
-
-@i title.w
-
-\tableofcontents
-
-@i abstract.w
-
-@i infrastructure.w
-
-@i settings.w
-
-@i database.w
-
-\chapter{Algorithm}
-
-@i gui.w
-
-@i qt.w
-
-\begin{appendix}
-\chapter{Code indices}
-\section{Files}
-@f
-
-\section{Fragments}
-@m
-
-\section{User identifiers}
-@u
-
-\cleardoublepage\printindex
-\end{appendix}
-\end{document}

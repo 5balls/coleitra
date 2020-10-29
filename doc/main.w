@@ -15,30 +15,42 @@
 % You should have received a copy of the GNU General Public License
 % along with coleitra.  If not, see <https://www.gnu.org/licenses/>.
 
-\chapter{Main}
+\section{Main}
 
 \codecpp
-@o ../src/main.h
+@o ../src/main.h -d
 @{
-#ifndef MAIN_H
-#define MAIN_H
-
+@<Start of @'MAIN@' header@>
 #include <QApplication>
 #include <QQmlApplicationEngine>
-
 #include "settings.h"
-
-#endif // MAIN_H
+#include "database.h"
+@<End of header@>
 @}
 
 \codecpp
-@o ../src/main.cpp
+@o ../src/main.cpp -d
 @{
 #include "main.h"
 
 int main(int argc, char *argv[])
 {
-    qmlRegisterType<settings>("SettingsStorageLib", 1, 0, "SettingsStorage");
+    qmlRegisterSingletonType<settings>("SettingsStorageLib", 1, 0, "SettingsStorage", [](
+                QQmlEngine *engine,
+                QJSEngine *scriptEngine) -> QObject * {
+            Q_UNUSED(engine);
+            Q_UNUSED(scriptEngine);
+            settings *settings_singleton_instance = new settings();
+            return settings_singleton_instance;
+            });
+    qmlRegisterSingletonType<database>("DatabaseLib", 1, 0, "Database", [](
+                QQmlEngine *engine,
+                QJSEngine *scriptEngine) -> QObject * {
+            Q_UNUSED(engine);
+            Q_UNUSED(scriptEngine);
+            database *db_singleton_instance = new database();
+            return db_singleton_instance;
+            });
 
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QCoreApplication::setApplicationName("coleitra");
@@ -59,5 +71,4 @@ int main(int argc, char *argv[])
 
     return app.exec();
 }
-
 @}

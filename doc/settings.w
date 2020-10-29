@@ -19,9 +19,7 @@
 \codecpp
 @o ../src/settings.h
 @{
-#ifndef SETTINGS_H
-#define SETTINGS_H
-
+@<Start of @'SETTINGS@' header@>
 #include <QObject>
 #include <QSettings>
 #include <QDebug>
@@ -29,25 +27,16 @@
 
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)
-
-class settings : public QObject
-{
-    Q_OBJECT
+@<Start of class @'settings@'@>
     @<Git properties@>
     @<Compile environment@>
-
 public:
     explicit settings(QObject *parent = nullptr);
     @<Git properties read implementation@>
     @<Compile environment read implementation@>
-
 private:
     QSettings s_settings;
-
-};
-
-
-#endif
+@<End of class and header@>
 @}
 
 \codecpp
@@ -58,19 +47,6 @@ private:
 settings::settings(QObject *parent) : QObject(parent)
 {
 
-}
-@}
-
-@d Qt readonly property @'propertyname@'
-@{
-Q_PROPERTY(QString @1 READ @1 CONSTANT)
-@}
-
-@d Function @'functionname@' return string @'string@'
-@{
-QString @1()
-{
-    return QString(@2);
 }
 @}
 

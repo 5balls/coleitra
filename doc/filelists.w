@@ -15,43 +15,29 @@
 % You should have received a copy of the GNU General Public License
 % along with coleitra.  If not, see <https://www.gnu.org/licenses/>.
 
-% Those are latex includes and defines, not for the program:
-@i includes.w
-@i defines.w
+\section{File lists}
+\subsection{Header files}
+@d Header files
+@{
+database.h
+settings.h
+databasetable.h
+databasefield.h
+main.h
+@}
 
-\makeindex
+\subsection{C++ files}
+@d C++ files
+@{
+settings.cpp
+main.cpp
+database.cpp
+databasetable.cpp
+databasefield.cpp
+@}
 
-\begin{document}
-
-@i title.w
-
-\tableofcontents
-
-@i abstract.w
-
-@i infrastructure.w
-
-@i settings.w
-
-@i database.w
-
-\chapter{Algorithm}
-
-@i gui.w
-
-@i qt.w
-
-\begin{appendix}
-\chapter{Code indices}
-\section{Files}
-@f
-
-\section{Fragments}
-@m
-
-\section{User identifiers}
-@u
-
-\cleardoublepage\printindex
-\end{appendix}
-\end{document}
+\subsection{Ressource files}
+@d Ressource files
+@{
+qml.qrc
+@}

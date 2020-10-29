@@ -17,148 +17,12 @@
 
 \chapter{GUI-Elements}
 \index{GUI}
-\section{Main}
-\codeqml
-@o ../src/main.qml
-@{
-import QtQuick 2.11
-import QtQuick.Controls 2.4
-import QtQuick.Layouts 1.3
-import QtQuick.Window 2.11
 
-ApplicationWindow {
-    id: window
-    visible: true
-    visibility: Window.FullScreen
-    title: qsTr("Stack")
+@i gui_main.w
 
-    @<Main header@>
+@i gui_train.w
 
-    @<Main drawer@>
-
-    StackView {
-        id: stackView
-        initialItem: "train.qml"
-        anchors.fill: parent
-        onCurrentItemChanged: {
-            currentItem.forceActiveFocus()
-        }
-    }
-
-}
-
-@}
-
-\subsection{Header}
-\index{GUI!Header}
-@d Main header
-@{
-header: ToolBar {
-    contentHeight: toolButton.implicitHeight
-    ToolButton {
-        id: toolButton
-        anchors.left: parent.left
-        anchors.verticalCenter: parent.verticalCenter
-        background: Image {
-            source: stackView.depth > 1 ? "back.svg" : "settings.svg"
-            sourceSize.height: 50
-            fillMode: Image.PreserveAspectFit
-        }
-        onClicked: {
-            if (stackView.depth > 1) {
-                stackView.pop()
-            } else {
-                drawer.open()
-            }
-        }
-    }
-
-    Label {
-        text: stackView.currentItem.title
-        anchors.centerIn: parent
-    }
-}
-@}
-
-\subsection{Drawer}
-\index{GUI!Menu}
-@d Main drawer
-@{
-Drawer {
-    id: drawer
-    width: window.width * 0.66
-    height: window.height
-
-    Column {
-        anchors.fill: parent
-
-        ItemDelegate {
-            text: qsTr("About")
-            width: parent.width
-            onClicked: {
-                stackView.push("about.qml")
-                drawer.close()
-            }
-        }
-    }
-}
-@}
-
-\section{Train}
-@o ../src/train.qml
-@{
-import QtQuick 2.11
-ColeitraPage {
-    title: "Vocable training"
-    ColeitraGridLayout {
-    }
-    footer: ColeitraGridLayout {
-    }
-}
-@}
-
-\section{About}
-@o ../src/about.qml
-@{
-import QtQuick 2.11
-import SettingsStorageLib 1.0
-
-ColeitraPage {
-    title: "About coleitra"
-    SettingsStorage {
-        id: settingsstorage
-    }
-    ColeitraGridLayout {
-        ColeitraGridLabel {
-            text: "GIT commit:"
-        }
-        ColeitraGridValueText {
-            text: settingsstorage.gitVersion
-        }
-        ColeitraGridLabel {
-            text: "Clean repository?"
-        }
-        ColeitraGridValueText {
-            text: settingsstorage.gitClean
-        }
-        ColeitraGridLabel {
-            text: "Last commit message:"
-        }
-        ColeitraGridValueText {
-            text: settingsstorage.gitLastCommitMessage
-        }
-        ColeitraGridLabel {
-            text: "Qt version"
-        }
-        ColeitraGridValueText {
-            text: settingsstorage.qtVersion
-        }
-
-    }
-    footer: ColeitraGridLayout {
-    }
-}
-@}
+@i gui_about.w
 
 \section{Reusable GUI elements}
 \subsection{Page}
@@ -221,5 +85,16 @@ Label {
     Layout.preferredWidth: parent.width / 2.0
     Layout.alignment: Qt.AlignLeft | Qt.AlignTop
     wrapMode: Text.WordWrap
+}
+@}
+
+\subsection{GUI fragments}
+@d Coleitra label @'name@' with value @'value@'
+@{
+ColeitraGridLabel {
+    text: @1
+}
+ColeitraGridValueText {
+    text: @2
 }
 @}
