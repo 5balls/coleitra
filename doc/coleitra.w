@@ -35,6 +35,10 @@
 
 @i database.w
 
+@i train.w
+
+@i edit.w
+
 \chapter{Algorithm}
 
 @i gui.w

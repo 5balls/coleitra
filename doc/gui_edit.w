@@ -15,14 +15,14 @@
 % You should have received a copy of the GNU General Public License
 % along with coleitra.  If not, see <https://www.gnu.org/licenses/>.
 
-\section{Edit}
-@o ../src/edit.qml
+\section{Train}
+@o ../src/train.qml
 @{
 import QtQuick 2.11
 import DatabaseLib 1.0
 
 ColeitraPage {
-    title: "Vocable editing"
+    title: "Vocable training"
     ColeitraGridLayout {
     }
     footer: ColeitraGridLayout {

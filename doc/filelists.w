@@ -18,26 +18,24 @@
 \section{File lists}
 \subsection{Header files}
 @d Header files
-@{
-database.h
+@{database.h
 settings.h
 databasetable.h
 databasefield.h
 main.h
-@}
+train.h
+edit.h @}
 
 \subsection{C++ files}
 @d C++ files
-@{
-settings.cpp
+@{settings.cpp
 main.cpp
 database.cpp
 databasetable.cpp
 databasefield.cpp
-@}
+train.cpp
+edit.cpp @}
 
 \subsection{Ressource files}
 @d Ressource files
-@{
-qml.qrc
-@}
+@{qml.qrc @}

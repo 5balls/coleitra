@@ -15,19 +15,25 @@
 % You should have received a copy of the GNU General Public License
 % along with coleitra.  If not, see <https://www.gnu.org/licenses/>.
 
-\section{Edit}
-@o ../src/edit.qml
+\chapter{Editing}
+\section{Interface}
+@o ../src/edit.h -d
 @{
-import QtQuick 2.11
-import DatabaseLib 1.0
-
-ColeitraPage {
-    title: "Vocable editing"
-    ColeitraGridLayout {
-    }
-    footer: ColeitraGridLayout {
-    }
-}
+@<Start of @'EDIT@' header@>
+@<Start of class @'edit@'@>
+public:
+    explicit edit(QObject *parent = nullptr);
+private:
+@<End of class and header @>
 @}
 
+\section{Implementation}
 
+@o ../src/edit.cpp -d
+@{
+#include "edit.h"
+
+edit::edit(QObject *parent) : QObject(parent)
+{
+}
+@}

@@ -80,6 +80,20 @@ header: ToolBar {
 
 \subsection{Drawer}
 \index{GUI!Menu}
+
+@d Side menu screen option @'optionname@' defined in @'qmlfile@'
+@{
+ItemDelegate {
+    text: "@1"
+    width: parent.width
+    onClicked: {
+        stackView.push("@2")
+        drawer.close()
+    }
+}
+@}
+
+
 @d Main drawer
 @{
 Drawer {
@@ -89,15 +103,8 @@ Drawer {
 
     Column {
         anchors.fill: parent
-
-        ItemDelegate {
-            text: "About"
-            width: parent.width
-            onClicked: {
-                stackView.push("about.qml")
-                drawer.close()
-            }
-        }
+        @<Side menu screen option @'About@' defined in @'about.qml@' @>
+        @<Side menu screen option @'Edit@' defined in @'edit.qml@' @>
         ItemDelegate {
             text: "Quit"
             width: parent.width

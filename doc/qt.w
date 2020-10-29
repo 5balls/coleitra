@@ -80,6 +80,7 @@ ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
         <file>back.svg</file>
         <file>about.qml</file>
         <file>train.qml</file>
+        <file>edit.qml</file>
     </qresource>
 </RCC>
 @}

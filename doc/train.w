@@ -15,19 +15,25 @@
 % You should have received a copy of the GNU General Public License
 % along with coleitra.  If not, see <https://www.gnu.org/licenses/>.
 
-\section{Edit}
-@o ../src/edit.qml
+\chapter{Training}
+\section{Interface}
+@o ../src/train.h -d
 @{
-import QtQuick 2.11
-import DatabaseLib 1.0
-
-ColeitraPage {
-    title: "Vocable editing"
-    ColeitraGridLayout {
-    }
-    footer: ColeitraGridLayout {
-    }
-}
+@<Start of @'TRAIN@' header@>
+@<Start of class @'train@'@>
+public:
+    explicit train(QObject *parent = nullptr);
+private:
+@<End of class and header @>
 @}
 
+\section{Implementation}
 
+@o ../src/train.cpp -d
+@{
+#include "train.h"
+
+train::train(QObject *parent) : QObject(parent)
+{
+}
+@}
