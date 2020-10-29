@@ -20,11 +20,15 @@
 @{
 import QtQuick 2.11
 import SettingsStorageLib 1.0
+import DatabaseLib 1.0
 
 ColeitraPage {
     title: "About coleitra"
     SettingsStorage {
         id: settingsstorage
+    }
+    Database {
+        id: db
     }
     ColeitraGridLayout {
         @<Coleitra label @'"GIT commit:"@' with value @'settingsstorage.gitVersion@'@>
