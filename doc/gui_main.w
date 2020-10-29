@@ -91,11 +91,18 @@ Drawer {
         anchors.fill: parent
 
         ItemDelegate {
-            text: qsTr("About")
+            text: "About"
             width: parent.width
             onClicked: {
                 stackView.push("about.qml")
                 drawer.close()
+            }
+        }
+        ItemDelegate {
+            text: "Quit"
+            width: parent.width
+            onClicked: {
+                Qt.callLater(Qt.quit)
             }
         }
     }

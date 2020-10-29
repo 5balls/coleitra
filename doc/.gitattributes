@@ -3,6 +3,6 @@ settings.w linguist-language=C++
 database.w linguist-language=C++
 boilerplate.w linguist-language=C++
 cmake.w linguist-language=CMake
-gui.w linguist-language=QML
+gui*.w linguist-language=QML
 qt.w linguist-language=QMake
 
