@@ -23,9 +23,6 @@ import DatabaseLib 1.0
 
 ColeitraPage {
     title: "Vocable training"
-    Database {
-        id: db
-    }
     ColeitraGridLayout {
     }
     footer: ColeitraGridLayout {

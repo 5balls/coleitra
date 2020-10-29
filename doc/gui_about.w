@@ -24,17 +24,11 @@ import DatabaseLib 1.0
 
 ColeitraPage {
     title: "About coleitra"
-    SettingsStorage {
-        id: settingsstorage
-    }
-    Database {
-        id: db
-    }
     ColeitraGridLayout {
-        @<Coleitra label @'"GIT commit:"@' with value @'settingsstorage.gitVersion@'@>
-        @<Coleitra label @'"Clean repository?"@' with value @'settingsstorage.gitClean@'@>
-        @<Coleitra label @'"Last commit message:"@' with value @'settingsstorage.gitLastCommitMessage@'@>
-        @<Coleitra label @'"Qt version"@' with value @'settingsstorage.qtVersion@'@>
+        @<Coleitra label @'"GIT commit:"@' with value @'SettingsStorage.gitVersion@'@>
+        @<Coleitra label @'"Clean repository?"@' with value @'SettingsStorage.gitClean@'@>
+        @<Coleitra label @'"Last commit message:"@' with value @'SettingsStorage.gitLastCommitMessage@'@>
+        @<Coleitra label @'"Qt version"@' with value @'SettingsStorage.qtVersion@'@>
     }
     footer: ColeitraGridLayout {
     }

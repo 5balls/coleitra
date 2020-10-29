@@ -35,8 +35,22 @@
 
 int main(int argc, char *argv[])
 {
-    qmlRegisterType<settings>("SettingsStorageLib", 1, 0, "SettingsStorage");
-    qmlRegisterType<database>("DatabaseLib", 1, 0, "Database");
+    qmlRegisterSingletonType<settings>("SettingsStorageLib", 1, 0, "SettingsStorage", [](
+                QQmlEngine *engine,
+                QJSEngine *scriptEngine) -> QObject * {
+            Q_UNUSED(engine);
+            Q_UNUSED(scriptEngine);
+            settings *settings_singleton_instance = new settings();
+            return settings_singleton_instance;
+            });
+    qmlRegisterSingletonType<database>("DatabaseLib", 1, 0, "Database", [](
+                QQmlEngine *engine,
+                QJSEngine *scriptEngine) -> QObject * {
+            Q_UNUSED(engine);
+            Q_UNUSED(scriptEngine);
+            database *db_singleton_instance = new database();
+            return db_singleton_instance;
+            });
 
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QCoreApplication::setApplicationName("coleitra");
