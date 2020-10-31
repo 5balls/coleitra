@@ -20,10 +20,18 @@
 @o ../src/edit.h -d
 @{
 @<Start of @'EDIT@' header@>
+#include <QQmlEngine>
+#include "database.h"
+
 @<Start of class @'edit@'@>
 public:
     explicit edit(QObject *parent = nullptr);
+    Q_PROPERTY(QString dbversion MEMBER m_dbversion NOTIFY dbversionChanged);
 private:
+    database* m_database;
+    QString m_dbversion;
+signals:
+    void dbversionChanged(const QString &newVersion);
 @<End of class and header @>
 @}
 
@@ -35,5 +43,10 @@ private:
 
 edit::edit(QObject *parent) : QObject(parent)
 {
+
+    QQmlEngine* engine = qobject_cast<QQmlEngine*>(parent);
+    m_database = engine->singletonInstance<database*>(qmlTypeId("DatabaseLib", 1, 0, "Database"));
+    m_dbversion = m_database->property("version").toString();
 }
+
 @}

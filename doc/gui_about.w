@@ -19,16 +19,17 @@
 @o ../src/about.qml
 @{
 import QtQuick 2.11
-import SettingsStorageLib 1.0
+import AboutLib 1.0
 import DatabaseLib 1.0
 
 ColeitraPage {
     title: "About coleitra"
     ColeitraGridLayout {
-        @<Coleitra label @'"GIT commit:"@' with value @'SettingsStorage.gitVersion@'@>
-        @<Coleitra label @'"Clean repository?"@' with value @'SettingsStorage.gitClean@'@>
-        @<Coleitra label @'"Last commit message:"@' with value @'SettingsStorage.gitLastCommitMessage@'@>
-        @<Coleitra label @'"Qt version"@' with value @'SettingsStorage.qtVersion@'@>
+        @<Coleitra label @'"GIT commit:"@' with value @'About.gitVersion@'@>
+        @<Coleitra label @'"Clean repository?"@' with value @'About.gitClean@'@>
+        @<Coleitra label @'"Last commit message:"@' with value @'About.gitLastCommitMessage@'@>
+        @<Coleitra label @'"Qt version"@' with value @'About.qtVersion@'@>
+        @<Coleitra label @'"DB version"@' with value @'Database.version@'@>
     }
     footer: ColeitraGridLayout {
     }

@@ -23,8 +23,11 @@
 @<Start of @'MAIN@' header@>
 #include <QApplication>
 #include <QQmlApplicationEngine>
+#include "about.h"
 #include "settings.h"
 #include "database.h"
+#include "edit.h"
+#include "train.h"
 @<End of header@>
 @}
 
@@ -35,13 +38,21 @@
 
 int main(int argc, char *argv[])
 {
-    qmlRegisterSingletonType<settings>("SettingsStorageLib", 1, 0, "SettingsStorage", [](
+    qmlRegisterSingletonType<settings>("SettingsLib", 1, 0, "Settings", [](
                 QQmlEngine *engine,
                 QJSEngine *scriptEngine) -> QObject * {
             Q_UNUSED(engine);
             Q_UNUSED(scriptEngine);
             settings *settings_singleton_instance = new settings();
             return settings_singleton_instance;
+            });
+    qmlRegisterSingletonType<about>("AboutLib", 1, 0, "About", [](
+                QQmlEngine *engine,
+                QJSEngine *scriptEngine) -> QObject * {
+            Q_UNUSED(engine);
+            Q_UNUSED(scriptEngine);
+            about *about_singleton_instance = new about();
+            return about_singleton_instance;
             });
     qmlRegisterSingletonType<database>("DatabaseLib", 1, 0, "Database", [](
                 QQmlEngine *engine,
@@ -51,6 +62,14 @@ int main(int argc, char *argv[])
             database *db_singleton_instance = new database();
             return db_singleton_instance;
             });
+    qmlRegisterSingletonType<database>("EditLib", 1, 0, "Edit", [](
+                QQmlEngine *engine,
+                QJSEngine *scriptEngine) -> QObject * {
+            Q_UNUSED(scriptEngine);
+            edit *edit_singleton_instance = new edit(engine);
+            return edit_singleton_instance;
+            });
+
 
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QCoreApplication::setApplicationName("coleitra");

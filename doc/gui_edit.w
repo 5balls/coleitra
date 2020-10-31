@@ -15,15 +15,33 @@
 % You should have received a copy of the GNU General Public License
 % along with coleitra.  If not, see <https://www.gnu.org/licenses/>.
 
-\section{Train}
-@o ../src/train.qml
+\section{Edit}
+@o ../src/edit.qml
 @{
-import QtQuick 2.11
-import DatabaseLib 1.0
+import QtQuick 2.14
+import QtQuick.Layouts 1.14
+import EditLib 1.0
 
 ColeitraPage {
-    title: "Vocable training"
+    title: "Lexeme editing"
     ColeitraGridLayout {
+        ColeitraGridTextInput {
+            Layout.preferredWidth: parent.width - 80
+            text: Edit.dbversion;
+        }
+        Image {
+            source: "plus.svg"
+            Layout.columnSpan: 2
+            Layout.preferredHeight: 40
+            Layout.preferredWidth: 40
+        }
+        Image {
+            source: "minus.svg"
+            Layout.columnSpan: 2
+            Layout.preferredHeight: 40
+            Layout.preferredWidth: 40
+        }
+
     }
     footer: ColeitraGridLayout {
     }

@@ -33,6 +33,8 @@
 
 @i settings.w
 
+@i about.w
+
 @i database.w
 
 @i train.w

@@ -48,9 +48,19 @@ The database class defines an interface for creating the different database conn
 @<Start of class @'database@'@>
 public:
     explicit database(QObject *parent = nullptr);
+    databasetable* getTableByName(QString name);
+    Q_PROPERTY(QString version MEMBER m_version NOTIFY versionChanged);
+    Q_INVOKABLE QStringList languagenames();
+    Q_INVOKABLE int idfromlanguagename(QString languagename);
+    Q_INVOKABLE QString languagenamefromid(int id);
+    Q_INVOKABLE int alphabeticidfromlanguagename(QString languagename);
+    Q_INVOKABLE int alphabeticidfromlanguageid(int languageid);
 private:
     QSqlDatabase vocableDatabase;
     QList < databasetable* > tables;
+    QString m_version;
+signals:
+    void versionChanged(const QString &newVersion);
 @<End of class and header @>
 @}
 
@@ -152,19 +162,31 @@ Finally we create our tables if they don't exist already:
             variant->setValue(databasefield_constraint_foreign_key(fKT,fFN));
             return variant;
         };
+        bool database_is_empty = false;
 
         databasetable* dbversiontable = d("dbversion",
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
                 fc("version",QVariant::String,{c_u()})});
-        /*{
+        {
             QList<QString> selection;
-            selection.push_back("version");
             selection.push_back("id");
+            selection.push_back("version");
             QSqlQuery result = dbversiontable->select(selection);
+            int oldid = 0;
             while(result.next()){
-                qDebug() << result.value("version").toString() << result.value("id").toInt();
+                if(result.value("id").toInt() > oldid){
+                    m_version = result.value("version").toString();
+                }
             }
-        }*/
+        }
+
+        if(m_version.isEmpty()){
+            m_version = "0.1";
+            QMap<QString,QVariant> insert;
+            insert["version"] = QVariant(m_version);
+            dbversiontable->insertRecord(insert);
+            database_is_empty = true;
+        }
 
 	databasetable* categorytable = d("category",
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
@@ -180,6 +202,85 @@ Finally we create our tables if they don't exist already:
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
                 fc("categoryselection",QVariant::Int,{c_fk(categoryselectiontable,"id")}),
                 fc("locale",QVariant::String,{c_u()})});
+        databasetable* languagenametable = d("languagename",
+                {fc("id",QVariant::Int,{c_pk(),c_nn()}),
+                fc("language",QVariant::Int,{c_fk(languagetable,"id")}),
+                f("name",QVariant::String),
+                fc("nameisinlanguage",QVariant::Int,{c_fk(languagetable,"id")})});
+        if(database_is_empty){
+            QMap<QString,QVariant> add_language;
+            QMap<QString,QVariant> add_language_name;
+            QList< QList< QString> > languages = {
+                {"cmn","Mandarin Chinese"},
+                {"hi","Hindi"},
+                {"es","Spanish"},
+                {"fr","French"},
+                {"arb","Standard Arabic"},
+                {"bn","Bengali"},
+                {"ru","Russian"},
+                {"pt","Portuguese"},
+                {"id","Indonesian"},
+                {"ur","Urdu"},
+                {"de","German"},
+                {"ja","Japanese"},
+                {"sw","Swahili"},
+                {"mr","Marathi"},
+                {"te","Telugu"},
+                {"tr","Turkish"},
+                {"yue","Yue Chinese"},
+                {"ta","Tamil"},
+                {"pa","Punjabi"},
+                {"wuu","Wu Chinese"},
+                {"ko","Korean"},
+                {"vi","Vietnamese"},
+                {"ha","Hausa"},
+                {"jv","Javanese"},
+                {"arz","Egyptian Arabic"},
+                {"it","Italian"},
+                {"th","Thai"},
+                {"gu","Gujarati"},
+                {"kn","Kannada"},
+                {"fa","Persian"},
+                {"bho","Bhojpuri"},
+                {"nan","Southern Min"},
+                {"fil","Filipino"},
+                {"nl","Dutch"},
+                {"da","Danish"},
+                {"el","Greek"},
+                {"fi","Finnish"},
+                {"sv","Swedish"},
+                {"cs","Czech"},
+                {"et","Estonian"},
+                {"hu","Hungarian"},
+                {"lv","Latvian"},
+                {"lt","Lithuanian"},
+                {"mt","Maltese"},
+                {"pl","Polish"},
+                {"sk","Slovak"},
+                {"sl","Slovene"},
+                {"bg","Bulgarian"},
+                {"ga","Irish"},
+                {"ro","Romanian"},
+                {"hr","Croatian"}
+            };
+            add_language["locale"] = QVariant("en");
+            int en_id = languagetable->insertRecord(add_language);
+            add_language_name["language"] = QVariant(en_id);
+            add_language_name["name"] = QVariant("English");
+            add_language_name["nameisinlanguage"] = QVariant(en_id);
+            languagenametable->insertRecord(add_language_name);
+            QList<QString> language;
+            foreach(language, languages){
+                add_language["locale"] = QVariant(language.first());
+                int language_id = languagetable->insertRecord(add_language);
+                add_language_name["language"] = QVariant(language_id);
+                add_language_name["name"] = QVariant(language.last());
+                add_language_name["nameisinlanguage"] = QVariant(en_id);
+                languagenametable->insertRecord(add_language_name);
+            }
+        }
+
+
         databasetable* lexemetable = d("lexeme",
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
                 fc("categoryselection",QVariant::Int,{c_fk(categoryselectiontable,"id")}),
@@ -269,8 +370,64 @@ Finally we create our tables if they don't exist already:
                 fc("lexeme",QVariant::Int,{c_fk(lexemetable,"id")}),
                 fc("grammarform",QVariant::Int,{c_fk(grammarformtable,"id")})});
 
-        qDebug() << "Created" << tables.count() << "tables";
     }
+}
+
+databasetable* database::getTableByName(QString name){
+    foreach(databasetable* table, tables){
+        if(table->name() == name) return table;
+    }
+    return nullptr;
+}
+
+QStringList database::languagenames()
+{
+    databasetable* languagenametable = getTableByName("languagename");
+
+    QList<QString> selection;
+    selection.push_back("name");
+    QSqlQuery result = languagenametable->select(selection, qMakePair(QString("nameisinlanguage"),QVariant(1)));
+
+    QStringList languages;
+    while(result.next()){
+        QString language = result.value("name").toString();
+        languages.push_back(language);
+    }
+    languages.sort();
+    return languages;
+}
+
+int database::alphabeticidfromlanguagename(QString languagename){
+    return languagenames().indexOf(QStringView(languagename));
+}
+
+int database::alphabeticidfromlanguageid(int languageid){
+    return alphabeticidfromlanguagename(languagenamefromid(languageid));
+}
+
+QString database::languagenamefromid(int id){
+    databasetable* languagenametable = getTableByName("languagename");
+    QList<QString> selection;
+    selection.push_back("name");
+    QList< QPair< QString, QVariant > > wheres;
+    wheres.push_back(qMakePair(QString("nameisinlanguage"),QVariant(1)));
+    wheres.push_back(qMakePair(QString("language"),QVariant(id)));
+    QSqlQuery result = languagenametable->select(selection, wheres);
+    if(!result.next()) throw sql_error::select_empty;
+    return result.value("name").toString();
+
+}
+
+int database::idfromlanguagename(QString languagename){
+    databasetable* languagenametable = getTableByName("languagename");
+    QList<QString> selection;
+    selection.push_back("language");
+    QList< QPair< QString, QVariant > > wheres;
+    wheres.push_back(qMakePair(QString("nameisinlanguage"),QVariant(1)));
+    wheres.push_back(qMakePair(QString("name"),QVariant(languagename)));
+    QSqlQuery result = languagenametable->select(selection, wheres);
+    if(!result.next()) throw sql_error::select_empty;
+    return result.value("language").toInt();
 }
 @}
 
@@ -369,6 +526,7 @@ public:
     int updateRecord(const QPair<QString, QVariant>& id, const QMap<QString, QVariant>& fields);
     int deleteRecord(const QPair<QString, QVariant>& id);
     QSqlQuery select(const QList<QString>& selection, const QPair<QString, QVariant>& where = qMakePair(QString(),QVariant(0)));
+    QSqlQuery select(const QList<QString>& selection, const QList< QPair<QString, QVariant> >& where);
     QString name(){return m_name;};
 private:
     QString m_name;
@@ -428,7 +586,6 @@ databasetable::databasetable(QString name, QList<databasefield*> fields) : m_nam
     sqlString += ")";
     QSqlQuery sqlQuery(m_vocableDatabase);
     bool querySuccessful = sqlQuery.exec(sqlString);
-    qDebug() << m_name << querySuccessful;
 }
 
 int databasetable::insertRecord(const QMap<QString, QVariant>& fields){
@@ -536,9 +693,11 @@ QSqlQuery databasetable::select(const QList<QString>& selection, const QPair<QSt
     QSqlQuery sqlQuery(m_vocableDatabase);
     if(!where.first.isEmpty()){
         sqlString += " WHERE " + where.first + "=:" + where.first;
-        sqlQuery.bindValue(":" + where.first, where.second);
     }
     sqlQuery.prepare(sqlString);
+    if(!where.first.isEmpty()){
+        sqlQuery.bindValue(":" + where.first, where.second);
+    }
     if(!sqlQuery.exec()){
         QSqlError error = sqlQuery.lastError();
         qDebug() << sqlString;
@@ -547,6 +706,38 @@ QSqlQuery databasetable::select(const QList<QString>& selection, const QPair<QSt
         throw sql_error::select;
     }
     return sqlQuery;
+}
+
+QSqlQuery databasetable::select(const QList<QString>& selection, const QList< QPair<QString, QVariant> >& wheres){
+    QString sqlString = "SELECT ";
+    foreach(databasefield* field, m_fields){
+        QString fieldname = field->field().name();
+        if(selection.contains(fieldname)){
+            sqlString += fieldname + ", ";
+        }
+    }
+    sqlString.truncate(sqlString.size()-2);
+    sqlString += " FROM " + m_name; 
+    QSqlQuery sqlQuery(m_vocableDatabase);
+    QPair<QString, QVariant> where;
+    foreach(where, wheres){
+        if(where == wheres.first()) sqlString += " WHERE";
+        sqlString += " " + where.first + "=:" + where.first + " AND";
+    }
+    sqlString.truncate(sqlString.size()-4);
+    sqlQuery.prepare(sqlString);
+    foreach(where, wheres){
+        sqlQuery.bindValue(":" + where.first, where.second);
+    }
+    if(!sqlQuery.exec()){
+        QSqlError error = sqlQuery.lastError();
+        qDebug() << sqlString;
+        qDebug() << error.databaseText();
+        qDebug() << error.driverText();
+        throw sql_error::select;
+    }
+    return sqlQuery;
+
 }
 
 @}

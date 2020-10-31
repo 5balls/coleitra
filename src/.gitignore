@@ -7,3 +7,4 @@
 *.swp
 CMakeLists.txt
 Makefile
+tags

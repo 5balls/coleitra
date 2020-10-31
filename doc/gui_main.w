@@ -103,8 +103,9 @@ Drawer {
 
     Column {
         anchors.fill: parent
-        @<Side menu screen option @'About@' defined in @'about.qml@' @>
         @<Side menu screen option @'Edit@' defined in @'edit.qml@' @>
+        @<Side menu screen option @'Settings@' defined in @'settings.qml@' @>
+        @<Side menu screen option @'About@' defined in @'about.qml@' @>
         ItemDelegate {
             text: "Quit"
             width: parent.width

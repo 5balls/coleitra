@@ -80,3 +80,5 @@ QString @1()
 }
 @}
 
+\subsection{GUI}
+

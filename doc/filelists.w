@@ -20,6 +20,7 @@
 @d Header files
 @{database.h
 settings.h
+about.h
 databasetable.h
 databasefield.h
 main.h
@@ -29,6 +30,7 @@ edit.h @}
 \subsection{C++ files}
 @d C++ files
 @{settings.cpp
+about.cpp
 main.cpp
 database.cpp
 databasetable.cpp
