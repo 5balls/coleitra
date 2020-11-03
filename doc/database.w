@@ -296,6 +296,45 @@ Finally we create our tables if they don't exist already:
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
                 fc("categoryselection",QVariant::Int,{c_fk(categoryselectiontable,"id")}),
                 f("string",QVariant::String)});
+
+        if(database_is_empty){
+            QList<QString> grammarexpressions = {
+                "Ablative",
+                "Accusative",
+                "Abessive",
+                "Adessive",
+                "Allative",
+                "Causal-final",
+                "Comitative",
+                "Dative",
+                "Delative",
+                "Elative",
+                "Essive",
+                "External",
+                "General",
+                "Genitive",
+                "Illative",
+                "Inessive",
+                "Instructive",
+                "Instrumental",
+                "Internal",
+                "Locative",
+                "Nominative",
+                "Partitive",
+                "Plural",
+                "Prolative",
+                "Singular",
+                "Sociative",
+                "Sublative",
+                "Superessive",
+                "Temporal",
+                "Terminative",
+                "Translative",
+                "Vocative",
+            };
+            grammarexpressiontable->insertRecord();
+        }
+
         databasetable* grammarformtable = d("grammarform",
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
                 fc("categoryselection",QVariant::Int,{c_fk(categoryselectiontable,"id")})});

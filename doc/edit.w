@@ -23,11 +23,20 @@
 #include <QQmlEngine>
 #include "database.h"
 
+
 @<Start of class @'edit@'@>
 public:
     explicit edit(QObject *parent = nullptr);
     Q_PROPERTY(QString dbversion MEMBER m_dbversion NOTIFY dbversionChanged);
 private:
+    struct form {
+        QString string;
+        QList<int> grammarexpressions;
+    };
+    struct lexeme {
+        QList<form> forms;
+    };
+    QList<lexeme> lexemes;
     database* m_database;
     QString m_dbversion;
 signals:
