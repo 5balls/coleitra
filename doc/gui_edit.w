@@ -21,13 +21,31 @@
 import QtQuick 2.14
 import QtQuick.Layouts 1.14
 import EditLib 1.0
+import SettingsLib 1.0
+import GrammarProviderLib 1.0
 
 ColeitraPage {
     title: "Lexeme editing"
     ColeitraGridLayout {
         ColeitraGridTextInput {
-            Layout.preferredWidth: parent.width - 80
+            id: lexeme
+            Layout.columnSpan: 6
+            Layout.preferredWidth: parent.width - 120
             text: Edit.dbversion;
+        }
+        Image {
+            source: "www.svg"
+            Layout.columnSpan: 2
+            Layout.preferredHeight: 40
+            Layout.preferredWidth: 40
+            MouseArea {
+                anchors.fill: parent
+                onClicked: { 
+                    GrammarProvider.language = Settings.learninglanguage;
+                    GrammarProvider.word = lexeme.text;
+                    GrammarProvider.getWiktionarySections()
+                }
+            }
         }
         Image {
             source: "plus.svg"

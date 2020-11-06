@@ -28,8 +28,21 @@
 #include "database.h"
 #include "edit.h"
 #include "train.h"
+#include "grammarprovider.h"
 @<End of header@>
 @}
+
+@d Register singleton @'qmlobjectname@' class @'classname@' version @'major@' @'minor@'
+@{
+qmlRegisterSingletonType<@2>("@1Lib", @3, @4, "@1", [](
+            QQmlEngine *engine,
+            QJSEngine *scriptEngine) -> QObject * {
+        Q_UNUSED(scriptEngine);
+        @2 *@2_singleton_instance = new @2(engine);
+        return @2_singleton_instance;
+        });
+@}
+
 
 \codecpp
 @o ../src/main.cpp -d
@@ -38,38 +51,11 @@
 
 int main(int argc, char *argv[])
 {
-    qmlRegisterSingletonType<settings>("SettingsLib", 1, 0, "Settings", [](
-                QQmlEngine *engine,
-                QJSEngine *scriptEngine) -> QObject * {
-            Q_UNUSED(engine);
-            Q_UNUSED(scriptEngine);
-            settings *settings_singleton_instance = new settings();
-            return settings_singleton_instance;
-            });
-    qmlRegisterSingletonType<about>("AboutLib", 1, 0, "About", [](
-                QQmlEngine *engine,
-                QJSEngine *scriptEngine) -> QObject * {
-            Q_UNUSED(engine);
-            Q_UNUSED(scriptEngine);
-            about *about_singleton_instance = new about();
-            return about_singleton_instance;
-            });
-    qmlRegisterSingletonType<database>("DatabaseLib", 1, 0, "Database", [](
-                QQmlEngine *engine,
-                QJSEngine *scriptEngine) -> QObject * {
-            Q_UNUSED(engine);
-            Q_UNUSED(scriptEngine);
-            database *db_singleton_instance = new database();
-            return db_singleton_instance;
-            });
-    qmlRegisterSingletonType<database>("EditLib", 1, 0, "Edit", [](
-                QQmlEngine *engine,
-                QJSEngine *scriptEngine) -> QObject * {
-            Q_UNUSED(scriptEngine);
-            edit *edit_singleton_instance = new edit(engine);
-            return edit_singleton_instance;
-            });
-
+    @<Register singleton @'Settings@' class @'settings@' version @'1@' @'0@' @>
+    @<Register singleton @'About@' class @'about@' version @'1@' @'0@' @>
+    @<Register singleton @'Database@' class @'database@' version @'1@' @'0@' @>
+    @<Register singleton @'Edit@' class @'edit@' version @'1@' @'0@' @>
+    @<Register singleton @'GrammarProvider@' class @'grammarprovider@' version @'1@' @'0@' @>
 
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QCoreApplication::setApplicationName("coleitra");

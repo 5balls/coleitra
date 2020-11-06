@@ -36,6 +36,7 @@ Here are the files described, which are needed for compiling code for the Qt fra
         <file>settings.svg</file>
         <file>back.svg</file>
         <file>plus.svg</file>
+        <file>www.svg</file>
         <file>minus.svg</file>
         <file>about.qml</file>
         <file>train.qml</file>
