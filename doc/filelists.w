@@ -25,7 +25,8 @@ databasetable.h
 databasefield.h
 main.h
 train.h
-edit.h @}
+edit.h
+grammarprovider.h @}
 
 \subsection{C++ files}
 @d C++ files
@@ -36,7 +37,8 @@ database.cpp
 databasetable.cpp
 databasefield.cpp
 train.cpp
-edit.cpp @}
+edit.cpp
+grammarprovider.cpp @}
 
 \subsection{Ressource files}
 @d Ressource files

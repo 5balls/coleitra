@@ -332,7 +332,11 @@ Finally we create our tables if they don't exist already:
                 "Translative",
                 "Vocative",
             };
-            grammarexpressiontable->insertRecord();
+            QMap<QString,QVariant> add_ge;
+            foreach(const QString& grammarexpression, grammarexpressions){
+                add_ge["string"] = grammarexpression;
+                grammarexpressiontable->insertRecord(add_ge);
+            }
         }
 
         databasetable* grammarformtable = d("grammarform",

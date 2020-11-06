@@ -20,20 +20,24 @@
 @o ../src/grammarprovider.h -d
 @{
 @<Start of @'GRAMMARPROVIDER@' header@>
-
 #include <QNetworkAccessManager>
-
+#include <QNetworkRequest>
+#include <QNetworkReply>
+#include <QJsonDocument>
+#include <QJsonObject>
 @<Start of class @'grammarprovider@'@>
+    Q_PROPERTY(QString language MEMBER m_language)
 public:
-    explicit database(QObject *parent = nullptr);
-    Q_PROPERTY(language MEMBER m_language);
+    explicit grammarprovider(QObject *parent = nullptr);
+    ~grammarprovider(void);
 public slots:
-    void getWiktionarySections(QString word);
+    Q_INVOKABLE void getWiktionarySections(QString word);
     void getWiktionarySection(QNetworkReply* reply);
 private:
     QString m_language;
     QString s_baseurl;
     QNetworkAccessManager* m_manager;
+    QMetaObject::Connection m_tmp_connection;
 signals:
 
 @<End of class and header @>
@@ -51,19 +55,26 @@ grammarprovider::grammarprovider(QObject *parent) : QObject(parent)
     s_baseurl = "https://en.wiktionary.org/w/api.php?";
 }
 
+grammarprovider::~grammarprovider() {
+    delete m_manager;
+}
+
 void grammarprovider::getWiktionarySections(QString word){
     QNetworkRequest request;
-    request.setUrl(QUrl(s_baseurl + "action=parse&page=" + word + "&prop=sections&format=json"));
-    request.setRawHeader("User-Agent", "Coleitra/0.1 (https://coleitra.org; fpesth@gmx.de)");
-    connect(m_manager, &QNetworkAccessManager::finished,
-        this, &grammarprovider::
+    QUrl url(s_baseurl + "action=parse&page=" + word + "&prop=sections&format=json");
+    request.setUrl(url);
+    request.setRawHeader("User-Agent", "Coleitra/0.1 (https://coleitra.org; fpesth@@gmx.de)");
+    m_tmp_connection = connect(m_manager, &QNetworkAccessManager::finished,
+        this, &grammarprovider::getWiktionarySection);
     m_manager->get(request);
 }
 
 void grammarprovider::getWiktionarySection(QNetworkReply* reply){
+    QObject::disconnect(m_tmp_connection);
     QString s_reply = QString(reply->readAll());
     QJsonDocument jsonSections = QJsonDocument::fromJson(s_reply.toUtf8());
     QJsonObject jsonSectionsObject = jsonSections.object();
+    qDebug() << s_reply;
 //    QNetworkRequest request(QUrl("https://en.wiktionary.org/w/api.php?action=parse&page=" + word + "&section=" + section + "&prop=wikitext"));
 }
 @}

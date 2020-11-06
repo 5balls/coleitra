@@ -41,6 +41,8 @@
 
 @i edit.w
 
+@i grammarprovider.w
+
 \chapter{Algorithm}
 
 @i gui.w
