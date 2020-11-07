@@ -51,6 +51,7 @@ public:
     databasetable* getTableByName(QString name);
     Q_PROPERTY(QString version MEMBER m_version NOTIFY versionChanged);
     Q_INVOKABLE QStringList languagenames();
+    Q_INVOKABLE QStringList grammarexpressions();
     Q_INVOKABLE int idfromlanguagename(QString languagename);
     Q_INVOKABLE QString languagenamefromid(int id);
     Q_INVOKABLE int alphabeticidfromlanguagename(QString languagename);
@@ -463,6 +464,19 @@ QStringList database::languagenames()
     }
     languages.sort();
     return languages;
+}
+
+QStringList database::grammarexpressions(){
+    databasetable* grammarexpressiontable = getTableByName("grammarexpression");
+    QList<QString> selection;
+    selection.push_back("string");
+    QSqlQuery result = grammarexpressiontable->select(selection);
+    QStringList grammarexpressions;
+    while(result.next()){
+        QString language = result.value("string").toString();
+        grammarexpressions.push_back(language);
+    }
+    return grammarexpressions;
 }
 
 int database::alphabeticidfromlanguagename(QString languagename){

@@ -44,6 +44,11 @@ public:
         int column;
         QString content;
     };
+    struct grammarform {
+        int row;
+        int column;
+        QStringList grammarexpressions;
+    };
 public slots:
     Q_INVOKABLE void getWiktionarySections();
     void getWiktionarySection(QNetworkReply* reply);
@@ -51,6 +56,9 @@ public slots:
     void parseMediawikiTableToPlainText(QString wikitext, QList<grammarprovider::tablecell>& table);
     void parse_fi_verbs(QNetworkReply* reply);
     void parse_fi_nominals(QNetworkReply* reply);
+    void process_grammar(QList<grammarform> grammarforms, QList<tablecell> parsedTable);
+signals:
+    void grammar_obtained(QStringList expressions, QList<QStringList> grammarexpressions);
 private:
     int m_language;
     QString m_word;
@@ -174,11 +182,6 @@ void grammarprovider::getWiktionarySection(QNetworkReply* reply){
     QString s_reply = QString(reply->readAll());
     reply->deleteLater();
 
-    /*QFile file("debug.json");
-    file.open(QFile::ReadOnly);
-    QString s_reply = file.readAll();
-    file.close();*/
-
     int languageid = m_language;
     QString language = m_database->languagenamefromid(languageid);
 
@@ -219,20 +222,10 @@ void grammarprovider::getWiktionarySection(QNetworkReply* reply){
                 this, &grammarprovider::getWiktionaryTemplate);
         m_manager->get(request);
     }
-/*    QFile file("debug.json");
-    file.open(QFile::WriteOnly);
-    file.write(j_sectionsDocument.toJson());
-    file.close();*/
 }
 
 
 void grammarprovider::getWiktionaryTemplate(QNetworkReply* reply){
-
-/*    QFile file("debug_template.json");
-    file.open(QFile::ReadOnly);
-    QString s_reply = file.readAll();
-    file.close();*/
-
     QObject::disconnect(m_tmp_connection);
     QString s_reply = QString(reply->readAll());
     reply->deleteLater();
@@ -294,11 +287,6 @@ void grammarprovider::getWiktionaryTemplate(QNetworkReply* reply){
             }
         }
     }
-/*    QFile file("debug_template.json");
-    file.open(QFile::WriteOnly);
-    file.write(j_document.toJson());
-    file.close();*/
-
 }
 
 void grammarprovider::parseMediawikiTableToPlainText(QString wikitext, QList<grammarprovider::tablecell>& table){
@@ -377,19 +365,42 @@ void grammarprovider::parseMediawikiTableToPlainText(QString wikitext, QList<gra
             column += columnspan;
             continue;
         }
-
     }
+}
+
+void grammarprovider::process_grammar(QList<grammarform> grammarforms, QList<tablecell> parsedTable){
+    QStringList expressions;
+    QList<QStringList> grammarexpressions;
+    if(!parsedTable.isEmpty()){
+        foreach(const grammarform& gf_expectedcell, grammarforms){
+            tablecell tc_current = parsedTable.first();
+            while(tc_current.row < gf_expectedcell.row){
+                if(!parsedTable.isEmpty()){
+                    parsedTable.pop_front();
+                    tc_current = parsedTable.first();
+                }
+                else break;
+            }
+            if(tc_current.row == gf_expectedcell.row){
+                while(tc_current.column < gf_expectedcell.column){
+                    if(!parsedTable.isEmpty()){
+                        parsedTable.pop_front();
+                        tc_current = parsedTable.first();
+                    }
+                    else break;
+                }
+                if(tc_current.column == gf_expectedcell.column){
+                    expressions.push_back(tc_current.content);
+                    grammarexpressions.push_back(gf_expectedcell.grammarexpressions);
+                }
+            }
+        }
+    }
+    emit grammar_obtained(expressions, grammarexpressions);
 }
 
 
 void grammarprovider::parse_fi_verbs(QNetworkReply* reply){
-
-    /*QFile file("debug_table.json");
-    file.open(QFile::ReadOnly);
-    QString s_reply = file.readAll();
-    file.close();*/
-
-
     QObject::disconnect(m_tmp_connection);
     QString s_reply = QString(reply->readAll());
     reply->deleteLater();
@@ -399,11 +410,6 @@ void grammarprovider::parse_fi_verbs(QNetworkReply* reply){
     QList<grammarprovider::tablecell> parsedTable;
     parseMediawikiTableToPlainText(wikitemplate_text, parsedTable);
 
-    struct grammarform {
-        int row;
-        int column;
-        QList<QString> grammarexpressions;
-    };
     QList<grammarform> grammarforms {
         {5,3,{"Indicative mood","Present tense","Positive","First person","Singular"}},
         {5,4,{"Indicative mood","Present tense","Negative","First person","Singular"}},
@@ -573,37 +579,7 @@ void grammarprovider::parse_fi_verbs(QNetworkReply* reply){
         {65,3,{"Nominal form","Infinitive","Active","Fourth","Partitive"}},
         {66,3,{"Nominal form","Infinitive","Active","Fifth"}},
     };
-
-    if(!parsedTable.isEmpty()){
-        foreach(const grammarform& gf_expectedcell, grammarforms){
-            tablecell tc_current = parsedTable.first();
-            while(tc_current.row < gf_expectedcell.row){
-                if(!parsedTable.isEmpty()){
-                    parsedTable.pop_front();
-                    tc_current = parsedTable.first();
-                }
-                else break;
-            }
-            if(tc_current.row == gf_expectedcell.row){
-                while(tc_current.column < gf_expectedcell.column){
-                    if(!parsedTable.isEmpty()){
-                        parsedTable.pop_front();
-                        tc_current = parsedTable.first();
-                    }
-                    else break;
-                }
-                if(tc_current.column == gf_expectedcell.column){
-                    qDebug() << tc_current.content << gf_expectedcell.grammarexpressions;
-                }
-            }
-        }
-    }
-
-
-/*    QFile file("debug_table.json");
-    file.open(QFile::WriteOnly);
-    file.write(j_document.toJson());
-    file.close();*/
+    process_grammar(grammarforms,parsedTable);
 }
 
 
@@ -617,11 +593,6 @@ void grammarprovider::parse_fi_nominals(QNetworkReply* reply){
     QList<grammarprovider::tablecell> parsedTable;
     parseMediawikiTableToPlainText(wikitemplate_text, parsedTable);
 
-    struct grammarform {
-        int row;
-        int column;
-        QList<QString> grammarexpressions;
-    };
     QList<grammarform> grammarforms {
         {7,3,{"Nominative","Singular"}},
         {7,4,{"Nominative","Plural"}},
@@ -660,30 +631,7 @@ void grammarprovider::parse_fi_nominals(QNetworkReply* reply){
         {26,3,{"Possessive","Plural","Second person"}},
         {27,2,{"Possessive","Singular","Plural","Third person"}},
     };
-    if(!parsedTable.isEmpty()){
-        foreach(const grammarform& gf_expectedcell, grammarforms){
-            tablecell tc_current = parsedTable.first();
-            while(tc_current.row < gf_expectedcell.row){
-                if(!parsedTable.isEmpty()){
-                    parsedTable.pop_front();
-                    tc_current = parsedTable.first();
-                }
-                else break;
-            }
-            if(tc_current.row == gf_expectedcell.row){
-                while(tc_current.column < gf_expectedcell.column){
-                    if(!parsedTable.isEmpty()){
-                        parsedTable.pop_front();
-                        tc_current = parsedTable.first();
-                    }
-                    else break;
-                }
-                if(tc_current.column == gf_expectedcell.column){
-                    qDebug() << tc_current.content << gf_expectedcell.grammarexpressions;
-                }
-            }
-        }
-    }
+    process_grammar(grammarforms,parsedTable);
 }
 
 @}

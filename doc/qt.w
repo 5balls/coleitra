@@ -25,6 +25,7 @@ Here are the files described, which are needed for compiling code for the Qt fra
 <RCC>
     <qresource prefix="/">
         <file>ColeitraGridLayout.qml</file>
+        <file>ColeitraGridInGridLayout.qml</file>
         <file>ColeitraPage.qml</file>
         <file>ColeitraGridLabel.qml</file>
         <file>ColeitraGridValueText.qml</file>
@@ -32,12 +33,20 @@ Here are the files described, which are needed for compiling code for the Qt fra
         <file>ColeitraGridComboBox.qml</file>
         <file>ColeitraGridCheckBox.qml</file>
         <file>ColeitraGridButton.qml</file>
+        <file>ColeitraWidgetEditGrammarForm.qml</file>
+        <file>ColeitraWidgetEditLexeme.qml</file>
+        <file>ColeitraWidgetEditGrammarExpression.qml</file>
         <file>main.qml</file>
         <file>settings.svg</file>
+        <file>settings_pressed.svg</file>
         <file>back.svg</file>
+        <file>back_pressed.svg</file>
         <file>plus.svg</file>
+        <file>plus_pressed.svg</file>
         <file>www.svg</file>
+        <file>www_pressed.svg</file>
         <file>minus.svg</file>
+        <file>minus_pressed.svg</file>
         <file>about.qml</file>
         <file>train.qml</file>
         <file>edit.qml</file>

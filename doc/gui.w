@@ -60,6 +60,24 @@ GridLayout {
 }
 @}
 
+@o ../src/ColeitraGridInGridLayout.qml
+@{
+import QtQuick 2.11
+import QtQuick.Controls 2.4
+import QtQuick.Layouts 1.3
+
+GridLayout {
+    visible: true
+    Layout.columnSpan: 12
+    Layout.preferredWidth: 0
+    columns: 12
+    columnSpacing: 0
+    rowSpacing: 0
+    flow: GridLayout.LeftToRight
+}
+@}
+
+
 \subsection{Grid Label}
 @o ../src/ColeitraGridLabel.qml
 @{
@@ -170,4 +188,14 @@ background: Rectangle {
 }
 @}
 
+@d Background yellow rounded control
+@{
+background: Rectangle {
+    border.color: "black"
+    border.width: 1
+    color: "#FFFFDD"
+    radius: 4
+    implicitHeight: 40
+}
+@}
 
