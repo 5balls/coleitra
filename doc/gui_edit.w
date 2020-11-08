@@ -145,11 +145,12 @@ ColeitraGridInGridLayout {
             var newObject = component.createObject(this);
         }
         else {
-            console.log(component.status);
             console.log("Problem with creation of grammar expression edit widget");
         }
     }
     Component.onCompleted: {
+        width = parent.width;
+        Layout.preferredWidth = parent.width;
         lexeme.Layout.preferredWidth = parent.width - 80;
         addAddRemoveGrammarExpression();
     }
@@ -169,7 +170,7 @@ ColeitraGridInGridLayout {
         id: label
         text: "Lexeme (" + Database.languagenamefromid(lexeme_language) + ")"
         Layout.columnSpan: 10
-        Layout.preferredWidth: 0
+        Layout.preferredWidth: 40
     }
     Image {
         source: "plus.svg"
@@ -187,6 +188,7 @@ ColeitraGridInGridLayout {
         }
     }
     Component.onCompleted: {
+        width = parent.width;
         Layout.preferredWidth = parent.width;
         label.Layout.preferredWidth = parent.width - 40;
         addAddRemoveGrammarForm();
@@ -198,26 +200,30 @@ ColeitraGridInGridLayout {
 @{
 import QtQuick 2.14
 import QtQuick.Layouts 1.14
+import QtQuick.Controls 2.14
 import EditLib 1.0
 import SettingsLib 1.0
 import DatabaseLib 1.0
 
 ColeitraPage {
     title: "Lexeme editing"
-    ColeitraGridLayout {
-        id: lexemeContainer
-        function addAddRemoveLexeme(language){
-            var component = Qt.createComponent("ColeitraWidgetEditLexeme.qml");
-            if (component.status == Component.Ready) {
-                var newObject = component.createObject(this, {lexeme_language: language});
+    ScrollView {
+        anchors.fill: parent
+        ColeitraGridLayout {
+            width: Math.max(implicitWidth, parent.availableWidth)
+            function addAddRemoveLexeme(language){
+                var component = Qt.createComponent("ColeitraWidgetEditLexeme.qml");
+                if (component.status == Component.Ready) {
+                    var newObject = component.createObject(this, {lexeme_language: language});
+                }
+                else {
+                    console.log("Problem with creation of lexeme edit widget");
+                }
             }
-            else {
-                console.log("Problem with creation of lexeme edit widget");
+            Component.onCompleted: {
+                addAddRemoveLexeme(Settings.learninglanguage);
+                addAddRemoveLexeme(Settings.nativelanguage);
             }
-        }
-        Component.onCompleted: {
-            addAddRemoveLexeme(Settings.learninglanguage);
-            addAddRemoveLexeme(Settings.nativelanguage);
         }
     }
     footer: ColeitraGridLayout {

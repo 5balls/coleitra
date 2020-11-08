@@ -56,7 +56,12 @@ public slots:
     void parseMediawikiTableToPlainText(QString wikitext, QList<grammarprovider::tablecell>& table);
     void parse_fi_verbs(QNetworkReply* reply);
     void parse_fi_nominals(QNetworkReply* reply);
+    void parse_de_noun_n(QNetworkReply* reply);
+    void parse_de_noun_m(QNetworkReply* reply);
+    void parse_de_noun_f(QNetworkReply* reply);
+    void parse_de_verb(QNetworkReply* reply);
     void process_grammar(QList<grammarform> grammarforms, QList<tablecell> parsedTable);
+    void getPlainTextTableFromReply(QNetworkReply* reply, QList<grammarprovider::tablecell> parsedTable);
 signals:
     void grammar_obtained(QStringList expressions, QList<QStringList> grammarexpressions);
 private:
@@ -399,17 +404,20 @@ void grammarprovider::process_grammar(QList<grammarform> grammarforms, QList<tab
     emit grammar_obtained(expressions, grammarexpressions);
 }
 
-
-void grammarprovider::parse_fi_verbs(QNetworkReply* reply){
+void grammarprovider::getPlainTextTableFromReply(QNetworkReply* reply, QList<grammarprovider::tablecell> parsedTable){
     QObject::disconnect(m_tmp_connection);
     QString s_reply = QString(reply->readAll());
     reply->deleteLater();
 
     QJsonDocument j_document = QJsonDocument::fromJson(s_reply.toUtf8());
     QString wikitemplate_text = j_document.object()["expandtemplates"].toObject()["wikitext"].toString();
-    QList<grammarprovider::tablecell> parsedTable;
     parseMediawikiTableToPlainText(wikitemplate_text, parsedTable);
 
+}
+
+void grammarprovider::parse_fi_verbs(QNetworkReply* reply){
+    QList<grammarprovider::tablecell> parsedTable;
+    getPlainTextTableFromReply(reply, parsedTable);
     QList<grammarform> grammarforms {
         {5,3,{"Indicative mood","Present tense","Positive","First person","Singular"}},
         {5,4,{"Indicative mood","Present tense","Negative","First person","Singular"}},
@@ -584,14 +592,9 @@ void grammarprovider::parse_fi_verbs(QNetworkReply* reply){
 
 
 void grammarprovider::parse_fi_nominals(QNetworkReply* reply){
-    QObject::disconnect(m_tmp_connection);
-    QString s_reply = QString(reply->readAll());
-    reply->deleteLater();
 
-    QJsonDocument j_document = QJsonDocument::fromJson(s_reply.toUtf8());
-    QString wikitemplate_text = j_document.object()["expandtemplates"].toObject()["wikitext"].toString();
     QList<grammarprovider::tablecell> parsedTable;
-    parseMediawikiTableToPlainText(wikitemplate_text, parsedTable);
+    getPlainTextTableFromReply(reply, parsedTable);
 
     QList<grammarform> grammarforms {
         {7,3,{"Nominative","Singular"}},
@@ -634,4 +637,69 @@ void grammarprovider::parse_fi_nominals(QNetworkReply* reply){
     process_grammar(grammarforms,parsedTable);
 }
 
+void grammarprovider::parse_de_noun_n(QNetworkReply* reply){
+
+    QList<grammarprovider::tablecell> parsedTable;
+    getPlainTextTableFromReply(reply, parsedTable);
+
+    QList<grammarform> grammarforms {
+        {4,4,{"Neuter gender","Nominative","Singular"}},
+        {4,6,{"Neuter gender","Nominative","Plural"}},
+        {5,4,{"Neuter gender","Genitive","Singular"}},
+        {5,6,{"Neuter gender","Genitive","Plural"}},
+        {6,4,{"Neuter gender","Dative","Singular"}},
+        {6,6,{"Neuter gender","Dative","Plural"}},
+        {7,4,{"Neuter gender","Accusative","Singular"}},
+        {7,6,{"Neuter gender","Accusative","Plural"}},
+    };
+    process_grammar(grammarforms,parsedTable);
+}
+
+void grammarprovider::parse_de_noun_m(QNetworkReply* reply){
+
+    QList<grammarprovider::tablecell> parsedTable;
+    getPlainTextTableFromReply(reply, parsedTable);
+
+    QList<grammarform> grammarforms {
+        {4,4,{"Masculine gender","Nominative","Singular"}},
+        {4,6,{"Masculine gender","Nominative","Plural"}},
+        {5,4,{"Masculine gender","Genitive","Singular"}},
+        {5,6,{"Masculine gender","Genitive","Plural"}},
+        {6,4,{"Masculine gender","Dative","Singular"}},
+        {6,6,{"Masculine gender","Dative","Plural"}},
+        {7,4,{"Masculine gender","Accusative","Singular"}},
+        {7,6,{"Masculine gender","Accusative","Plural"}},
+    };
+    process_grammar(grammarforms,parsedTable);
+}
+
+void grammarprovider::parse_de_noun_f(QNetworkReply* reply){
+
+    QList<grammarprovider::tablecell> parsedTable;
+    getPlainTextTableFromReply(reply, parsedTable);
+
+    QList<grammarform> grammarforms {
+        {4,4,{"Feminine gender","Nominative","Singular"}},
+        {4,6,{"Feminine gender","Nominative","Plural"}},
+        {5,4,{"Feminine gender","Genitive","Singular"}},
+        {5,6,{"Feminine gender","Genitive","Plural"}},
+        {6,4,{"Feminine gender","Dative","Singular"}},
+        {6,6,{"Feminine gender","Dative","Plural"}},
+        {7,4,{"Feminine gender","Accusative","Singular"}},
+        {7,6,{"Feminine gender","Accusative","Plural"}},
+    };
+    process_grammar(grammarforms,parsedTable);
+}
+
+void grammarprovider::parse_de_verb(QNetworkReply* reply){
+
+    QList<grammarprovider::tablecell> parsedTable;
+    getPlainTextTableFromReply(reply, parsedTable);
+    QList<grammarform> grammarforms {
+        {2,3,{"Infinitive","Present tense"}},
+        {3,3,{"Present tense","Participle"}},
+        {4,3,{"Past tense","Participle"}},
+    };
+    process_grammar(grammarforms,parsedTable);
+}
 @}

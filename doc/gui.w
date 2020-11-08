@@ -69,7 +69,8 @@ import QtQuick.Layouts 1.3
 GridLayout {
     visible: true
     Layout.columnSpan: 12
-    Layout.preferredWidth: 0
+    Layout.fillWidth: true
+    Layout.preferredWidth: parent.width
     columns: 12
     columnSpacing: 0
     rowSpacing: 0
