@@ -100,13 +100,27 @@ import GrammarProviderLib 1.0
 import DatabaseLib 1.0
 
 ColeitraGridInGridLayout {
+    id: widget
     property var language: 1
     Image {
+        id: minusbutton
         visible: false
         source: "minus.svg"
         Layout.columnSpan: 2
         Layout.preferredHeight: 40
         Layout.preferredWidth: 40
+        MouseArea {
+            anchors.fill: parent
+            onClicked: { 
+                widget.destroy();
+            }
+            onPressed: {
+                parent.source = "minus_pressed.svg";
+            }
+            onReleased: {
+                parent.source = "minus.svg";
+            }
+        }
     }
     ColeitraGridTextInput {
         id: lexeme
@@ -134,10 +148,26 @@ ColeitraGridInGridLayout {
         }
     }
     Image {
+        id: plusbutton
         source: "plus.svg"
         Layout.columnSpan: 2
         Layout.preferredHeight: 40
         Layout.preferredWidth: 40
+        MouseArea {
+            anchors.fill: parent
+            onClicked: { 
+                plusbutton.visible = false;
+                minusbutton.visible = true;
+                parent.parent.parent.addAddRemoveGrammarForm();
+            }
+            onPressed: {
+                parent.source = "plus_pressed.svg";
+            }
+            onReleased: {
+                parent.source = "plus.svg";
+            }
+        }
+
     }
     function addAddRemoveGrammarExpression(){
         var component = Qt.createComponent("ColeitraWidgetEditGrammarExpression.qml");
@@ -165,18 +195,54 @@ import QtQuick.Layouts 1.14
 
 ColeitraGridInGridLayout {
     property var lexeme_language: 1
-    id: grammarExpressionContainer
+    id: widget
+    Image {
+        id: minusbutton
+        visible: false
+        source: "minus.svg"
+        Layout.columnSpan: 2
+        Layout.preferredHeight: 40
+        Layout.preferredWidth: 40
+        MouseArea {
+            anchors.fill: parent
+            onClicked: { 
+                widget.destroy();
+            }
+            onPressed: {
+                parent.source = "minus_pressed.svg";
+            }
+            onReleased: {
+                parent.source = "minus.svg";
+            }
+        }
+
+    }
     ColeitraGridLabel {
         id: label
         text: "Lexeme (" + Database.languagenamefromid(lexeme_language) + ")"
-        Layout.columnSpan: 10
+        Layout.columnSpan: 8
         Layout.preferredWidth: 40
     }
     Image {
+        id: plusbutton
         source: "plus.svg"
         Layout.columnSpan: 2
         Layout.preferredHeight: 40
         Layout.preferredWidth: 40
+        MouseArea {
+            anchors.fill: parent
+            onClicked: { 
+                plusbutton.visible = false;
+                minusbutton.visible = true;
+                parent.parent.parent.addAddRemoveLexeme(lexeme_language);
+            }
+            onPressed: {
+                parent.source = "plus_pressed.svg";
+            }
+            onReleased: {
+                parent.source = "plus.svg";
+            }
+        }
     }
     function addAddRemoveGrammarForm(){
         var component = Qt.createComponent("ColeitraWidgetEditGrammarForm.qml");
@@ -206,23 +272,43 @@ import SettingsLib 1.0
 import DatabaseLib 1.0
 
 ColeitraPage {
-    title: "Lexeme editing"
+    title: "Edit translation"
     ScrollView {
         anchors.fill: parent
         ColeitraGridLayout {
             width: Math.max(implicitWidth, parent.availableWidth)
-            function addAddRemoveLexeme(language){
-                var component = Qt.createComponent("ColeitraWidgetEditLexeme.qml");
-                if (component.status == Component.Ready) {
-                    var newObject = component.createObject(this, {lexeme_language: language});
+            Column {
+                width: parent.width
+                Layout.columnSpan: 12
+                function addAddRemoveLexeme(language){
+                    var component = Qt.createComponent("ColeitraWidgetEditLexeme.qml");
+                    if (component.status == Component.Ready) {
+                        var newObject = component.createObject(this, {lexeme_language: language});
+                    }
+                    else {
+                        console.log("Problem with creation of lexeme edit widget");
+                    }
                 }
-                else {
-                    console.log("Problem with creation of lexeme edit widget");
+                Component.onCompleted: {
+                    addAddRemoveLexeme(Settings.learninglanguage);
                 }
             }
-            Component.onCompleted: {
-                addAddRemoveLexeme(Settings.learninglanguage);
-                addAddRemoveLexeme(Settings.nativelanguage);
+            Column {
+                width: parent.width
+                Layout.columnSpan: 12
+                function addAddRemoveLexeme(language){
+                    var component = Qt.createComponent("ColeitraWidgetEditLexeme.qml");
+                    if (component.status == Component.Ready) {
+                        var newObject = component.createObject(this, {lexeme_language: language});
+                    }
+                    else {
+                        console.log("Problem with creation of lexeme edit widget");
+                    }
+                }
+                Component.onCompleted: {
+                    addAddRemoveLexeme(Settings.nativelanguage);
+                }
+
             }
         }
     }
