@@ -36,6 +36,7 @@ Here are the files described, which are needed for compiling code for the Qt fra
         <file>ColeitraWidgetEditGrammarForm.qml</file>
         <file>ColeitraWidgetEditLexeme.qml</file>
         <file>ColeitraWidgetEditGrammarExpression.qml</file>
+        <file>ColeitraWidgetEdit.qml</file>
         <file>main.qml</file>
         <file>settings.svg</file>
         <file>settings_pressed.svg</file>

@@ -51,7 +51,9 @@ public:
     databasetable* getTableByName(QString name);
     Q_PROPERTY(QString version MEMBER m_version NOTIFY versionChanged);
     Q_INVOKABLE QStringList languagenames();
-    Q_INVOKABLE QStringList grammarexpressions();
+    Q_INVOKABLE QStringList grammarkeys();
+    Q_INVOKABLE int idfromgrammarkey(QString key);
+    Q_INVOKABLE QStringList grammarvalues(QString key);
     Q_INVOKABLE int idfromlanguagename(QString languagename);
     Q_INVOKABLE QString languagenamefromid(int id);
     Q_INVOKABLE int alphabeticidfromlanguagename(QString languagename);
@@ -287,79 +289,58 @@ Finally we create our tables if they don't exist already:
                 fc("categoryselection",QVariant::Int,{c_fk(categoryselectiontable,"id")}),
                 fc("language",QVariant::Int,{c_fk(languagetable,"id")})});
 
+        databasetable* grammarkeytable = d("grammarkey",
+                {fc("id",QVariant::Int,{c_pk(),c_nn()}),
+                f("string",QVariant::String)});
 
         databasetable* grammarexpressiontable = d("grammarexpression",
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
                 fc("categoryselection",QVariant::Int,{c_fk(categoryselectiontable,"id")}),
-                f("string",QVariant::String)});
+                fc("key",QVariant::Int,{c_fk(grammarkeytable,"id")}),
+                f("value",QVariant::String)});
 
         if(database_is_empty){
-            QList<QString> grammarexpressions = {
-                "Ablative",
-                "Accusative",
-                "Active",
-                "Abessive",
-                "Adessive",
-                "Agent",
-                "Allative",
-                "Causal-final",
-                "Comitative",
-                "Dative",
-                "Delative",
-                "Elative",
-                "Essive",
-                "External",
-                "Feminine gender",
-                "Fifth",
-                "First",
-                "First person",
-                "Fourth",
-                "General",
-                "Genitive",
-                "Illative",
-                "Imperative mood",
-                "Indicative mood",
-                "Inessive",
-                "Infinitive",
-                "Instructive",
-                "Instrumental",
-                "Internal",
-                "Locative",
-                "Long first",
-                "Masculine gender",
-                "Negative",
-                "Neuter gender",
-                "Nominal form",
-                "Nominative",
-                "Participle",
-                "Partitive",
-                "Passive",
-                "Past tense",
-                "Plural",
-                "Positive",
-                "Possessive",
-                "Potential mood",
-                "Perfect tense",
-                "Plusquamperfekt tense",
-                "Present tense",
-                "Prolative",
-                "Second",
-                "Second person",
-                "Singular",
-                "Sociative",
-                "Sublative",
-                "Superessive",
-                "Temporal",
-                "Terminative",
-                "Third",
-                "Third person",
-                "Translative",
-                "Vocative",
+            QList<QList<QString> > grammarexpressions = {
+                // Case
+                {"Case", "Ablative", "Accusative", "Abessive", "Adessive", "Allative", "Causal-final", "Comitative", "Dative", "Delative", "Elative", "Essive", "Genitive", "Illative", "Inessive", "Infinitive", "Instructive", "Instrumental", "Locative", "Nominative", "Partitive", "Possessive", "Prolative", "Sociative", "Sublative", "Superessive", "Terminative", "Translative", "Vocative"},
+                // Voice
+                {"Voice","Active", "Passive"},
+                // Gender
+                {"Gender","Feminine", "Masculine", "Neuter"},
+                // Number
+                {"Number","Singular", "Plural"},
+                // Tense
+                {"Tense", "Past", "Perfect", "Plusquamperfekt", "Present","Agent"},
+                // Mood
+                {"Mood", "Imperative", "Indicative", "Potential"},
+                // Part of speech
+                {"Part of speech", "Noun", "Verb", "Adjective", "Adverb", "Pronoun", "Preposition", "Conjunction", "Interjection", "Numeral", "Article", "Determiner", "Postposition"},
+                // Person
+                {"Person","First","Second","Third"},
+                // Polarity
+                {"Polarity", "Negative", "Positive"},
+                // Infinitive
+                {"Infinitive", "First", "Long first", "Second", "Third", "Fourth", "Fifth"},
+                // Verbform
+                {"Verbform", "Participle"},
             };
             QMap<QString,QVariant> add_ge;
-            foreach(const QString& grammarexpression, grammarexpressions){
-                add_ge["string"] = grammarexpression;
-                grammarexpressiontable->insertRecord(add_ge);
+            QMap<QString,QVariant> add_gk;
+            QList<QString> grammarexpression;
+            int current_key_id = 0;
+            foreach(grammarexpression, grammarexpressions){
+                current_key_id = 0;
+                foreach(const QString& grammarvalue, grammarexpression){
+                    if(current_key_id == 0){
+                        add_gk["string"] = grammarvalue;
+                        current_key_id = grammarkeytable->insertRecord(add_gk);
+                    }
+                    else{
+                        add_ge["key"] = current_key_id;
+                        add_ge["value"] = grammarvalue;
+                        grammarexpressiontable->insertRecord(add_ge);
+                    }
+                }
             }
         }
 
@@ -470,17 +451,47 @@ QStringList database::languagenames()
     return languages;
 }
 
-QStringList database::grammarexpressions(){
-    databasetable* grammarexpressiontable = getTableByName("grammarexpression");
+QStringList database::grammarkeys(){
+    databasetable* grammarkeytable = getTableByName("grammarkey");
     QList<QString> selection;
     selection.push_back("string");
-    QSqlQuery result = grammarexpressiontable->select(selection);
+    QSqlQuery result = grammarkeytable->select(selection);
     QStringList grammarexpressions;
     while(result.next()){
-        QString language = result.value("string").toString();
-        grammarexpressions.push_back(language);
+        QString key = result.value("string").toString();
+        grammarexpressions.push_back(key);
     }
     return grammarexpressions;
+}
+
+int database::idfromgrammarkey(QString key){
+    databasetable* grammarkeytable = getTableByName("grammarkey");
+    QList<QString> selection;
+    selection.push_back("id");
+    QList< QPair< QString, QVariant > > wheres;
+    wheres.push_back(qMakePair(QString("string"),QVariant(key)));
+    QSqlQuery result = grammarkeytable->select(selection, wheres);
+    if(!result.next()) throw sql_error::select_empty;
+    return result.value("id").toInt();
+}
+
+QStringList database::grammarvalues(QString key){
+    QStringList grammarvalues;
+    if(key.isEmpty()){
+        return grammarvalues;
+    }
+    int key_id = idfromgrammarkey(key);
+    databasetable* grammarexpressiontable = getTableByName("grammarexpression");
+    QList<QString> selection;
+    selection.push_back("value");
+    QList< QPair< QString, QVariant > > wheres;
+    wheres.push_back(qMakePair(QString("key"),QVariant(key_id)));
+    QSqlQuery result = grammarexpressiontable->select(selection, wheres);
+    while(result.next()){
+        QString value = result.value("value").toString();
+        grammarvalues.push_back(value);
+    }
+    return grammarvalues;
 }
 
 int database::alphabeticidfromlanguagename(QString languagename){
