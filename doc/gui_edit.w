@@ -146,6 +146,26 @@ ColeitraGridInGridLayout {
         id: lexeme
         Layout.columnSpan: 6
         Layout.preferredWidth: 120
+        Connections {
+            target: GrammarProvider
+            onGrammarobtained: {
+                console.log("Received the signal " + expressions.length + "==" + grammarexpressions.length);
+                var j,j_max;
+                j_max = expressions.length;
+                for(j=0; j<j_max; j++){
+                    var item = expressions[j];
+                    console.log("Item " + item);
+                    var grammartags;
+                    grammartags = grammarexpressions[j];
+                    console.log("  item length " + grammarexpressions[j]);
+                    var i,i_max;
+                    i_max = grammartags.length;
+                    for(i=0; i<i_max; i++){
+                        console.log("["+grammartags[i][0] + "]=" + grammartags[i][1]);
+                    }
+                }
+            }
+        }
     }
     Image {
         source: "www.svg"
@@ -166,6 +186,8 @@ ColeitraGridInGridLayout {
                 parent.source = "www.svg";
             }
         }
+
+
     }
     Image {
         id: plusbutton
@@ -204,6 +226,7 @@ ColeitraGridInGridLayout {
         lexeme.Layout.preferredWidth = parent.width - 80;
         addAddRemoveGrammarExpression();
     }
+
 }
 @}
 
@@ -230,6 +253,7 @@ ColeitraGridInGridLayout {
         Layout.preferredWidth = parent.width;
         addAddRemoveGrammarForm();
     }
+
 }
 @}
 
@@ -343,9 +367,11 @@ ColeitraGridInGridLayout {
 import QtQuick 2.14
 import QtQuick.Layouts 1.14
 import QtQuick.Controls 2.14
+import QtQml 2.14
 import EditLib 1.0
 import SettingsLib 1.0
 import DatabaseLib 1.0
+import GrammarProviderLib 1.0
 
 ColeitraPage {
     title: "Edit translation"
@@ -397,6 +423,7 @@ ColeitraPage {
             }
         }
     }
+        
     footer: ColeitraGridLayout {
     }
 }

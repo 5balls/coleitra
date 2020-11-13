@@ -61,9 +61,9 @@ public slots:
     void parse_de_noun_f(QNetworkReply* reply);
     void parse_de_verb(QNetworkReply* reply);
     void process_grammar(QList<grammarform> grammarforms, QList<tablecell> parsedTable);
-    void getPlainTextTableFromReply(QNetworkReply* reply, QList<grammarprovider::tablecell> parsedTable);
+    void getPlainTextTableFromReply(QNetworkReply* reply, QList<grammarprovider::tablecell>& parsedTable);
 signals:
-    void grammar_obtained(QStringList expressions, QList<QList<QList<QString> > > grammarexpressions);
+    void grammarobtained(QStringList expressions, QList<QList<QList<QString> > > grammarexpressions);
 private:
     int m_language;
     QString m_word;
@@ -279,7 +279,6 @@ void grammarprovider::getWiktionaryTemplate(QNetworkReply* reply){
     while (parser.hasNext()) {
         parser.next();
         foreach(const QString& wt_finished, wt_finisheds){
-            qDebug() << parser.key() << wt_finished;
             if(wt_finished.startsWith("{{" + parser.key())){
                 QUrl url(s_baseurl + "action=expandtemplates&text=" + wt_finished + "&prop=wikitext&format=json");
                 qDebug() << url.toString();
@@ -395,16 +394,19 @@ void grammarprovider::process_grammar(QList<grammarform> grammarforms, QList<tab
                     else break;
                 }
                 if(tc_current.column == gf_expectedcell.column){
-                    expressions.push_back(tc_current.content);
-                    grammarexpressions.push_back(gf_expectedcell.grammarexpressions);
+                    if(tc_current.content != "—"){
+                        expressions.push_back(tc_current.content);
+                        grammarexpressions.push_back(gf_expectedcell.grammarexpressions);
+                    }
                 }
             }
         }
     }
-    emit grammar_obtained(expressions, grammarexpressions);
+    qDebug() << "Got" << grammarexpressions.size() << "==" << expressions.size();
+    emit grammarobtained(expressions, grammarexpressions);
 }
 
-void grammarprovider::getPlainTextTableFromReply(QNetworkReply* reply, QList<grammarprovider::tablecell> parsedTable){
+void grammarprovider::getPlainTextTableFromReply(QNetworkReply* reply, QList<grammarprovider::tablecell>& parsedTable){
     QObject::disconnect(m_tmp_connection);
     QString s_reply = QString(reply->readAll());
     reply->deleteLater();

@@ -29,6 +29,7 @@ ApplicationWindow {
     visible: true
     visibility: Window.FullScreen
     title: qsTr("Stack")
+    //useSafeArea: false
 
     @<Main header@>
 
