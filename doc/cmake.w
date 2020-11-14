@@ -76,7 +76,10 @@ We need to define all needed Qt5 components here:
 find_package(Qt5 COMPONENTS Quick QuickControls2 QuickWidgets Sql Svg Qml Widgets REQUIRED)
 set(QT_LIBS Qt5::Quick Qt5::QuickControls2 Qt5::QuickWidgets Qt5::Sql Qt5::Svg Qt5::Qml Qt5::Widgets)
 
-include_directories(${Qt5Widgets_INCLUDE_DIRS} ${QtQml_INCLUDE_DIRS})
+link_directories("/usr/lib")
+set(LIBS ${LIBS} "lapack;blas" f2c)
+
+include_directories(${Qt5Widgets_INCLUDE_DIRS} ${QtQml_INCLUDE_DIRS} levmar-2.6)
 add_definitions(${Qt5Widgets_DEFINITIONS} ${QtQml_DEFINITIONS} ${${Qt5Quick_DEFINITIONS}})
 @}
 
@@ -96,7 +99,7 @@ else()
     )
 endif()
 
-target_link_libraries(coleitra PUBLIC ${QT_LIBS})
+target_link_libraries(coleitra PUBLIC ${QT_LIBS} ${LIBS})
 @}
 
 In this step we finally can produce the APK file. For a new release we should probably increase the VERSION\_CODE.

@@ -38,7 +38,15 @@ databasetable.cpp
 databasefield.cpp
 train.cpp
 edit.cpp
-grammarprovider.cpp @}
+grammarprovider.cpp 
+levmar-2.6/lm.c
+levmar-2.6/Axb.c
+levmar-2.6/misc.c
+levmar-2.6/lmlec.c
+levmar-2.6/lmbc.c
+levmar-2.6/lmblec.c
+levmar-2.6/lmbleic.c
+@}
 
 \subsection{Ressource files}
 @d Ressource files

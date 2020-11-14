@@ -43,8 +43,6 @@
 
 @i grammarprovider.w
 
-\chapter{Algorithm}
-
 @i gui.w
 
 @i qt.w
