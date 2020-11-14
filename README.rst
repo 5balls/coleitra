@@ -101,7 +101,17 @@ Directory structure seems to have changed, but this seems to work for the curren
 cmake
 _____
 
-Install the cmake package from your operation system.
+Install the cmake package from your operating system.
+
+LAPACK
+______
+
+Install a lapack library package from your operating system, on debian one possible package is named liblapack-dev.
+
+f2c
+___
+
+Install the f2c package from your operating system, on debian the package name is "f2c".
 
 coleitra
 ........
