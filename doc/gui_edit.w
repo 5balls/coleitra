@@ -26,24 +26,12 @@ import DatabaseLib 1.0
 
 ColeitraGridInGridLayout {
     id: widget
-    Image {
+    ColeitraGridImageButton {
         visible: false
         id: minusbutton
-        source: "minus.svg"
-        Layout.columnSpan: 2
-        Layout.preferredHeight: 40
-        Layout.preferredWidth: 40
-        MouseArea {
-            anchors.fill: parent
-            onClicked: { 
+        imageid: "minus"
+        clickhandler: function() { 
                 widget.destroy();
-            }
-            onPressed: {
-                parent.source = "minus_pressed.svg";
-            }
-            onReleased: {
-                parent.source = "minus.svg";
-            }
         }
     }
     ColeitraGridComboBox {
@@ -58,7 +46,6 @@ ColeitraGridInGridLayout {
         Layout.columnSpan: 4
         Layout.preferredWidth: 100
     }
-
     ColeitraGridLabel {
         visible: false
         id: grammarkeylabel
@@ -77,30 +64,17 @@ ColeitraGridInGridLayout {
         Layout.preferredWidth: 100
         @<Background yellow rounded control@>
     }
-
-    Image {
-        source: "plus.svg"
+    ColeitraGridImageButton {
+        imageid: "plus"
         id: plusbutton
-        Layout.columnSpan: 2
-        Layout.preferredHeight: 40
-        Layout.preferredWidth: 40
-        MouseArea {
-            anchors.fill: parent
-            onClicked: { 
-                minusbutton.visible = true;
-                grammarkey.visible = false;
-                grammarkeylabel.visible = true;
-                grammarvalue.visible = false;
-                grammarvaluelabel.visible = true;
-                plusbutton.visible = false;
-                widget.parent.addAddRemoveGrammarExpression();
-            }
-            onPressed: {
-                parent.source = "plus_pressed.svg";
-            }
-            onReleased: {
-                parent.source = "plus.svg";
-            }
+        clickhandler: function() { 
+            minusbutton.visible = true;
+            grammarkey.visible = false;
+            grammarkeylabel.visible = true;
+            grammarvalue.visible = false;
+            grammarvaluelabel.visible = true;
+            plusbutton.visible = false;
+            widget.parent.addAddRemoveGrammarExpression();
         }
     }
     Component.onCompleted: {
@@ -122,24 +96,12 @@ import DatabaseLib 1.0
 ColeitraGridInGridLayout {
     id: widget
     property var language: 1
-    Image {
+    ColeitraGridImageButton {
         id: minusbutton
         visible: false
-        source: "minus.svg"
-        Layout.columnSpan: 2
-        Layout.preferredHeight: 40
-        Layout.preferredWidth: 40
-        MouseArea {
-            anchors.fill: parent
-            onClicked: { 
-                widget.destroy();
-            }
-            onPressed: {
-                parent.source = "minus_pressed.svg";
-            }
-            onReleased: {
-                parent.source = "minus.svg";
-            }
+        imageid: "minus"
+        clickhandler: function() { 
+            widget.destroy();
         }
     }
     ColeitraGridTextInput {
@@ -167,49 +129,22 @@ ColeitraGridInGridLayout {
             }
         }
     }
-    Image {
-        source: "www.svg"
-        Layout.columnSpan: 2
-        Layout.preferredHeight: 40
-        Layout.preferredWidth: 40
-        MouseArea {
-            anchors.fill: parent
-            onClicked: { 
-                GrammarProvider.language = language;
-                GrammarProvider.word = lexeme.text;
-                GrammarProvider.getWiktionarySections()
-            }
-            onPressed: {
-                parent.source = "www_pressed.svg";
-            }
-            onReleased: {
-                parent.source = "www.svg";
-            }
+    ColeitraGridImageButton {
+        imageid: "www"
+        clickhandler: function() { 
+            GrammarProvider.language = language;
+            GrammarProvider.word = lexeme.text;
+            GrammarProvider.getWiktionarySections()
         }
-
-
     }
-    Image {
+    ColeitraGridImageButton {
         id: plusbutton
-        source: "plus.svg"
-        Layout.columnSpan: 2
-        Layout.preferredHeight: 40
-        Layout.preferredWidth: 40
-        MouseArea {
-            anchors.fill: parent
-            onClicked: { 
-                plusbutton.visible = false;
-                minusbutton.visible = true;
-                parent.parent.parent.addAddRemoveGrammarForm();
-            }
-            onPressed: {
-                parent.source = "plus_pressed.svg";
-            }
-            onReleased: {
-                parent.source = "plus.svg";
-            }
+        imageid: "plus"
+        clickhandler: function() { 
+            plusbutton.visible = false;
+            minusbutton.visible = true;
+            parent.parent.addAddRemoveGrammarForm();
         }
-
     }
     function addAddRemoveGrammarExpression(){
         var component = Qt.createComponent("ColeitraWidgetEditGrammarExpression.qml");
@@ -273,26 +208,13 @@ ColeitraGridInGridLayout {
         Layout.columnSpan: 12
         text: Database.languagenamefromid(edit_language) + ":"
     }
-    Image {
+    ColeitraGridImageButton {
         id: minusbutton
         visible: false
-        source: "minus.svg"
-        Layout.columnSpan: 2
-        Layout.preferredHeight: 40
-        Layout.preferredWidth: 40
-        MouseArea {
-            anchors.fill: parent
-            onClicked: { 
-                widget.destroy();
-            }
-            onPressed: {
-                parent.source = "minus_pressed.svg";
-            }
-            onReleased: {
-                parent.source = "minus.svg";
-            }
+        imageid: "minus"
+        clickhandler: function() {
+            widget.destroy();
         }
-
     }
     TabBar {
         id: editselection
@@ -310,25 +232,13 @@ ColeitraGridInGridLayout {
             text: qsTr("Grammarform")
         }
     }
-    Image {
+    ColeitraGridImageButton {
         id: plusbutton
-        source: "plus.svg"
-        Layout.columnSpan: 2
-        Layout.preferredHeight: 40
-        Layout.preferredWidth: 40
-        MouseArea {
-            anchors.fill: parent
-            onClicked: { 
-                plusbutton.visible = false;
-                minusbutton.visible = true;
-                parent.parent.parent.addAddRemoveEdit(edit_language);
-            }
-            onPressed: {
-                parent.source = "plus_pressed.svg";
-            }
-            onReleased: {
-                parent.source = "plus.svg";
-            }
+        imageid: "plus"
+        clickhandler: function() {
+            plusbutton.visible = false;
+            minusbutton.visible = true;
+            parent.parent.addAddRemoveEdit(edit_language);
         }
     }
     StackLayout {
@@ -419,6 +329,7 @@ ColeitraPage {
                 Component.onCompleted: {
                     addAddRemoveEdit(Settings.nativelanguage);
                 }
+
 
             }
         }

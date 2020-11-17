@@ -166,6 +166,33 @@ Button {
 }
 @}
 
+\subsection{Grid image button}
+@o ../src/ColeitraGridImageButton.qml
+@{
+import QtQuick 2.14
+import QtQuick.Layouts 1.14
+
+Image {
+    property var imageid: "plus"
+    property var clickhandler: function() {};
+    source: imageid + ".svg"
+    Layout.columnSpan: 2
+    Layout.preferredHeight: 40
+    Layout.preferredWidth: 40
+    MouseArea {
+        id: ma
+        anchors.fill: parent
+        onClicked: clickhandler()
+        onPressed: {
+            parent.source = parent.imageid + "_pressed.svg";
+        }
+        onReleased: {
+            parent.source = parent.imageid + ".svg";
+        }
+    }
+}
+@}
+
 \subsection{GUI fragments}
 \subsubsection{Label and text}
 @d Coleitra label @'name@' with value @'value@'
