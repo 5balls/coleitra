@@ -50,7 +50,7 @@ public:
         QList<QList<QString> > grammarexpressions;
     };
 public slots:
-    Q_INVOKABLE void getWiktionarySections();
+    Q_INVOKABLE void getWiktionarySections(QObject* caller);
     void getWiktionarySection(QNetworkReply* reply);
     void getWiktionaryTemplate(QNetworkReply* reply);
     void parseMediawikiTableToPlainText(QString wikitext, QList<grammarprovider::tablecell>& table);
@@ -63,7 +63,7 @@ public slots:
     void process_grammar(QList<grammarform> grammarforms, QList<tablecell> parsedTable);
     void getPlainTextTableFromReply(QNetworkReply* reply, QList<grammarprovider::tablecell>& parsedTable);
 signals:
-    void grammarobtained(QStringList expressions, QList<QList<QList<QString> > > grammarexpressions);
+    void grammarobtained(QObject* caller, QStringList expressions, QList<QList<QList<QString> > > grammarexpressions);
 private:
     int m_language;
     QString m_word;
@@ -73,6 +73,7 @@ private:
     QList<QString> m_parsesections;
     settings* m_settings;
     database* m_database;
+    QObject* m_caller;
     QMap<QString, void (grammarprovider::*)(QNetworkReply*)> m_parser_map; 
 signals:
 
@@ -173,7 +174,8 @@ grammarprovider::~grammarprovider() {
     delete m_manager;
 }
 
-void grammarprovider::getWiktionarySections(){
+void grammarprovider::getWiktionarySections(QObject* caller){
+    m_caller = caller;
     QUrl url(s_baseurl + "action=parse&page=" + m_word + "&prop=sections&format=json");
     QNetworkRequest request(url);
     request.setRawHeader("User-Agent", "Coleitra/0.1 (https://coleitra.org; fpesth@@gmx.de)");
@@ -403,7 +405,7 @@ void grammarprovider::process_grammar(QList<grammarform> grammarforms, QList<tab
         }
     }
     qDebug() << "Got" << grammarexpressions.size() << "==" << expressions.size();
-    emit grammarobtained(expressions, grammarexpressions);
+    emit grammarobtained(m_caller, expressions, grammarexpressions);
 }
 
 void grammarprovider::getPlainTextTableFromReply(QNetworkReply* reply, QList<grammarprovider::tablecell>& parsedTable){

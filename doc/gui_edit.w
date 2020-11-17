@@ -26,12 +26,15 @@ import DatabaseLib 1.0
 
 ColeitraGridInGridLayout {
     id: widget
+    property var gklabel: grammarkeylabel
+    property var gvlabel: grammarvaluelabel
+    property var pbutton: plusbutton
     ColeitraGridImageButton {
         visible: false
         id: minusbutton
         imageid: "minus"
         clickhandler: function() { 
-                widget.destroy();
+            widget.destroy();
         }
     }
     ColeitraGridComboBox {
@@ -96,6 +99,8 @@ import DatabaseLib 1.0
 ColeitraGridInGridLayout {
     id: widget
     property var language: 1
+    property var pbutton: plusbutton
+    property var lx: lexeme
     ColeitraGridImageButton {
         id: minusbutton
         visible: false
@@ -111,20 +116,22 @@ ColeitraGridInGridLayout {
         Connections {
             target: GrammarProvider
             onGrammarobtained: {
-                console.log("Received the signal " + expressions.length + "==" + grammarexpressions.length);
-                var j,j_max;
-                j_max = expressions.length;
-                for(j=0; j<j_max; j++){
+                if(widget != caller) return;
+                var current_lexeme = lexeme;
+                var j_max = expressions.length;
+                for(var j=0; j<j_max; j++){
                     var item = expressions[j];
-                    console.log("Item " + item);
-                    var grammartags;
-                    grammartags = grammarexpressions[j];
-                    console.log("  item length " + grammarexpressions[j]);
-                    var i,i_max;
-                    i_max = grammartags.length;
-                    for(i=0; i<i_max; i++){
-                        console.log("["+grammartags[i][0] + "]=" + grammartags[i][1]);
+                    current_lexeme.text = item;
+                    var grammartags = grammarexpressions[j];
+                    var i_max = grammartags.length;
+                    for(var i=0; i<i_max; i++){
+                        var current_grammarexpression = current_lexeme.parent.children[current_lexeme.parent.children.length-1];
+                        current_grammarexpression.gklabel.text = grammartags[i][0];
+                        current_grammarexpression.gvlabel.text = grammartags[i][1];
+                        current_grammarexpression.pbutton.clickhandler();
                     }
+                    current_lexeme.parent.pbutton.clickhandler();
+                    current_lexeme = current_lexeme.parent.parent.children[current_lexeme.parent.parent.children.length-1].lx;
                 }
             }
         }
@@ -134,7 +141,7 @@ ColeitraGridInGridLayout {
         clickhandler: function() { 
             GrammarProvider.language = language;
             GrammarProvider.word = lexeme.text;
-            GrammarProvider.getWiktionarySections()
+            GrammarProvider.getWiktionarySections(widget)
         }
     }
     ColeitraGridImageButton {
