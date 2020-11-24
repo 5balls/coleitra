@@ -495,7 +495,11 @@ QStringList database::grammarvalues(QString key){
 }
 
 int database::alphabeticidfromlanguagename(QString languagename){
-    return languagenames().indexOf(QStringView(languagename));
+    int index=0;
+    foreach(const QString& test_languagename, languagenames()){
+        if(test_languagename == languagename) return index;
+        index++;
+    }
 }
 
 int database::alphabeticidfromlanguageid(int languageid){

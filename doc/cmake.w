@@ -73,14 +73,19 @@ We need to define all needed Qt5 components here:
 
 @o ../src/CMakeLists.txt
 @{
-find_package(Qt5 COMPONENTS Quick QuickControls2 QuickWidgets Sql Svg Qml Widgets REQUIRED)
-set(QT_LIBS Qt5::Quick Qt5::QuickControls2 Qt5::QuickWidgets Qt5::Sql Qt5::Svg Qt5::Qml Qt5::Widgets)
+find_package(Qt5 COMPONENTS Quick QuickControls2 QuickWidgets Sql Svg Qml Widgets Network REQUIRED)
+set(QT_LIBS Qt5::Quick Qt5::QuickControls2 Qt5::QuickWidgets Qt5::Sql Qt5::Svg Qt5::Qml Qt5::Widgets Qt5::Network)
 
-link_directories("/usr/lib")
-set(LIBS ${LIBS} "lapack;blas" f2c)
+if(ANDROID)
+set(ANDROID_EXTRA_LIBS
+    /usr/local/lib/libcrypto_1_1.so
+    /usr/local/lib/libssl_1_1.so
+CACHE INTERNAL "")
+set(LIBS ${LIBS} android log)
+endif()
 
-include_directories(${Qt5Widgets_INCLUDE_DIRS} ${QtQml_INCLUDE_DIRS} levmar-2.6)
-add_definitions(${Qt5Widgets_DEFINITIONS} ${QtQml_DEFINITIONS} ${${Qt5Quick_DEFINITIONS}})
+include_directories(${Qt5Widgets_INCLUDE_DIRS} ${QtQml_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR} levmar-2.6)
+add_definitions(${Qt5Widgets_DEFINITIONS} ${QtQml_DEFINITIONS} ${QtNetwork} ${${Qt5Quick_DEFINITIONS}})
 @}
 
 A slightly different command is needed if we compile for android as the program entry point is a java function and not our C++ main function:
@@ -110,8 +115,10 @@ if(ANDROID)
     include(${CMAKE_CURRENT_LIST_DIR}/qt-android-cmake/AddQtAndroidApk.cmake)
     add_qt_android_apk(coleitra.apk coleitra
         NAME "coleitra"
-        VERSION_CODE 1
+        VERSION_CODE 0010
         PACKAGE_NAME "org.coleitra.coleitra"
+        DEPENDS
+        ${ANDROID_EXTRA_LIBS}
         INSTALL
     )
 endif()

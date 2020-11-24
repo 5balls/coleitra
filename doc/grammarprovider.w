@@ -31,6 +31,7 @@
 #include <QMap>
 #include <QMapIterator>
 #include <QTextDocument>
+#include <QThread>
 #include "settings.h"
 #include "database.h"
 @<Start of class @'grammarprovider@'@>
@@ -53,6 +54,7 @@ public slots:
     Q_INVOKABLE void getWiktionarySections(QObject* caller);
     void getWiktionarySection(QNetworkReply* reply);
     void getWiktionaryTemplate(QNetworkReply* reply);
+    void networkReplyErrorOccurred(QNetworkReply::NetworkError code);
     void parseMediawikiTableToPlainText(QString wikitext, QList<grammarprovider::tablecell>& table);
     void parse_fi_verbs(QNetworkReply* reply);
     void parse_fi_nominals(QNetworkReply* reply);
@@ -175,18 +177,29 @@ grammarprovider::~grammarprovider() {
 }
 
 void grammarprovider::getWiktionarySections(QObject* caller){
+    qDebug() << "getWiktionarySections enter";
     m_caller = caller;
     QUrl url(s_baseurl + "action=parse&page=" + m_word + "&prop=sections&format=json");
     QNetworkRequest request(url);
     request.setRawHeader("User-Agent", "Coleitra/0.1 (https://coleitra.org; fpesth@@gmx.de)");
     m_tmp_connection = connect(m_manager, &QNetworkAccessManager::finished,
         this, &grammarprovider::getWiktionarySection);
-    m_manager->get(request);
+    QNetworkReply *reply = m_manager->get(request);
+#if QT_VERSION >= 0x051500
+    connect(reply, &QNetworkReply::errorOccurred, this,
+                [reply](QNetworkReply::NetworkError) {
+                qDebug() << "Error " << reply->errorString(); 
+            });
+#endif
+
+    qDebug() << "getWiktionarySections exit";
 }
 
 void grammarprovider::getWiktionarySection(QNetworkReply* reply){
+    qDebug() << "getWiktionarySection enter";
     QObject::disconnect(m_tmp_connection);
     QString s_reply = QString(reply->readAll());
+    qDebug() << s_reply;
     reply->deleteLater();
 
     int languageid = m_language;
@@ -204,6 +217,7 @@ void grammarprovider::getWiktionarySection(QNetworkReply* reply){
         s_section = j_section["line"].toString();
         section_level = j_section["level"].toString().toInt();
         if(section_level <= language_section_level) break;
+        qDebug() << "Section" << s_section << "language" << language;
         if(s_section == language){
             found_language = true;
             best_bet_for_section = j_section["index"].toString().toInt();
@@ -227,12 +241,29 @@ void grammarprovider::getWiktionarySection(QNetworkReply* reply){
         request.setRawHeader("User-Agent", "Coleitra/0.1 (https://coleitra.org; fpesth@@gmx.de)");
         m_tmp_connection = connect(m_manager, &QNetworkAccessManager::finished,
                 this, &grammarprovider::getWiktionaryTemplate);
-        m_manager->get(request);
+        QThread::msleep(200);
+        QNetworkReply *reply = m_manager->get(request);
+#if QT_VERSION >= 0x051500
+        connect(reply, &QNetworkReply::errorOccurred, this,
+                [reply](QNetworkReply::NetworkError) {
+                qDebug() << "Error " << reply->errorString(); 
+            });
+#endif
+
     }
+    else{
+        qDebug() << "Could not find language";
+    }
+    qDebug() << "getWiktionarySection exit";
+}
+
+void grammarprovider::networkReplyErrorOccurred(QNetworkReply::NetworkError code){
+//    qWarning() << "Error occured in network request in grammar provider:" << QIODevice::errorString();
 }
 
 
 void grammarprovider::getWiktionaryTemplate(QNetworkReply* reply){
+    qDebug() << "getWiktionaryTemplate enter";
     QObject::disconnect(m_tmp_connection);
     QString s_reply = QString(reply->readAll());
     reply->deleteLater();
@@ -293,6 +324,8 @@ void grammarprovider::getWiktionaryTemplate(QNetworkReply* reply){
             }
         }
     }
+
+    qDebug() << "getWiktionaryTemplate exit";
 }
 
 void grammarprovider::parseMediawikiTableToPlainText(QString wikitext, QList<grammarprovider::tablecell>& table){

@@ -72,7 +72,7 @@ You should follow the instructions of Qt - either on their webpage or in the sou
    -android-ndk ~/src/foreign/android-sdk/ndk-bundle \
    -android-sdk ~/src/foreign/android-sdk \
    -no-warnings-are-errors \
-   --prefix=/home/user/src/foreign/qt5-android-install-20201022
+   -prefix ~/src/foreign/qt5-android-install-20201121
    make
    su
    make install
@@ -80,10 +80,12 @@ You should follow the instructions of Qt - either on their webpage or in the sou
 
 Choose the open source license and accept the LGPLv3 offer. It may take quite some time to compile Qt as it is a large library (expect several hours of compile time depending on your setup).
 
+It might help to pass also the `-ltcg` flag to configure to enable link time optimization and make the resulting binary smaller but I could not make it work yet.
+
 Android SDK and NDK
 ___________________
 
-You don't need Android Studio to compile coleitra. Download just the commandlinetools package (it is usually a bit hidden on googles webpage, you might need to scroll down quite  bit), at the time of this writing the file was called `commandlinetools-linux-6858069_latest.zip` but that may change.
+You don't need Android Studio to compile coleitra. Download just the commandlinetools package (it is usually a bit hidden on googles webpage, you might need to scroll down quite  bit), at the time of this writing the file was called `commandlinetools-linux-6858069_latest.zip` located at `this place <https://developer.android.com/studio#command-tools>`_ but that may change.
 
 .. code-block:: bash
    
@@ -94,9 +96,25 @@ You don't need Android Studio to compile coleitra. Download just the commandline
    export PATH=$PATH:~/src/foreign/android-sdk/cmdline-tools/tools/bin
    export ANDROID_SDK_ROOT=~/src/foreign/android-sdk
    sdkmanager ndk-bundle
+   sdkmanager "platform-tools" "platforms;android-28"
 
-Directory structure seems to have changed, but this seems to work for the current version.
+You have to agree to googles license agreement to continue. Directory structure seems to have changed, but this seems to work for the current version.
 
+OpenSSL
+_______
+
+Qt5 needs to be configured with OpenSSL which is needed for https requests. Download the last stable version from `the OpenSSL webpage <https://www.openssl.org/source/>`_, at the time of this writing this is version 1.1.1.. Follow the instructions to compile it for android, in my case this is written in
+
+.. code-block:: bash
+
+
+   export ANDROID_NDK_HOME=~/src/foreign/android-sdk/ndk-bundle
+   export PATH=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$ANDROID_NDK_HOME/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin:$PATH
+   cd openssl-1.1.1h
+   ./Configure android-arm -D__ANDROID_API__=21
+   make SHLIB_VERSION_NUMBER= SHLIB_EXT=_1_1.so build_libs
+
+The extension of the libraries needs to be changed from standard naming because android does not seem to like libraries which don't end on .so, so libssl.so.1.1 is not working while libssl_1_1.so is. `make install` will not work with this extension but this is fine we don't need it.
 
 cmake
 _____

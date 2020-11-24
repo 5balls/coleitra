@@ -21,14 +21,20 @@
 @o ../src/main.h -d
 @{
 @<Start of @'MAIN@' header@>
+#include <QtGlobal>
 #include <QApplication>
 #include <QQmlApplicationEngine>
+#include <QSslSocket>
 #include "about.h"
 #include "settings.h"
 #include "database.h"
 #include "edit.h"
 #include "train.h"
 #include "grammarprovider.h"
+
+#ifdef Q_OS_ANDROID
+#include <android/log.h>
+#endif
 @<End of header@>
 @}
 
@@ -49,8 +55,37 @@ qmlRegisterSingletonType<@2>("@1Lib", @3, @4, "@1", [](
 @{
 #include "main.h"
 
+#ifdef Q_OS_ANDROID
+    void androidAdbLogcatMessageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg){
+        const char* const applicationName = "coleitra";
+        const char* const local=msg.toLocal8Bit().constData();
+        switch (type) {
+            case QtDebugMsg:
+                __android_log_write(ANDROID_LOG_DEBUG,applicationName,local);
+                break;
+            case QtInfoMsg:
+                __android_log_write(ANDROID_LOG_INFO,applicationName,local);
+                break;
+            case QtWarningMsg:
+                __android_log_write(ANDROID_LOG_WARN,applicationName,local);
+                break;
+            case QtCriticalMsg:
+                __android_log_write(ANDROID_LOG_ERROR,applicationName,local);
+                break;
+            case QtFatalMsg:
+            default:
+                __android_log_write(ANDROID_LOG_FATAL,applicationName,local);
+                abort();    
+        }
+    }
+#endif
+
 int main(int argc, char *argv[])
 {
+#ifdef Q_OS_ANDROID
+    qInstallMessageHandler(androidAdbLogcatMessageHandler);
+    qputenv("ANDROID_OPENSSL_SUFFIX", "_1_1");
+#endif
     @<Register singleton @'Settings@' class @'settings@' version @'1@' @'0@' @>
     @<Register singleton @'About@' class @'about@' version @'1@' @'0@' @>
     @<Register singleton @'Database@' class @'database@' version @'1@' @'0@' @>
@@ -60,9 +95,11 @@ int main(int argc, char *argv[])
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QCoreApplication::setApplicationName("coleitra");
     QCoreApplication::setOrganizationName("coleitra");
-    QCoreApplication::setOrganizationDomain("https://pesth.org");
+    QCoreApplication::setOrganizationDomain("https://icoleitra.org");
     //qputenv("QT_ANDROID_VOLUME_KEYS", "1");
+
     QApplication app(argc, argv);
+    qDebug() << "Device supports OpenSSL: " << QSslSocket::supportsSsl();
 
     QQmlApplicationEngine engine;
 
