@@ -78,7 +78,7 @@ You should follow the instructions of Qt - either on their webpage or in the sou
    make install
    exit
 
-Choose the open source license and accept the LGPLv3 offer. It may take quite some time to compile Qt as it is a large library (expect several hours of compile time depending on your setup).
+Choose the open source license and accept the LGPLv3 offer. It may take quite some time to compile Qt as it is a large library (expect several hours of compile time depending on your setup) to speed up the process you can make use of multiple cores by adding -j4 to the make commnd (in the case of four cores for example). If compiling the desktop version on linux the -xcb switch seems to be needed or at least the required dependencies to be able to add this option, maybe it is automatically compiled when the dependencies are fullfilled.
 
 It might help to pass also the `-ltcg` flag to configure to enable link time optimization and make the resulting binary smaller but I could not make it work yet.
 

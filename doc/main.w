@@ -22,6 +22,15 @@
 @{
 @<Start of @'MAIN@' header@>
 #include <QtGlobal>
+
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 12, 0))
+    #pragma message "Compiling for Qt version " QT_VERSION_STR 
+#else
+    #pragma message "Tried to compiling for to old Qt version " QT_VERSION_STR 
+    #error "Version of Qt5 >= 5.12.0 is required"
+#endif
+
+
 #include <QApplication>
 #include <QQmlApplicationEngine>
 #include <QSslSocket>
@@ -31,6 +40,7 @@
 #include "edit.h"
 #include "train.h"
 #include "grammarprovider.h"
+
 
 #ifdef Q_OS_ANDROID
 #include <android/log.h>
