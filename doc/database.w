@@ -310,9 +310,9 @@ Finally we create our tables if they don't exist already:
                 // Number
                 {"Number","Singular", "Plural"},
                 // Tense
-                {"Tense", "Past", "Perfect", "Plusquamperfekt", "Present","Agent"},
+                {"Tense", "Past", "Perfect", "Plusquamperfekt", "Present", "Preterite", "Agent"},
                 // Mood
-                {"Mood", "Imperative", "Indicative", "Potential"},
+                {"Mood", "Imperative", "Indicative", "Potential", "Subjunctive"},
                 // Part of speech
                 {"Part of speech", "Noun", "Verb", "Adjective", "Adverb", "Pronoun", "Preposition", "Conjunction", "Interjection", "Numeral", "Article", "Determiner", "Postposition"},
                 // Person
@@ -322,7 +322,7 @@ Finally we create our tables if they don't exist already:
                 // Infinitive
                 {"Infinitive", "First", "Long first", "Second", "Third", "Fourth", "Fifth"},
                 // Verbform
-                {"Verbform", "Participle"},
+                {"Verbform", "Participle", "Auxiliary"},
             };
             QMap<QString,QVariant> add_ge;
             QMap<QString,QVariant> add_gk;

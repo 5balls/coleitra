@@ -50,11 +50,16 @@ public:
         int column;
         QList<QList<QString> > grammarexpressions;
     };
+    struct templatearguments {
+        QMap<QString, QString> named;
+        QList<QString> unnamed;
+    };
 public slots:
     Q_INVOKABLE void getWiktionarySections(QObject* caller);
     void getWiktionarySection(QNetworkReply* reply);
     void getWiktionaryTemplate(QNetworkReply* reply);
     void networkReplyErrorOccurred(QNetworkReply::NetworkError code);
+    templatearguments parseTemplateArguments(QString templateString);
     void parseMediawikiTableToPlainText(QString wikitext, QList<grammarprovider::tablecell>& table);
     void parse_fi_verbs(QNetworkReply* reply);
     void parse_fi_nominals(QNetworkReply* reply);
@@ -62,7 +67,7 @@ public slots:
     void parse_de_noun_m(QNetworkReply* reply);
     void parse_de_noun_f(QNetworkReply* reply);
     void parse_de_verb(QNetworkReply* reply);
-    void process_grammar(QList<grammarform> grammarforms, QList<tablecell> parsedTable);
+    void process_grammar(QList<grammarform> grammarforms, QList<tablecell> parsedTable, QList<QList<QString> > additional_grammarforms = {});
     void getPlainTextTableFromReply(QNetworkReply* reply, QList<grammarprovider::tablecell>& parsedTable);
 signals:
     void grammarobtained(QObject* caller, QStringList expressions, QList<QList<QList<QString> > > grammarexpressions);
@@ -76,6 +81,7 @@ private:
     settings* m_settings;
     database* m_database;
     QObject* m_caller;
+    templatearguments m_currentarguments;
     QMap<QString, void (grammarprovider::*)(QNetworkReply*)> m_parser_map; 
 signals:
 
@@ -170,6 +176,10 @@ grammarprovider::grammarprovider(QObject *parent) : QObject(parent)
     m_parser_map["fi-decl-tuhat"] = &grammarprovider::parse_fi_nominals;
     m_parser_map["fi-decl-kuollut"] = &grammarprovider::parse_fi_nominals;
     m_parser_map["fi-decl-hame"] = &grammarprovider::parse_fi_nominals;
+    m_parser_map["de-decl-noun-n"] = &grammarprovider::parse_de_noun_n;
+    m_parser_map["de-decl-noun-m"] = &grammarprovider::parse_de_noun_m;
+    m_parser_map["de-decl-noun-f"] = &grammarprovider::parse_de_noun_f;
+    m_parser_map["de-conj-strong"] = &grammarprovider::parse_de_verb;
 }
 
 grammarprovider::~grammarprovider() {
@@ -261,9 +271,28 @@ void grammarprovider::networkReplyErrorOccurred(QNetworkReply::NetworkError code
 //    qWarning() << "Error occured in network request in grammar provider:" << QIODevice::errorString();
 }
 
+grammarprovider::templatearguments grammarprovider::parseTemplateArguments(QString templateString){
+    templateString = templateString.trimmed();
+    templateString.remove(0,2);
+    templateString.chop(2);
+    QStringList args = templateString.split(QLatin1Char('|'));
+    templatearguments parsed_args;
+    foreach(const QString& arg, args){
+        if(arg.contains(QLatin1Char('='))){
+            QStringList keyval = arg.split(QLatin1Char('='));
+            parsed_args.named[keyval.first()] = keyval.last();
+            qDebug() << keyval.first() << "=" << keyval.last();
+        }
+        else {
+            parsed_args.unnamed.push_back(arg);
+            qDebug() << arg;
+        }
+    }
+    return parsed_args;
+}
+
 
 void grammarprovider::getWiktionaryTemplate(QNetworkReply* reply){
-    qDebug() << "getWiktionaryTemplate enter";
     QObject::disconnect(m_tmp_connection);
     QString s_reply = QString(reply->readAll());
     reply->deleteLater();
@@ -313,7 +342,8 @@ void grammarprovider::getWiktionaryTemplate(QNetworkReply* reply){
         parser.next();
         foreach(const QString& wt_finished, wt_finisheds){
             if(wt_finished.startsWith("{{" + parser.key())){
-                QUrl url(s_baseurl + "action=expandtemplates&text=" + wt_finished + "&prop=wikitext&format=json");
+                QUrl url(s_baseurl + "action=expandtemplates&text=" + wt_finished + "&title=" + m_word + "&prop=wikitext&format=json");
+                m_currentarguments = parseTemplateArguments(wt_finished);
                 qDebug() << url.toString();
                 QNetworkRequest request(url);
                 request.setRawHeader("User-Agent", "Coleitra/0.1 (https://coleitra.org; fpesth@@gmx.de)");
@@ -324,8 +354,7 @@ void grammarprovider::getWiktionaryTemplate(QNetworkReply* reply){
             }
         }
     }
-
-    qDebug() << "getWiktionaryTemplate exit";
+    qDebug() << "Template(s)" << wt_finisheds << "not supported!";
 }
 
 void grammarprovider::parseMediawikiTableToPlainText(QString wikitext, QList<grammarprovider::tablecell>& table){
@@ -393,6 +422,7 @@ void grammarprovider::parseMediawikiTableToPlainText(QString wikitext, QList<gra
             column++;
             table_line = process_line(table_line);
             table.push_back({row,column,table_line});
+            qDebug() << row << column << table_line;
             column += columnspan;
             continue;
         }
@@ -401,13 +431,15 @@ void grammarprovider::parseMediawikiTableToPlainText(QString wikitext, QList<gra
             column++;
             table_line = process_line(table_line);
             table.push_back({row,column,table_line});
+            qDebug() << row << column << table_line;
             column += columnspan;
             continue;
         }
     }
 }
 
-void grammarprovider::process_grammar(QList<grammarform> grammarforms, QList<tablecell> parsedTable){
+
+void grammarprovider::process_grammar(QList<grammarform> grammarforms, QList<tablecell> parsedTable, QList<QList<QString> > additional_grammarforms){
     QStringList expressions;
     QList<QList<QList<QString> > > grammarexpressions;
     if(!parsedTable.isEmpty()){
@@ -416,7 +448,9 @@ void grammarprovider::process_grammar(QList<grammarform> grammarforms, QList<tab
             while(tc_current.row < gf_expectedcell.row){
                 if(!parsedTable.isEmpty()){
                     parsedTable.pop_front();
-                    tc_current = parsedTable.first();
+                    if(!parsedTable.isEmpty())
+                        tc_current = parsedTable.first();
+                    else goto out;
                 }
                 else break;
             }
@@ -431,12 +465,13 @@ void grammarprovider::process_grammar(QList<grammarform> grammarforms, QList<tab
                 if(tc_current.column == gf_expectedcell.column){
                     if(tc_current.content != "—"){
                         expressions.push_back(tc_current.content);
-                        grammarexpressions.push_back(gf_expectedcell.grammarexpressions);
+                        grammarexpressions.push_back(gf_expectedcell.grammarexpressions + additional_grammarforms);
                     }
                 }
             }
         }
     }
+out:
     qDebug() << "Got" << grammarexpressions.size() << "==" << expressions.size();
     emit grammarobtained(m_caller, expressions, grammarexpressions);
 }
@@ -624,7 +659,7 @@ void grammarprovider::parse_fi_verbs(QNetworkReply* reply){
         {65,3,{{"Infinitive","Fourth"},{"Voice","Active"},{"Case","Partitive"}}},
         {66,3,{{"Infinitive","Fifth"},{"Voice","Active"}}},
     };
-    process_grammar(grammarforms,parsedTable);
+    process_grammar(grammarforms,parsedTable,{{"Part of speech","Verb"}});
 }
 
 
@@ -671,25 +706,27 @@ void grammarprovider::parse_fi_nominals(QNetworkReply* reply){
         {26,3,{{"Case","Possessive"},{"Number","Plural"},{"Person","Second"}}},
         {27,2,{{"Case","Possessive"},{"Number","Singular"},{"Number","Plural"},{"Person","Third"}}},
     };
-    process_grammar(grammarforms,parsedTable);
+    if(m_currentarguments.named["pos"] == "adj")
+        process_grammar(grammarforms,parsedTable,{{"Part of speech","Adjective"}});
+    else
+        process_grammar(grammarforms,parsedTable,{{"Part of speech","Noun"}});
 }
 
 void grammarprovider::parse_de_noun_n(QNetworkReply* reply){
-
     QList<grammarprovider::tablecell> parsedTable;
     getPlainTextTableFromReply(reply, parsedTable);
 
     QList<grammarform> grammarforms {
-        {4,4,{{"Gender","Neuter"},{"Case","Nominative"},{"Number","Singular"}}},
-        {4,6,{{"Gender","Neuter"},{"Case","Nominative"},{"Number","Plural"}}},
-        {5,4,{{"Gender","Neuter"},{"Case","Genitive"},{"Number","Singular"}}},
-        {5,6,{{"Gender","Neuter"},{"Case","Genitive"},{"Number","Plural"}}},
-        {6,4,{{"Gender","Neuter"},{"Case","Dative"},{"Number","Singular"}}},
-        {6,6,{{"Gender","Neuter"},{"Case","Dative"},{"Number","Plural"}}},
-        {7,4,{{"Gender","Neuter"},{"Case","Accusative"},{"Number","Singular"}}},
-        {7,6,{{"Gender","Neuter"},{"Case","Accusative"},{"Number","Plural"}}},
+        {2,4,{{"Gender","Neuter"},{"Case","Nominative"},{"Number","Singular"}}},
+        {2,6,{{"Gender","Neuter"},{"Case","Nominative"},{"Number","Plural"}}},
+        {3,4,{{"Gender","Neuter"},{"Case","Genitive"},{"Number","Singular"}}},
+        {3,6,{{"Gender","Neuter"},{"Case","Genitive"},{"Number","Plural"}}},
+        {4,4,{{"Gender","Neuter"},{"Case","Dative"},{"Number","Singular"}}},
+        {4,6,{{"Gender","Neuter"},{"Case","Dative"},{"Number","Plural"}}},
+        {5,4,{{"Gender","Neuter"},{"Case","Accusative"},{"Number","Singular"}}},
+        {5,6,{{"Gender","Neuter"},{"Case","Accusative"},{"Number","Plural"}}},
     };
-    process_grammar(grammarforms,parsedTable);
+    process_grammar(grammarforms,parsedTable,{{"Part of speech","Noun"}});
 }
 
 void grammarprovider::parse_de_noun_m(QNetworkReply* reply){
@@ -698,16 +735,16 @@ void grammarprovider::parse_de_noun_m(QNetworkReply* reply){
     getPlainTextTableFromReply(reply, parsedTable);
 
     QList<grammarform> grammarforms {
-        {4,4,{{"Gender","Masculine"},{"Case","Nominative"},{"Number","Singular"}}},
-        {4,6,{{"Gender","Masculine"},{"Case","Nominative"},{"Number","Plural"}}},
-        {5,4,{{"Gender","Masculine"},{"Case","Genitive"},{"Number","Singular"}}},
-        {5,6,{{"Gender","Masculine"},{"Case","Genitive"},{"Number","Plural"}}},
-        {6,4,{{"Gender","Masculine"},{"Case","Dative"},{"Number","Singular"}}},
-        {6,6,{{"Gender","Masculine"},{"Case","Dative"},{"Number","Plural"}}},
-        {7,4,{{"Gender","Masculine"},{"Case","Accusative"},{"Number","Singular"}}},
-        {7,6,{{"Gender","Masculine"},{"Case","Accusative"},{"Number","Plural"}}},
+        {2,4,{{"Gender","Masculine"},{"Case","Nominative"},{"Number","Singular"}}},
+        {2,6,{{"Gender","Masculine"},{"Case","Nominative"},{"Number","Plural"}}},
+        {3,4,{{"Gender","Masculine"},{"Case","Genitive"},{"Number","Singular"}}},
+        {3,6,{{"Gender","Masculine"},{"Case","Genitive"},{"Number","Plural"}}},
+        {4,4,{{"Gender","Masculine"},{"Case","Dative"},{"Number","Singular"}}},
+        {4,6,{{"Gender","Masculine"},{"Case","Dative"},{"Number","Plural"}}},
+        {5,4,{{"Gender","Masculine"},{"Case","Accusative"},{"Number","Singular"}}},
+        {5,6,{{"Gender","Masculine"},{"Case","Accusative"},{"Number","Plural"}}},
     };
-    process_grammar(grammarforms,parsedTable);
+    process_grammar(grammarforms,parsedTable,{{"Part of speech","Noun"}});
 }
 
 void grammarprovider::parse_de_noun_f(QNetworkReply* reply){
@@ -716,24 +753,53 @@ void grammarprovider::parse_de_noun_f(QNetworkReply* reply){
     getPlainTextTableFromReply(reply, parsedTable);
 
     QList<grammarform> grammarforms {
-        {4,4,{{"Gender","Feminine"},{"Case","Nominative"},{"Number","Singular"}}},
-        {4,6,{{"Gender","Feminine"},{"Case","Nominative"},{"Number","Plural"}}},
-        {5,4,{{"Gender","Feminine"},{"Case","Genitive"},{"Number","Singular"}}},
-        {5,6,{{"Gender","Feminine"},{"Case","Genitive"},{"Number","Plural"}}},
-        {6,4,{{"Gender","Feminine"},{"Case","Dative"},{"Number","Singular"}}},
-        {6,6,{{"Gender","Feminine"},{"Case","Dative"},{"Number","Plural"}}},
-        {7,4,{{"Gender","Feminine"},{"Case","Accusative"},{"Number","Singular"}}},
-        {7,6,{{"Gender","Feminine"},{"Case","Accusative"},{"Number","Plural"}}},
+        {2,4,{{"Gender","Feminine"},{"Case","Nominative"},{"Number","Singular"}}},
+        {2,6,{{"Gender","Feminine"},{"Case","Nominative"},{"Number","Plural"}}},
+        {3,4,{{"Gender","Feminine"},{"Case","Genitive"},{"Number","Singular"}}},
+        {3,6,{{"Gender","Feminine"},{"Case","Genitive"},{"Number","Plural"}}},
+        {4,4,{{"Gender","Feminine"},{"Case","Dative"},{"Number","Singular"}}},
+        {4,6,{{"Gender","Feminine"},{"Case","Dative"},{"Number","Plural"}}},
+        {5,4,{{"Gender","Feminine"},{"Case","Accusative"},{"Number","Singular"}}},
+        {5,6,{{"Gender","Feminine"},{"Case","Accusative"},{"Number","Plural"}}},
     };
-    process_grammar(grammarforms,parsedTable);
+    process_grammar(grammarforms,parsedTable,{{"Part of speech","Noun"}});
 }
 
 void grammarprovider::parse_de_verb(QNetworkReply* reply){
+    // Work in process....
 
     QList<grammarprovider::tablecell> parsedTable;
     getPlainTextTableFromReply(reply, parsedTable);
     QList<grammarform> grammarforms {
+        {1,3,{{"Infinitive","First"}}},
+        {2,3,{{"Verbform","Participle"},{"Tense","Present"}}},
+        {3,3,{{"Verbform","Participle"},{"Tense","Past"}}},
+        {4,3,{{"Verbform","Auxiliary"}}},
+        {6,2,{{"Mood","Indicative"},{"Tense","Present"},{"Person","First"},{"Number","Singular"}}},
+        {6,3,{{"Mood","Indicative"},{"Tense","Present"},{"Person","First"},{"Number","Plural"}}},
+        {6,5,{{"Mood","Subjunctive"},{"Tense","Present"},{"Person","First"},{"Number","Singular"}}},
+        {6,6,{{"Mood","Subjunctive"},{"Tense","Present"},{"Person","First"},{"Number","Plural"}}},
+        {7,2,{{"Mood","Indicative"},{"Tense","Present"},{"Person","Second"},{"Number","Singular"}}},
+        {7,3,{{"Mood","Indicative"},{"Tense","Present"},{"Person","Second"},{"Number","Plural"}}},
+        {7,4,{{"Mood","Subjunctive"},{"Tense","Present"},{"Person","Second"},{"Number","Singular"}}},
+        {7,5,{{"Mood","Subjunctive"},{"Tense","Present"},{"Person","Second"},{"Number","Plural"}}},
+        {8,2,{{"Mood","Indicative"},{"Tense","Present"},{"Person","Third"},{"Number","Singular"}}},
+        {8,3,{{"Mood","Indicative"},{"Tense","Present"},{"Person","Third"},{"Number","Plural"}}},
+        {8,4,{{"Mood","Subjunctive"},{"Tense","Present"},{"Person","Third"},{"Number","Singular"}}},
+        {8,5,{{"Mood","Subjunctive"},{"Tense","Present"},{"Person","Third"},{"Number","Plural"}}},
+        {10,2,{{"Mood","Indicative"},{"Tense","Present"},{"Person","First"},{"Number","Singular"}}},
+        {10,3,{{"Mood","Indicative"},{"Tense","Present"},{"Person","First"},{"Number","Plural"}}},
+        {10,5,{{"Mood","Subjunctive"},{"Tense","Present"},{"Person","First"},{"Number","Singular"}}},
+        {10,6,{{"Mood","Subjunctive"},{"Tense","Present"},{"Person","First"},{"Number","Plural"}}},
+        {11,2,{{"Mood","Indicative"},{"Tense","Present"},{"Person","Second"},{"Number","Singular"}}},
+        {11,3,{{"Mood","Indicative"},{"Tense","Present"},{"Person","Second"},{"Number","Plural"}}},
+        {11,4,{{"Mood","Subjunctive"},{"Tense","Present"},{"Person","Second"},{"Number","Singular"}}},
+        {11,5,{{"Mood","Subjunctive"},{"Tense","Present"},{"Person","Second"},{"Number","Plural"}}},
+        {12,2,{{"Mood","Indicative"},{"Tense","Present"},{"Person","Third"},{"Number","Singular"}}},
+        {12,3,{{"Mood","Indicative"},{"Tense","Present"},{"Person","Third"},{"Number","Plural"}}},
+        {12,4,{{"Mood","Subjunctive"},{"Tense","Present"},{"Person","Third"},{"Number","Singular"}}},
+        {12,5,{{"Mood","Subjunctive"},{"Tense","Present"},{"Person","Third"},{"Number","Plural"}}},
     };
-    process_grammar(grammarforms,parsedTable);
+    process_grammar(grammarforms,parsedTable,{{"Part of speech","Verb"}});
 }
 @}

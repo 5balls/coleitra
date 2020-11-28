@@ -115,7 +115,7 @@ ColeitraGridInGridLayout {
         Layout.preferredWidth: 120
         Connections {
             target: GrammarProvider
-            onGrammarobtained: {
+            function onGrammarobtained(caller, expressions, grammarexpressions) {
                 if(widget != caller) return;
                 var current_lexeme = lexeme;
                 var j_max = expressions.length;
