@@ -379,6 +379,7 @@ void grammarprovider::parseMediawikiTableToPlainText(QString wikitext, QList<gra
             if(!table_line.left(formatting_i).contains("[[")){
                 table_line.remove(0,formatting_i+1);
             }
+	    table_line.replace(QString("<br/>"),QString(","));
             QStringList html_markupstrings = table_line.split("<");
             if(html_markupstrings.size() > 1){
                 table_line = "";
@@ -421,8 +422,12 @@ void grammarprovider::parseMediawikiTableToPlainText(QString wikitext, QList<gra
             table_line.remove(0,2);
             column++;
             table_line = process_line(table_line);
-            table.push_back({row,column,table_line});
-            qDebug() << row << column << table_line;
+	    QStringList table_entries = table_line.split(QLatin1Char(','));
+            foreach(QString table_entry, table_entries){
+                table_entry = table_entry.trimmed();
+                table.push_back({row,column,table_entry});
+                qDebug() << row << column << table_entry;
+            }
             column += columnspan;
             continue;
         }
@@ -430,8 +435,12 @@ void grammarprovider::parseMediawikiTableToPlainText(QString wikitext, QList<gra
             table_line.remove(0,2);
             column++;
             table_line = process_line(table_line);
-            table.push_back({row,column,table_line});
-            qDebug() << row << column << table_line;
+	    QStringList table_entries = table_line.split(QLatin1Char(','));
+            foreach(QString table_entry, table_entries){
+                table_entry = table_entry.trimmed();
+                table.push_back({row,column,table_entry});
+                qDebug() << row << column << table_entry;
+            }
             column += columnspan;
             continue;
         }
@@ -777,28 +786,93 @@ void grammarprovider::parse_de_verb(QNetworkReply* reply){
         {4,3,{{"Verbform","Auxiliary"}}},
         {6,2,{{"Mood","Indicative"},{"Tense","Present"},{"Person","First"},{"Number","Singular"}}},
         {6,3,{{"Mood","Indicative"},{"Tense","Present"},{"Person","First"},{"Number","Plural"}}},
-        {6,5,{{"Mood","Subjunctive"},{"Tense","Present"},{"Person","First"},{"Number","Singular"}}},
-        {6,6,{{"Mood","Subjunctive"},{"Tense","Present"},{"Person","First"},{"Number","Plural"}}},
+        {6,5,{{"Mood","Subjunctive 1"},{"Tense","Present"},{"Person","First"},{"Number","Singular"}}},
+        {6,6,{{"Mood","Subjunctive 1"},{"Tense","Present"},{"Person","First"},{"Number","Plural"}}},
         {7,2,{{"Mood","Indicative"},{"Tense","Present"},{"Person","Second"},{"Number","Singular"}}},
         {7,3,{{"Mood","Indicative"},{"Tense","Present"},{"Person","Second"},{"Number","Plural"}}},
-        {7,4,{{"Mood","Subjunctive"},{"Tense","Present"},{"Person","Second"},{"Number","Singular"}}},
-        {7,5,{{"Mood","Subjunctive"},{"Tense","Present"},{"Person","Second"},{"Number","Plural"}}},
+        {7,4,{{"Mood","Subjunctive 1"},{"Tense","Present"},{"Person","Second"},{"Number","Singular"}}},
+        {7,5,{{"Mood","Subjunctive 1"},{"Tense","Present"},{"Person","Second"},{"Number","Plural"}}},
         {8,2,{{"Mood","Indicative"},{"Tense","Present"},{"Person","Third"},{"Number","Singular"}}},
         {8,3,{{"Mood","Indicative"},{"Tense","Present"},{"Person","Third"},{"Number","Plural"}}},
-        {8,4,{{"Mood","Subjunctive"},{"Tense","Present"},{"Person","Third"},{"Number","Singular"}}},
-        {8,5,{{"Mood","Subjunctive"},{"Tense","Present"},{"Person","Third"},{"Number","Plural"}}},
-        {10,2,{{"Mood","Indicative"},{"Tense","Present"},{"Person","First"},{"Number","Singular"}}},
-        {10,3,{{"Mood","Indicative"},{"Tense","Present"},{"Person","First"},{"Number","Plural"}}},
-        {10,5,{{"Mood","Subjunctive"},{"Tense","Present"},{"Person","First"},{"Number","Singular"}}},
-        {10,6,{{"Mood","Subjunctive"},{"Tense","Present"},{"Person","First"},{"Number","Plural"}}},
-        {11,2,{{"Mood","Indicative"},{"Tense","Present"},{"Person","Second"},{"Number","Singular"}}},
-        {11,3,{{"Mood","Indicative"},{"Tense","Present"},{"Person","Second"},{"Number","Plural"}}},
-        {11,4,{{"Mood","Subjunctive"},{"Tense","Present"},{"Person","Second"},{"Number","Singular"}}},
-        {11,5,{{"Mood","Subjunctive"},{"Tense","Present"},{"Person","Second"},{"Number","Plural"}}},
-        {12,2,{{"Mood","Indicative"},{"Tense","Present"},{"Person","Third"},{"Number","Singular"}}},
-        {12,3,{{"Mood","Indicative"},{"Tense","Present"},{"Person","Third"},{"Number","Plural"}}},
-        {12,4,{{"Mood","Subjunctive"},{"Tense","Present"},{"Person","Third"},{"Number","Singular"}}},
-        {12,5,{{"Mood","Subjunctive"},{"Tense","Present"},{"Person","Third"},{"Number","Plural"}}},
+        {8,4,{{"Mood","Subjunctive 1"},{"Tense","Present"},{"Person","Third"},{"Number","Singular"}}},
+        {8,5,{{"Mood","Subjunctive 1"},{"Tense","Present"},{"Person","Third"},{"Number","Plural"}}},
+        {10,2,{{"Mood","Indicative"},{"Tense","Preterite"},{"Person","First"},{"Number","Singular"}}},
+        {10,3,{{"Mood","Indicative"},{"Tense","Preterite"},{"Person","First"},{"Number","Plural"}}},
+        {10,5,{{"Mood","Subjunctive 2"},{"Tense","Preterite"},{"Person","First"},{"Number","Singular"}}},
+        {10,6,{{"Mood","Subjunctive 2"},{"Tense","Preterite"},{"Person","First"},{"Number","Plural"}}},
+        {11,2,{{"Mood","Indicative"},{"Tense","Preterite"},{"Person","Second"},{"Number","Singular"}}},
+        {11,3,{{"Mood","Indicative"},{"Tense","Preterite"},{"Person","Second"},{"Number","Plural"}}},
+        {11,4,{{"Mood","Subjunctive 2"},{"Tense","Preterite"},{"Person","Second"},{"Number","Singular"}}},
+        {11,5,{{"Mood","Subjunctive 2"},{"Tense","Preterite"},{"Person","Second"},{"Number","Plural"}}},
+        {12,2,{{"Mood","Indicative"},{"Tense","Preterite"},{"Person","Third"},{"Number","Singular"}}},
+        {12,3,{{"Mood","Indicative"},{"Tense","Preterite"},{"Person","Third"},{"Number","Plural"}}},
+        {12,4,{{"Mood","Subjunctive 2"},{"Tense","Preterite"},{"Person","Third"},{"Number","Singular"}}},
+        {12,5,{{"Mood","Subjunctive 2"},{"Tense","Preterite"},{"Person","Third"},{"Number","Plural"}}},
+        {14,2,{{"Mood","Imperative"},{"Person","Second"},{"Number","Singular"}}},
+        {14,3,{{"Mood","Imperative"},{"Person","Second"},{"Number","Plural"}}},
+        {16,2,{{"Mood","Indicative"},{"Tense","Perfect"},{"Person","First"},{"Number","Singular"}}},
+        {16,3,{{"Mood","Indicative"},{"Tense","Perfect"},{"Person","First"},{"Number","Plural"}}},
+        {16,5,{{"Mood","Subjunctive"},{"Tense","Perfect"},{"Person","First"},{"Number","Singular"}}},
+        {16,6,{{"Mood","Subjunctive"},{"Tense","Perfect"},{"Person","First"},{"Number","Plural"}}},
+        {17,2,{{"Mood","Indicative"},{"Tense","Perfect"},{"Person","Second"},{"Number","Singular"}}},
+        {17,3,{{"Mood","Indicative"},{"Tense","Perfect"},{"Person","Second"},{"Number","Plural"}}},
+        {17,4,{{"Mood","Subjunctive"},{"Tense","Perfect"},{"Person","Second"},{"Number","Singular"}}},
+        {17,5,{{"Mood","Subjunctive"},{"Tense","Perfect"},{"Person","Second"},{"Number","Plural"}}},
+        {18,2,{{"Mood","Indicative"},{"Tense","Perfect"},{"Person","Third"},{"Number","Singular"}}},
+        {18,3,{{"Mood","Indicative"},{"Tense","Perfect"},{"Person","Third"},{"Number","Plural"}}},
+        {18,4,{{"Mood","Subjunctive"},{"Tense","Perfect"},{"Person","Third"},{"Number","Singular"}}},
+        {18,5,{{"Mood","Subjunctive"},{"Tense","Perfect"},{"Person","Third"},{"Number","Plural"}}},
+        {20,2,{{"Mood","Indicative"},{"Tense","Plusquamperfekt"},{"Person","First"},{"Number","Singular"}}},
+        {20,3,{{"Mood","Indicative"},{"Tense","Plusquamperfekt"},{"Person","First"},{"Number","Plural"}}},
+        {20,5,{{"Mood","Subjunctive"},{"Tense","Plusquamperfekt"},{"Person","First"},{"Number","Singular"}}},
+        {20,6,{{"Mood","Subjunctive"},{"Tense","Plusquamperfekt"},{"Person","First"},{"Number","Plural"}}},
+        {21,2,{{"Mood","Indicative"},{"Tense","Plusquamperfekt"},{"Person","Second"},{"Number","Singular"}}},
+        {21,3,{{"Mood","Indicative"},{"Tense","Plusquamperfekt"},{"Person","Second"},{"Number","Plural"}}},
+        {21,4,{{"Mood","Subjunctive"},{"Tense","Plusquamperfekt"},{"Person","Second"},{"Number","Singular"}}},
+        {21,5,{{"Mood","Subjunctive"},{"Tense","Plusquamperfekt"},{"Person","Second"},{"Number","Plural"}}},
+        {22,2,{{"Mood","Indicative"},{"Tense","Plusquamperfekt"},{"Person","Third"},{"Number","Singular"}}},
+        {22,3,{{"Mood","Indicative"},{"Tense","Plusquamperfekt"},{"Person","Third"},{"Number","Plural"}}},
+        {22,4,{{"Mood","Subjunctive"},{"Tense","Plusquamperfekt"},{"Person","Third"},{"Number","Singular"}}},
+        {22,5,{{"Mood","Subjunctive"},{"Tense","Plusquamperfekt"},{"Person","Third"},{"Number","Plural"}}},
+        {24,2,{{"Infinitive","First"},{"Tense","Future 1"},{"Person","Third"},{"Number","Plural"}}},
+        {24,5,{{"Mood","Subjunctive 1"},{"Tense","Future 1"},{"Person","First"},{"Number","Singular"}}},
+        {24,6,{{"Mood","Subjunctive 1"},{"Tense","Future 1"},{"Person","First"},{"Number","Plural"}}},
+        {25,2,{{"Mood","Subjunctive 1"},{"Tense","Future 1"},{"Person","Second"},{"Number","Singular"}}},
+        {25,3,{{"Mood","Subjunctive 1"},{"Tense","Future 1"},{"Person","Second"},{"Number","Plural"}}},
+        {26,2,{{"Mood","Subjunctive 1"},{"Tense","Future 1"},{"Person","Third"},{"Number","Singular"}}},
+        {26,3,{{"Mood","Subjunctive 1"},{"Tense","Future 1"},{"Person","Third"},{"Number","Plural"}}},
+        {28,2,{{"Mood","Indicative"},{"Tense","Future 1"},{"Person","First"},{"Number","Singular"}}},
+        {28,3,{{"Mood","Indicative"},{"Tense","Future 1"},{"Person","First"},{"Number","Plural"}}},
+        {28,5,{{"Mood","Subjunctive 2"},{"Tense","Future 1"},{"Person","First"},{"Number","Singular"}}},
+        {28,6,{{"Mood","Subjunctive 2"},{"Tense","Future 1"},{"Person","First"},{"Number","Plural"}}},
+        {29,2,{{"Mood","Indicative"},{"Tense","Future 1"},{"Person","Second"},{"Number","Singular"}}},
+        {29,3,{{"Mood","Indicative"},{"Tense","Future 1"},{"Person","Second"},{"Number","Plural"}}},
+        {29,4,{{"Mood","Subjunctive 2"},{"Tense","Future 1"},{"Person","Second"},{"Number","Singular"}}},
+        {29,5,{{"Mood","Subjunctive 2"},{"Tense","Future 1"},{"Person","Second"},{"Number","Plural"}}},
+        {30,2,{{"Mood","Indicative"},{"Tense","Future 1"},{"Person","Third"},{"Number","Singular"}}},
+        {30,3,{{"Mood","Indicative"},{"Tense","Future 1"},{"Person","Third"},{"Number","Plural"}}},
+        {30,4,{{"Mood","Subjunctive 2"},{"Tense","Future 1"},{"Person","Third"},{"Number","Singular"}}},
+        {30,5,{{"Mood","Subjunctive 2"},{"Tense","Future 1"},{"Person","Third"},{"Number","Plural"}}},
+        {32,2,{{"Infinitive","First"},{"Tense","Future 2"},{"Person","Third"},{"Number","Plural"}}},
+        {32,5,{{"Mood","Subjunctive 1"},{"Tense","Future 2"},{"Person","First"},{"Number","Singular"}}},
+        {32,6,{{"Mood","Subjunctive 1"},{"Tense","Future 2"},{"Person","First"},{"Number","Plural"}}},
+        {33,2,{{"Mood","Subjunctive 1"},{"Tense","Future 2"},{"Person","Second"},{"Number","Singular"}}},
+        {33,3,{{"Mood","Subjunctive 1"},{"Tense","Future 2"},{"Person","Second"},{"Number","Plural"}}},
+        {34,2,{{"Mood","Subjunctive 1"},{"Tense","Future 2"},{"Person","Third"},{"Number","Singular"}}},
+        {34,3,{{"Mood","Subjunctive 1"},{"Tense","Future 2"},{"Person","Third"},{"Number","Plural"}}},
+        {36,2,{{"Mood","Indicative"},{"Tense","Future 2"},{"Person","First"},{"Number","Singular"}}},
+        {36,3,{{"Mood","Indicative"},{"Tense","Future 2"},{"Person","First"},{"Number","Plural"}}},
+        {36,5,{{"Mood","Subjunctive 2"},{"Tense","Future 2"},{"Person","First"},{"Number","Singular"}}},
+        {36,6,{{"Mood","Subjunctive 2"},{"Tense","Future 2"},{"Person","First"},{"Number","Plural"}}},
+        {37,2,{{"Mood","Indicative"},{"Tense","Future 2"},{"Person","Second"},{"Number","Singular"}}},
+        {37,3,{{"Mood","Indicative"},{"Tense","Future 2"},{"Person","Second"},{"Number","Plural"}}},
+        {37,4,{{"Mood","Subjunctive 2"},{"Tense","Future 2"},{"Person","Second"},{"Number","Singular"}}},
+        {37,5,{{"Mood","Subjunctive 2"},{"Tense","Future 2"},{"Person","Second"},{"Number","Plural"}}},
+        {38,2,{{"Mood","Indicative"},{"Tense","Future 2"},{"Person","Third"},{"Number","Singular"}}},
+        {38,3,{{"Mood","Indicative"},{"Tense","Future 2"},{"Person","Third"},{"Number","Plural"}}},
+        {38,4,{{"Mood","Subjunctive 2"},{"Tense","Future 2"},{"Person","Third"},{"Number","Singular"}}},
+        {38,5,{{"Mood","Subjunctive 2"},{"Tense","Future 2"},{"Person","Third"},{"Number","Plural"}}},
+
     };
     process_grammar(grammarforms,parsedTable,{{"Part of speech","Verb"}});
 }

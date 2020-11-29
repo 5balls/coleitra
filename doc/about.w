@@ -17,7 +17,7 @@
 
 \chapter{About}
 \codecpp
-@o ../src/about.h
+@o ../src/about.h -d
 @{
 @<Start of @'ABOUT@' header@>
 #include <QObject>

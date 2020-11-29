@@ -310,9 +310,9 @@ Finally we create our tables if they don't exist already:
                 // Number
                 {"Number","Singular", "Plural"},
                 // Tense
-                {"Tense", "Past", "Perfect", "Plusquamperfekt", "Present", "Preterite", "Agent"},
+                {"Tense", "Future", "Future 1", "Future 2", "Past", "Perfect", "Plusquamperfekt", "Present", "Preterite", "Agent"},
                 // Mood
-                {"Mood", "Imperative", "Indicative", "Potential", "Subjunctive"},
+                {"Mood", "Imperative", "Indicative", "Potential", "Subjunctive", "Subjunctive 1", "Subjunctive 2"},
                 // Part of speech
                 {"Part of speech", "Noun", "Verb", "Adjective", "Adverb", "Pronoun", "Preposition", "Conjunction", "Interjection", "Numeral", "Article", "Determiner", "Postposition"},
                 // Person
