@@ -125,7 +125,9 @@ Now we can create a connection for the database and open the database file.
     }
 @}
 
-Finally we create our tables if they don't exist already:
+Finally we create our tables if they don't exist already. We begin with
+some helper lambda functions which are used to shorten the later
+definitions and make them more easy to read.
 
 @o ../src/database.cpp -d
 @{
@@ -165,6 +167,19 @@ Finally we create our tables if they don't exist already:
             variant->setValue(databasefield_constraint_foreign_key(fKT,fFN));
             return variant;
         };
+@}
+
+The database structure is versioned to be able to be downwards
+compatible on an import basis. That is, a newer version of
+coleitra should always be able to read an old variant of the
+database and migrating it to the latest database format.
+
+The new version is always attached, this way one can see which
+was the original database version which was started with (in
+case of regression errors in the migration this might be useful).
+
+@o ../src/database.cpp -d
+@{
         bool database_is_empty = false;
 
         databasetable* dbversiontable = d("dbversion",
@@ -190,6 +205,13 @@ Finally we create our tables if they don't exist already:
             dbversiontable->insertRecord(insert);
             database_is_empty = true;
         }
+@}
+
+Categories are not used currently but we add them in case we need them
+later.
+
+@o ../src/database.cpp -d
+@{
 
 	databasetable* categorytable = d("category",
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
@@ -200,7 +222,22 @@ Finally we create our tables if they don't exist already:
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
                 fc("categoryselection",QVariant::Int,{c_fk(categoryselectiontable,"id")}),
                 fc("category",QVariant::Int,{c_fk(categorytable,"id")})});
+@}
 
+This language selection covers the mostly spoken languages plus the
+languages spoken in the european union. In the beginning the program
+will have a bias towards western europe languages as the programmer
+is living there and learning these languages but this will hopefully
+be more balanced over time.
+
+The aim of the program is to be as useful as possible to
+languagelearners of any language.
+
+Locale should be an ISO code that QtLocale understands to be able to
+use the speech synthesizer with this code.
+
+@o ../src/database.cpp -d
+@{
         databasetable* languagetable = d("language",
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
                 fc("categoryselection",QVariant::Int,{c_fk(categoryselectiontable,"id")}),
@@ -282,8 +319,17 @@ Finally we create our tables if they don't exist already:
                 languagenametable->insertRecord(add_language_name);
             }
         }
+@}
+
+Here is where it gets tricky. I define a lexeme as a unit which
+possesses a meaning. This can consist of one or more words and it can
+have multiple grammatical forms. Different lexemes can have the same
+grammar form. A one word lexeme in one language can correspond to a
+multiple word lexeme in a different language.
 
 
+@o ../src/database.cpp -d
+@{
         databasetable* lexemetable = d("lexeme",
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
                 fc("categoryselection",QVariant::Int,{c_fk(categoryselectiontable,"id")}),
