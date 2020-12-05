@@ -3,17 +3,17 @@
 % This file is part of coleitra.
 %
 % coleitra is free software: you can redistribute it and/or modify
-% it under the terms of the GNU General Public License as published by
-% the Free Software Foundation, either version 3 of the License, or
-% (at your option) any later version.
+% it under the terms of the GNU Affero General Public License as
+% published by the Free Software Foundation version 3 of the
+% License.
 %
 % coleitra is distributed in the hope that it will be useful,
 % but WITHOUT ANY WARRANTY; without even the implied warranty of
 % MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-% GNU General Public License for more details.
+% GNU Affero General Public License for more details.
 %
-% You should have received a copy of the GNU General Public License
-% along with coleitra.  If not, see <https://www.gnu.org/licenses/>.
+% You should have received a copy of the GNU Affero General Public License
+% along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 \section{Main}
 \codeqml
@@ -29,6 +29,7 @@ ApplicationWindow {
     visible: true
     visibility: Window.FullScreen
     title: qsTr("Stack")
+    //useSafeArea: false
 
     @<Main header@>
 
@@ -80,6 +81,20 @@ header: ToolBar {
 
 \subsection{Drawer}
 \index{GUI!Menu}
+
+@d Side menu screen option @'optionname@' defined in @'qmlfile@'
+@{
+ItemDelegate {
+    text: "@1"
+    width: parent.width
+    onClicked: {
+        stackView.push("@2")
+        drawer.close()
+    }
+}
+@}
+
+
 @d Main drawer
 @{
 Drawer {
@@ -89,15 +104,9 @@ Drawer {
 
     Column {
         anchors.fill: parent
-
-        ItemDelegate {
-            text: "About"
-            width: parent.width
-            onClicked: {
-                stackView.push("about.qml")
-                drawer.close()
-            }
-        }
+        @<Side menu screen option @'Edit@' defined in @'edit.qml@' @>
+        @<Side menu screen option @'Settings@' defined in @'settings.qml@' @>
+        @<Side menu screen option @'About@' defined in @'about.qml@' @>
         ItemDelegate {
             text: "Quit"
             width: parent.width

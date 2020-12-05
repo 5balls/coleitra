@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+
+ Copyright 2020 Florian Pesth
+
+ This file is part of coleitra.
+
+ coleitra is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Affero General Public License as
+ published by the Free Software Foundation version 3 of the
+ License.
+
+ coleitra is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Affero General Public License for more details.
+
+ You should have received a copy of the GNU Affero General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+
+<svg
+   xmlns:osb="http://www.openswatchbook.org/uri/2009/osb"
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="499.68475mm"
+   height="499.68475mm"
+   viewBox="0 0 499.68475 499.68475"
+   version="1.1"
+   id="svg8"
+   inkscape:version="0.92.4 (5da689c313, 2019-01-14)"
+   sodipodi:docname="www_pressed.svg">
+  <defs
+     id="defs2">
+    <linearGradient
+       id="linearGradient1102"
+       osb:paint="solid">
+      <stop
+         style="stop-color:#000000;stop-opacity:1;"
+         offset="0"
+         id="stop1100" />
+    </linearGradient>
+    <marker
+       inkscape:stockid="Arrow1Lstart"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Arrow1Lstart"
+       style="overflow:visible"
+       inkscape:isstock="true">
+      <path
+         id="path830"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1.00000003pt"
+         transform="matrix(0.8,0,0,0.8,10,0)"
+         inkscape:connector-curvature="0" />
+    </marker>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.175"
+     inkscape:cx="-558.5049"
+     inkscape:cy="547.42278"
+     inkscape:document-units="mm"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:window-width="1916"
+     inkscape:window-height="1012"
+     inkscape:window-x="0"
+     inkscape:window-y="48"
+     inkscape:window-maximized="0"
+     showguides="true"
+     inkscape:guide-bbox="true" />
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Ebene 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     style="display:inline"
+     transform="translate(721.93475,127.0894)">
+    <path
+       style="fill:#000000;fill-opacity:0.627451;stroke:none;stroke-width:570.57635498;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+       d="M 494.28516,0 C 220.45086,0 0,220.45089 0,494.28516 v 900.00004 c 0,273.8342 220.45086,494.2871 494.28516,494.2871 h 900.00004 c 273.8341,0 494.2871,-220.4529 494.2871,-494.2871 V 494.28516 C 1888.5723,220.45089 1668.1193,0 1394.2852,0 Z m 450,311.69922 c 11.36989,0 22.59981,1.2108 33.66015,3.55273 333.98519,18.21108 599.19729,294.78858 599.19729,633.32032 -10e-5,350.30633 -283.9789,634.28513 -634.28518,634.28513 -350.3063,0 -634.28512,-283.9788 -634.28515,-634.28513 0,-339.80683 267.21226,-617.19636 602.97265,-633.51954 10.76316,-2.21558 21.68522,-3.35351 32.74024,-3.35351 z"
+       id="path4556"
+       inkscape:connector-curvature="0"
+       transform="matrix(0.26458333,0,0,0.26458333,-721.93475,-127.0894)" />
+    <circle
+       style="fill:#0000ff;fill-opacity:1;stroke:#000000;stroke-width:7.26499987;stroke-miterlimit:4;stroke-dasharray:none"
+       id="path826"
+       cx="-472.47046"
+       cy="123.88702"
+       r="0" />
+    <circle
+       r="0"
+       cy="123.88702"
+       cx="-472.47046"
+       id="ellipse830"
+       style="fill:#0000ff;fill-opacity:1;stroke:#000000;stroke-width:7.26499987;stroke-miterlimit:4;stroke-dasharray:none" />
+    <path
+       id="path4570"
+       style="fill:#0000ff;fill-opacity:0.78431374;stroke:#000000;stroke-width:20;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m -640.29189,119.3513 335.64286,4.53572 m -162.15194,60.17514 c -57.09876,0.03 -110.30034,14.38079 -141.41772,38.14648 31.50254,43.57588 81.97785,69.41794 135.7483,69.49964 56.10337,-0.036 108.4779,-28.10462 139.57495,-74.80112 -31.92653,-20.68417 -81.41318,-32.8225 -133.90553,-32.845 z m -5.66942,-227.99643 c -53.58184,0.06979 -103.90938,25.721263 -135.4491,69.037128 31.19683,23.609713 84.2394,37.837609 141.11852,37.852987 52.26973,-0.03988 101.55637,-12.092581 133.47505,-32.640383 -31.13819,-46.36005 -83.29792,-74.193323 -139.14447,-74.249732 z m -7e-5,-1.4e-4 c -92.68522,0 -167.82143,75.136214 -167.82143,167.82143 10e-6,92.68521 75.13622,167.82142 167.82143,167.82142 92.68521,0 167.82142,-75.13621 167.82143,-167.82142 0,-92.685216 -75.13621,-167.82143 -167.82143,-167.82143 z m 1.13403,-0.684821 c -46.30326,2e-6 -84.59541,75.273543 -84.59541,168.128161 0,92.85461 37.53621,168.12815 83.83946,168.12815 46.30325,0 83.83946,-75.27354 83.83946,-168.12815 0,-92.854618 -36.78025,-168.128159 -83.08351,-168.128161 z"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ccccccccccccssssssssss" />
+  </g>
+</svg>

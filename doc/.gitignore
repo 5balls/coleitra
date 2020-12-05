@@ -9,3 +9,5 @@
 *.idx
 *.ilg
 *.ind
+*.json
+tags

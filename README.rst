@@ -6,19 +6,19 @@
 
 ..
    coleitra is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
+   it under the terms of the GNU Affero General Public License as
+   published by the Free Software Foundation version 3 of the
+   License.
 
 ..
    coleitra is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
+   GNU Affero General Public License for more details.
 
-..
-   You should have received a copy of the GNU General Public License
-   along with coleitra.  If not, see <https://www.gnu.org/licenses/>.
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 
 
 coleitra
@@ -29,7 +29,7 @@ coleitra
 
 .. contents::
 
-coleitra is an open source vocable and grammar trainer using spaced repetition algorithms. It's intended usage is on a mobile phone with android operating system but it can be compiled for the desktop as well. This is the source code repository of the program, for more information about the program itself check the `coleitra webpage <https://coleitra.org>`_.
+coleitra is an open source (AGPL-3.0-only) vocable and grammar trainer using spaced repetition algorithms. It's intended usage is on a mobile phone with android operating system but it can be compiled for the desktop as well. This is the source code repository of the program, for more information about the program itself check the `coleitra webpage <https://coleitra.org>`_.
 
 In principle the used toolkit Qt also compiles for iOS but I can't support this operating system right now.
 
@@ -72,18 +72,20 @@ You should follow the instructions of Qt - either on their webpage or in the sou
    -android-ndk ~/src/foreign/android-sdk/ndk-bundle \
    -android-sdk ~/src/foreign/android-sdk \
    -no-warnings-are-errors \
-   --prefix=/home/user/src/foreign/qt5-android-install-20201022
+   -prefix ~/src/foreign/qt5-android-install-20201121
    make
    su
    make install
    exit
 
-Choose the open source license and accept the LGPLv3 offer. It may take quite some time to compile Qt as it is a large library (expect several hours of compile time depending on your setup).
+Choose the open source license and accept the LGPLv3 offer. It may take quite some time to compile Qt as it is a large library (expect several hours of compile time depending on your setup) to speed up the process you can make use of multiple cores by adding -j4 to the make commnd (in the case of four cores for example). If compiling the desktop version on linux the -xcb switch seems to be needed or at least the required dependencies to be able to add this option, maybe it is automatically compiled when the dependencies are fullfilled.
+
+It might help to pass also the `-ltcg` flag to configure to enable link time optimization and make the resulting binary smaller but I could not make it work yet.
 
 Android SDK and NDK
 ___________________
 
-You don't need Android Studio to compile coleitra. Download just the commandlinetools package (it is usually a bit hidden on googles webpage, you might need to scroll down quite  bit), at the time of this writing the file was called `commandlinetools-linux-6858069_latest.zip` but that may change.
+You don't need Android Studio to compile coleitra. Download just the commandlinetools package (it is usually a bit hidden on googles webpage, you might need to scroll down quite  bit), at the time of this writing the file was called `commandlinetools-linux-6858069_latest.zip` located at `this place <https://developer.android.com/studio#command-tools>`_ but that may change.
 
 .. code-block:: bash
    
@@ -94,14 +96,40 @@ You don't need Android Studio to compile coleitra. Download just the commandline
    export PATH=$PATH:~/src/foreign/android-sdk/cmdline-tools/tools/bin
    export ANDROID_SDK_ROOT=~/src/foreign/android-sdk
    sdkmanager ndk-bundle
+   sdkmanager "platform-tools" "platforms;android-28"
 
-Directory structure seems to have changed, but this seems to work for the current version.
+You have to agree to googles license agreement to continue. Directory structure seems to have changed, but this seems to work for the current version.
 
+OpenSSL
+_______
+
+Qt5 needs to be configured with OpenSSL which is needed for https requests. Download the last stable version from `the OpenSSL webpage <https://www.openssl.org/source/>`_, at the time of this writing this is version 1.1.1.. Follow the instructions to compile it for android, in my case this is written in
+
+.. code-block:: bash
+
+
+   export ANDROID_NDK_HOME=~/src/foreign/android-sdk/ndk-bundle
+   export PATH=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$ANDROID_NDK_HOME/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin:$PATH
+   cd openssl-1.1.1h
+   ./Configure android-arm -D__ANDROID_API__=21
+   make SHLIB_VERSION_NUMBER= SHLIB_EXT=_1_1.so build_libs
+
+The extension of the libraries needs to be changed from standard naming because android does not seem to like libraries which don't end on .so, so libssl.so.1.1 is not working while libssl_1_1.so is. `make install` will not work with this extension but this is fine we don't need it.
 
 cmake
 _____
 
-Install the cmake package from your operation system.
+Install the cmake package from your operating system.
+
+LAPACK
+______
+
+Install a lapack library package from your operating system, on debian one possible package is named liblapack-dev.
+
+f2c
+___
+
+Install the f2c package from your operating system, on debian the package name is "f2c".
 
 coleitra
 ........
