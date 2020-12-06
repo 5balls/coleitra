@@ -337,6 +337,7 @@ multiple word lexeme in a different language.
 
         databasetable* grammarkeytable = d("grammarkey",
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
+                fc("categoryselection",QVariant::Int,{c_fk(categoryselectiontable,"id")}),
                 f("string",QVariant::String)});
 
         databasetable* grammarexpressiontable = d("grammarexpression",
@@ -392,6 +393,7 @@ multiple word lexeme in a different language.
 
         databasetable* grammarformtable = d("grammarform",
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
+                fc("language",QVariant::Int,{c_fk(languagetable,"id")}),
                 fc("categoryselection",QVariant::Int,{c_fk(categoryselectiontable,"id")})});
         databasetable* grammarformcomponenttable = d("grammarformcomponent",
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
@@ -408,6 +410,8 @@ multiple word lexeme in a different language.
 
         databasetable* compoundformtable = d("compoundform",
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
+                fc("lexeme",QVariant::Int,{c_fk(lexemetable,"id")}),
+                fc("grammarform",QVariant::Int,{c_fk(grammarformtable,"id")}),
                 fc("categoryselection",QVariant::Int,{c_fk(categoryselectiontable,"id")}),
                 });
         databasetable* compoundformparttable = d("compoundformpart",
@@ -419,6 +423,8 @@ multiple word lexeme in a different language.
 
         databasetable* sentencetable = d("sentence",
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
+                fc("lexeme",QVariant::Int,{c_fk(lexemetable,"id")}),
+                fc("grammarform",QVariant::Int,{c_fk(grammarformtable,"id")}),
                 fc("categoryselection",QVariant::Int,{c_fk(categoryselectiontable,"id")})});
         databasetable* punctuationmarktable = d("punctuationmark",
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
@@ -431,10 +437,13 @@ multiple word lexeme in a different language.
                 f("part",QVariant::Int),
                 f("capialized",QVariant::Bool),
                 fc("form",QVariant::Int,{c_fk(formtable,"id")}),
+                fc("compoundform",QVariant::Int,{c_fk(compoundformtable,"id")}),
+                fc("grammarform",QVariant::Int,{c_fk(grammarformtable,"id")}),
                 fc("punctuationmark",QVariant::Int,{c_fk(punctuationmarktable,"id")})});
 
         databasetable* translationtable = d("translation",
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
+                fc("categoryselection",QVariant::Int,{c_fk(categoryselectiontable,"id")}),
                 });
 
         databasetable* translationparttable = d("translationpart",
@@ -444,26 +453,36 @@ multiple word lexeme in a different language.
                 fc("lexeme",QVariant::Int,{c_fk(lexemetable,"id")}),
                 fc("sentence",QVariant::Int,{c_fk(sentencetable,"id")}),
                 fc("form",QVariant::Int,{c_fk(formtable,"id")}),
+                fc("compoundform",QVariant::Int,{c_fk(compoundformtable,"id")}),
                 fc("grammarform",QVariant::Int,{c_fk(grammarformtable,"id")}),
                 });
 
         databasetable* programminglanguagetable = d("programminglanguage",
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
+                fc("categoryselection",QVariant::Int,{c_fk(categoryselectiontable,"id")}),
                 f("language",QVariant::String)});
 
         databasetable* trainingmodetable = d("trainingmode",
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
                 fc("programminglanguage",QVariant::Int,{c_fk(programminglanguagetable,"id")}),
                 fc("description",QVariant::String,{c_u()}),
+                fc("categoryselection",QVariant::Int,{c_fk(categoryselectiontable,"id")}),
                 f("code",QVariant::String),
+                });
+
+        databasetable* trainingidtable = d("trainingid",
+                {fc("id",QVariant::Int,{c_pk(),c_nn()}),
                 });
         databasetable* trainingdatumtable = d("trainingdatum",
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
                 fc("trainingmode",QVariant::Int,{c_fk(trainingmodetable,"id")}),
+                fc("trainingid",QVariant::Int,{c_fk(trainingidtable,"id")}),
                 f("timestamp_shown",QVariant::Int),
                 f("timestamp_answered",QVariant::Int),
                 f("knowledgesteps",QVariant::Int),
-                f("knowledge",QVariant::Double)});
+                f("knowledge",QVariant::Double),
+                fc("categoryselection",QVariant::Int,{c_fk(categoryselectiontable,"id")}),
+                });
         databasetable* trainingaffecteddatatable = d("trainingaffecteddata",
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
                 fc("trainingdatum",QVariant::Int,{c_fk(trainingdatumtable,"id")}),

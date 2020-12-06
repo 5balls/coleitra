@@ -26,8 +26,8 @@
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 12, 0))
     #pragma message "Compiling for Qt version " QT_VERSION_STR 
 #else
-    #pragma message "Tried to compiling for to old Qt version " QT_VERSION_STR 
-    #error "Version of Qt5 >= 5.12.0 is required"
+    #pragma message "Trying to compile for too old Qt version " QT_VERSION_STR 
+    #error "Version of Qt >= 5.12.0 is required"
 #endif
 
 
