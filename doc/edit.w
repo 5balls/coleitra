@@ -17,6 +17,19 @@
 
 \chapter{Editing}
 \section{Interface}
+
+@d Id property @'idname@'
+@{
+public:
+    Q_PROPERTY(int @1Id READ @1Id CONSTANT)
+    int @1Id()
+    {
+        return m_@1Id--;
+    }
+private:
+    int m_@1Id = -1;
+@}
+
 @o ../src/edit.h -d
 @{
 @<Start of @'EDIT@' header@>
@@ -28,6 +41,13 @@
 public:
     explicit edit(QObject *parent = nullptr);
     Q_PROPERTY(QString dbversion MEMBER m_dbversion NOTIFY dbversionChanged);
+    @<Id property @'translation@' @>
+    @<Id property @'lexeme@' @>
+    @<Id property @'sentence@' @>
+    @<Id property @'form@' @>
+    @<Id property @'compoundForm@' @>
+    @<Id property @'grammarForm@' @>
+    @<Id property @'grammarFormComponent@' @>
 private:
     struct form {
         QString string;

@@ -179,6 +179,8 @@ Image {
     Layout.columnSpan: 2
     Layout.preferredHeight: 40
     Layout.preferredWidth: 40
+    height: 40
+    width: 40
     MouseArea {
         id: ma
         anchors.fill: parent

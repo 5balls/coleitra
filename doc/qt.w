@@ -34,10 +34,16 @@ Here are the files described, which are needed for compiling code for the Qt fra
         <file>ColeitraGridCheckBox.qml</file>
         <file>ColeitraGridButton.qml</file>
         <file>ColeitraGridImageButton.qml</file>
-        <file>ColeitraWidgetEditGrammarForm.qml</file>
         <file>ColeitraWidgetEditLexeme.qml</file>
         <file>ColeitraWidgetEditGrammarExpression.qml</file>
         <file>ColeitraWidgetEdit.qml</file>
+        <file>ColeitraWidgetEditTranslationPart.qml</file>
+        <file>ColeitraWidgetEditSentence.qml</file>
+        <file>ColeitraWidgetEditForm.qml</file>
+        <file>ColeitraWidgetEditCompoundForm.qml</file>
+        <file>ColeitraWidgetEditGrammarForm.qml</file>
+        <file>ColeitraWidgetEditIdSelection.qml</file>
+        <file>ColeitraWidgetEditGrammarFormComponent.qml</file>
         <file>main.qml</file>
         <file>settings.svg</file>
         <file>settings_pressed.svg</file>

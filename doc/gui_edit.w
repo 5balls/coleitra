@@ -24,7 +24,7 @@ import QtQuick.Layouts 1.14
 import GrammarProviderLib 1.0
 import DatabaseLib 1.0
 
-ColeitraGridInGridLayout {
+Row {
     id: widget
     property var gklabel: grammarkeylabel
     property var gvlabel: grammarvaluelabel
@@ -40,31 +40,27 @@ ColeitraGridInGridLayout {
     ColeitraGridComboBox {
         id: grammarkey
         model: Database.grammarkeys()
-        Layout.columnSpan: 4
-        Layout.preferredWidth: 100
+        width: (widget.width - 40)/2
     }
     ColeitraGridComboBox {
         id: grammarvalue
         model: Database.grammarvalues(grammarkey.currentText)
-        Layout.columnSpan: 4
-        Layout.preferredWidth: 100
+        width: (widget.width - 40)/2
     }
     ColeitraGridLabel {
         visible: false
         id: grammarkeylabel
         text: grammarkey.currentText
-        Layout.columnSpan: 4
-        Layout.preferredHeight: 40
-        Layout.preferredWidth: 100
+        width: (widget.width - 40)/2
+        height: 40
         @<Background yellow rounded control@>
     }
     ColeitraGridLabel {
         visible: false
         id: grammarvaluelabel
         text: grammarvalue.currentText
-        Layout.columnSpan: 4
-        Layout.preferredHeight: 40
-        Layout.preferredWidth: 100
+        width: (widget.width - 40)/2
+        height: 40
         @<Background yellow rounded control@>
     }
     ColeitraGridImageButton {
@@ -80,17 +76,12 @@ ColeitraGridInGridLayout {
             widget.parent.addAddRemoveGrammarExpression();
         }
     }
-    Component.onCompleted: {
-        grammarkey.Layout.preferredWidth = parent.width/2.0 - 20;
-        grammarkeylabel.Layout.preferredWidth = parent.width/2.0 - 20;
-        grammarvalue.Layout.preferredWidth = parent.width/2.0 - 20;
-        grammarvaluelabel.Layout.preferredWidth = parent.width/2.0 - 20;
-    }
 }
 @}
 
 @o ../src/ColeitraWidgetEditGrammarForm.qml
 @{
+/*
 import QtQuick 2.14
 import QtQuick.Layouts 1.14
 import GrammarProviderLib 1.0
@@ -168,13 +159,13 @@ ColeitraGridInGridLayout {
         lexeme.Layout.preferredWidth = parent.width - 80;
         addAddRemoveGrammarExpression();
     }
-
 }
+*/
 @}
 
 @o ../src/ColeitraWidgetEditLexeme.qml
 @{
-import DatabaseLib 1.0
+/*import DatabaseLib 1.0
 import QtQuick 2.14
 import QtQuick.Layouts 1.14
 
@@ -196,9 +187,8 @@ ColeitraGridInGridLayout {
         addAddRemoveGrammarForm();
     }
 
-}
+}*/
 @}
-
 
 @o ../src/ColeitraWidgetEdit.qml
 @{
@@ -276,7 +266,246 @@ ColeitraGridInGridLayout {
         editfield.width = width;
     }
 }
+@}
 
+@o ../src/ColeitraWidgetEditIdSelection.qml
+@{
+import QtQuick 2.14
+import QtQuick.Controls 2.14
+
+Row {
+    property bool existing: existingTranslation.checked
+    property string existingText: ""
+    property int idValue: idSelection.value
+    property int existingId: 0
+    width: parent.width
+    ColeitraGridCheckBox {
+        id: existingTranslation
+        width: checked ? parent.width - idSelection.width : parent.width - idLabel.width
+        checked: false
+        text: existingText
+    }
+    SpinBox {
+        id: idSelection
+        visible: existingTranslation.checked
+    }
+    ColeitraGridLabel {
+        id: idLabel
+        visible: !existingTranslation.checked
+        text: existingId.toString()
+    }
+}
+@}
+
+@o ../src/ColeitraWidgetEditGrammarFormComponent.qml
+@{
+import QtQuick 2.14
+import EditLib 1.0
+
+Column {
+    ColeitraWidgetEditIdSelection {
+        id: grammarFormComponentId
+        existingText: "Grammarformcomponent exists"
+        existingId: Edit.grammarFormComponentId
+    }
+    ColeitraWidgetEditGrammarExpression {
+        visible: !grammarFormComponentId.existing
+        width: parent.width
+    }
+}
+@}
+
+@o ../src/ColeitraWidgetEditGrammarForm.qml
+@{
+import QtQuick 2.14
+import EditLib 1.0
+
+Column {
+    ColeitraWidgetEditIdSelection {
+        id: grammarFormId
+        existingText: "Grammarform exists"
+        existingId: Edit.grammarFormId
+    }
+    ColeitraWidgetEditGrammarFormComponent {
+        visible: !grammarFormId.existing
+        width: parent.width
+    }
+}
+@}
+
+@o ../src/ColeitraWidgetEditCompoundForm.qml
+@{
+import QtQuick 2.14
+import EditLib 1.0
+
+Column {
+    ColeitraWidgetEditIdSelection {
+        id: compoundFormId
+        existingText: "Compoundform exists"
+        existingId: Edit.compoundFormId
+    }
+}
+@}
+
+@o ../src/ColeitraWidgetEditForm.qml
+@{
+import QtQuick 2.14
+import EditLib 1.0
+
+Column {
+    ColeitraWidgetEditIdSelection {
+        id: formId
+        existingText: "Form exists"
+        existingId: Edit.formId
+    }
+    ColeitraGridTextInput {
+        visible: !formId.existing
+        width: parent.width
+    }
+    ColeitraGridCheckBox {
+        visible: !formId.existing
+        id: addGrammar
+        width: parent.width
+        checked: true
+        text: "Add grammar form"
+    }
+    ColeitraWidgetEditGrammarForm {
+        visible:  !formId.existing && addGrammar.checked
+        width: parent.width
+    }
+}
+@}
+
+@o ../src/ColeitraWidgetEditSentence.qml
+@{
+import QtQuick 2.14
+import EditLib 1.0
+
+Column {
+    ColeitraWidgetEditIdSelection {
+        id: sentenceId
+        existingText: "Sentence exists"
+        existingId: Edit.sentenceId
+    }
+}
+@}
+
+@o ../src/ColeitraWidgetEditLexeme.qml
+@{
+import QtQuick 2.14
+import QtQuick.Controls 2.14
+import QtQuick.Layouts 1.14
+import EditLib 1.0
+import DatabaseLib 1.0
+
+Column {
+    property int languageId: 1
+    ColeitraWidgetEditIdSelection {
+        id: lexemeId
+        existingText: "Lexeme exists"
+        existingId: Edit.lexemeId
+    }
+    ColeitraGridComboBox {
+        visible: !lexemeId.existing
+        width: parent.width
+        model: Database.languagenames();
+        currentIndex: Database.alphabeticidfromlanguageid(languageId);
+    }
+    Row {
+        visible: !lexemeId.existing
+        width: parent.width
+        ColeitraGridImageButton {
+            id: minusbutton
+            visible: false
+            imageid: "minus"
+            clickhandler: function() {
+            //    widget.destroy();
+            }
+        }
+        TabBar {
+            id: lexemeTypeSelection
+            width: parent.width - 40
+            TabButton {
+                text: "Form"
+            }
+            TabButton {
+                text: "Compoundform"
+            }
+            TabButton {
+                text: "Sentence"
+            }
+        }
+        ColeitraGridImageButton {
+            id: plusbutton
+            imageid: "plus"
+            clickhandler: function() {
+                plusbutton.visible = false;
+                minusbutton.visible = true;
+            }
+        }
+    }
+    StackLayout {
+        visible: !lexemeId.existing
+        width: parent.width
+        currentIndex: lexemeTypeSelection.currentIndex
+        ColeitraWidgetEditForm {
+        }
+        ColeitraWidgetEditCompoundForm {
+        }
+        ColeitraWidgetEditSentence {
+        }
+    }
+
+
+}
+@}
+
+@o ../src/ColeitraWidgetEditTranslationPart.qml
+@{
+import QtQuick 2.14
+import QtQuick.Layouts 1.14
+import QtQuick.Controls 2.14
+import EditLib 1.0
+
+Column {
+    property int translationLanguageId: 1
+    Layout.columnSpan: 12
+    ColeitraWidgetEditIdSelection {
+        id: translationPartId
+        existingText: "Translation exists"
+        existingId: Edit.translationId
+    }
+    Column {
+        width: parent.width
+        visible: !translationPartId.existing
+        ColeitraGridComboBox {
+            id: translationPartType
+            width: parent.width
+            model: ["Lexeme", "Sentence", "Form", "Compundform", "Grammarform"]
+        }
+        ColeitraWidgetEditLexeme {
+            languageId: translationLanguageId
+            width: parent.width
+            visible: translationPartType.currentIndex == 0
+        }
+        ColeitraWidgetEditSentence {
+            width: parent.width
+            visible: translationPartType.currentIndex == 1
+        }
+        ColeitraWidgetEditForm {
+            width: parent.width
+            visible: translationPartType.currentIndex == 2
+        }
+        ColeitraWidgetEditCompoundForm {
+            width: parent.width
+            visible: translationPartType.currentIndex == 3
+        }
+        ColeitraWidgetEditGrammarForm {
+            width: parent.width
+            visible: translationPartType.currentIndex == 4
+        }
+    }
+}
 @}
 
 @o ../src/edit.qml
@@ -296,11 +525,15 @@ ColeitraPage {
         anchors.fill: parent
         ColeitraGridLayout {
             width: Math.max(implicitWidth, parent.availableWidth)
-            Column {
-                /*ColeitraWidgetEdit {
-                    edit_language: Settings.learninglanguage
-                    width: parent.width
-                }*/
+            ColeitraWidgetEditTranslationPart {
+                translationLanguageId: Settings.learninglanguage
+                width: parent.width
+            }
+            ColeitraWidgetEditTranslationPart {
+                translationLanguageId: Settings.nativelanguage
+                width: parent.width
+            }
+            /*Column {
                 width: parent.width
                 Layout.columnSpan: 12
                 function addAddRemoveEdit(language){
@@ -336,12 +569,9 @@ ColeitraPage {
                 Component.onCompleted: {
                     addAddRemoveEdit(Settings.nativelanguage);
                 }
-
-
-            }
+            }*/
         }
     }
-        
     footer: ColeitraGridLayout {
     }
 }
