@@ -78,7 +78,6 @@ GridLayout {
 }
 @}
 
-
 \subsection{Grid Label}
 @o ../src/ColeitraGridLabel.qml
 @{
@@ -90,7 +89,9 @@ import QtQuick.Layouts 1.3
 Label {
     Layout.columnSpan: 6
     Layout.preferredWidth: parent.width / 2.0
-    Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+    Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+    leftPadding: 10
+    topPadding: 10
     wrapMode: Text.WordWrap
 }
 @}
@@ -153,6 +154,7 @@ CheckBox {
 @}
 
 \subsection{Grid button}
+
 @o ../src/ColeitraGridButton.qml
 @{
 import QtQuick 2.11
@@ -162,7 +164,7 @@ import QtQuick.Layouts 1.3
 Button {
     Layout.columnSpan: 6
     Layout.preferredWidth: parent.width / 2.0
-    @< Background rounded control@>
+    @<Background rounded control button @>
 }
 @}
 
@@ -218,12 +220,34 @@ background: Rectangle {
 }
 @}
 
+@d Background rounded control button
+@{
+background: Rectangle {
+    border.color: "black"
+    border.width: 1
+    color: pressed? "#99FFFF" : "#DDFFFF"
+    radius: 4
+    implicitHeight: 40
+}
+@}
+
 @d Background yellow rounded control
 @{
 background: Rectangle {
     border.color: "black"
     border.width: 1
     color: "#FFFFDD"
+    radius: 4
+    implicitHeight: 40
+}
+@}
+
+@d Background grey rounded control
+@{
+background: Rectangle {
+    border.color: "black"
+    border.width: 1
+    color: "#EEEEEE"
     radius: 4
     implicitHeight: 40
 }
