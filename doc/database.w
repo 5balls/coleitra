@@ -435,7 +435,7 @@ multiple word lexeme in a different language.
                 fc("categoryselection",QVariant::Int,{c_fk(categoryselectiontable,"id")}),
                 fc("sentence",QVariant::Int,{c_fk(sentencetable,"id")}),
                 f("part",QVariant::Int),
-                f("capialized",QVariant::Bool),
+                f("capitalized",QVariant::Bool),
                 fc("form",QVariant::Int,{c_fk(formtable,"id")}),
                 fc("compoundform",QVariant::Int,{c_fk(compoundformtable,"id")}),
                 fc("grammarform",QVariant::Int,{c_fk(grammarformtable,"id")}),
