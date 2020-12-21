@@ -58,6 +58,12 @@ public:
     Q_INVOKABLE QString languagenamefromid(int id);
     Q_INVOKABLE int alphabeticidfromlanguagename(QString languagename);
     Q_INVOKABLE int alphabeticidfromlanguageid(int languageid);
+    Q_INVOKABLE int newLexeme(int language_id);
+    Q_INVOKABLE int newForm(int lexeme_id, int grammarFormId, QString string);
+    Q_INVOKABLE QString prettyPrintGrammarForm(int grammarForm_id);
+    Q_INVOKABLE QString prettyPrintForm(int form_id);
+    Q_INVOKABLE QList<int> searchForms(QString string, bool exact=false);
+    Q_INVOKABLE int grammarFormIdFromStrings(int language_id, QList<QList<QString> > grammarform);
 private:
     QSqlDatabase vocableDatabase;
     QList < databasetable* > tables;
@@ -359,7 +365,7 @@ multiple word lexeme in a different language.
                 // Tense
                 {"Tense", "Future", "Future 1", "Future 2", "Past", "Perfect", "Plusquamperfekt", "Present", "Preterite", "Agent"},
                 // Mood
-                {"Mood", "Imperative", "Indicative", "Potential", "Subjunctive", "Subjunctive 1", "Subjunctive 2"},
+                {"Mood", "Imperative", "Indicative", "Potential", "Subjunctive", "Subjunctive 1", "Subjunctive 2", "Optative"},
                 // Part of speech
                 {"Part of speech", "Noun", "Verb", "Adjective", "Adverb", "Pronoun", "Preposition", "Conjunction", "Interjection", "Numeral", "Article", "Determiner", "Postposition"},
                 // Person
@@ -407,7 +413,55 @@ multiple word lexeme in a different language.
                 fc("lexeme",QVariant::Int,{c_fk(lexemetable,"id")}),
                 fc("grammarform",QVariant::Int,{c_fk(grammarformtable,"id")}),
                 f("string",QVariant::String)});
+@}
 
+We need to add certain entries to the database to support the finnish
+help verbs.
+
+@o ../src/database.cpp -d
+@{
+        if(database_is_empty){
+            struct newform{
+                QString form;
+                QList<QList<QString> > grammarform;
+            };
+            QList<newform> fi_negation_verb_forms = {
+                {"en",{{"Mood","Indicative"},{"Number","Singular"},{"Person","First"}}},
+                {"et",{{"Mood","Indicative"},{"Number","Singular"},{"Person","Second"}}},
+                {"ei",{{"Mood","Indicative"},{"Number","Singular"},{"Person","Third"}}},
+                {"emme",{{"Mood","Indicative"},{"Number","Plural"},{"Person","First"}}},
+                {"ette",{{"Mood","Indicative"},{"Number","Plural"},{"Person","Second"}}},
+                {"eivät",{{"Mood","Indicative"},{"Number","Plural"},{"Person","Third"}}},
+
+                {"älkääni",{{"Mood","Imperative"},{"Number","Singular"},{"Person","First"}}},
+                {"älkäämi",{{"Mood","Imperative"},{"Number","Singular"},{"Person","First"}}},
+                {"älä",{{"Mood","Imperative"},{"Number","Singular"},{"Person","Second"}}},
+                {"älköön",{{"Mood","Imperative"},{"Number","Singular"},{"Person","Third"}}},
+                {"älkäämme",{{"Mood","Imperative"},{"Number","Plural"},{"Person","First"}}},
+                {"älkää",{{"Mood","Imperative"},{"Number","Plural"},{"Person","Second"}}},
+                {"älkööt",{{"Mood","Imperative"},{"Number","Plural"},{"Person","Third"}}},
+
+                {"ällön",{{"Mood","Optative"},{"Number","Singular"},{"Person","First"}}},
+                {"ällös",{{"Mood","Optative"},{"Number","Singular"},{"Person","Second"}}},
+                {"älköön",{{"Mood","Optative"},{"Number","Singular"},{"Person","Third"}}},
+                {"älköömme",{{"Mood","Optative"},{"Number","Plural"},{"Person","First"}}},
+                {"älköötte",{{"Mood","Optative"},{"Number","Plural"},{"Person","Second"}}},
+                {"älkööt",{{"Mood","Optative"},{"Number","Plural"},{"Person","Third"}}},
+            };
+            // Check if finnish exists in database:
+            int fi_id = idfromlanguagename("Finnish");
+            // Create lexeme for negation verb:
+            int lexeme_id = newLexeme(fi_id);
+            foreach(const struct newform& fi_negation_verb_form, fi_negation_verb_forms){
+                int grammarform_id = grammarFormIdFromStrings(fi_id, fi_negation_verb_form.grammarform);
+                newForm(lexeme_id, grammarform_id, fi_negation_verb_form.form);
+            }
+        }
+@}
+
+
+@o ../src/database.cpp -d
+@{
         databasetable* compoundformtable = d("compoundform",
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
                 fc("lexeme",QVariant::Int,{c_fk(lexemetable,"id")}),
@@ -565,12 +619,128 @@ int database::alphabeticidfromlanguagename(QString languagename){
         if(test_languagename == languagename) return index;
         index++;
     }
+    return index;
 }
 
 int database::alphabeticidfromlanguageid(int languageid){
     return alphabeticidfromlanguagename(languagenamefromid(languageid));
 }
 
+int database::newLexeme(int language_id){
+    databasetable* lexemetable = getTableByName("lexeme");
+    QMap<QString,QVariant> add_lexeme;
+    add_lexeme["language"] = language_id;
+    return lexemetable->insertRecord(add_lexeme);
+}
+
+int database::newForm(int lexeme_id, int grammarFormId, QString string){
+    databasetable* formtable = getTableByName("form");
+    QMap<QString,QVariant> add_form;
+    add_form["lexeme"] = lexeme_id;
+    add_form["grammarform"] = grammarFormId;
+    add_form["string"] = string;
+    return formtable->insertRecord(add_form);
+}
+
+QString database::prettyPrintGrammarForm(int grammarForm_id){
+    QString prettystring;
+    databasetable* grammarformcomponenttable = getTableByName("grammarformcomponent");
+    databasetable* grammarexpressiontable = getTableByName("grammarexpression");
+    databasetable* grammarkeytable = getTableByName("grammarkey");
+    QSqlQuery result = grammarformcomponenttable->select({"grammarexpression"},{"grammarform",grammarForm_id});
+    while(result.next()){
+        QSqlQuery result2 = grammarexpressiontable->select({"value","key"},{"id",result.value("grammarexpression").toInt()});
+        if(result2.next()){
+            QSqlQuery result3 = grammarkeytable->select({"string"},{"id",result2.value("key").toInt()});
+            if(result3.next()){
+                prettystring += result3.value("string").toString() + ": ";
+                prettystring += "<i>" + result2.value("value").toString() + "</i>, ";
+            }
+        }
+    }
+    prettystring.chop(2);
+    return prettystring;
+}
+
+QString database::prettyPrintForm(int form_id){
+    QString prettystring;
+    databasetable* formtable = getTableByName("form");
+    QSqlQuery result = formtable->select({"string","grammarform"},{"id",form_id});
+    if(result.next()){
+        prettystring += "<b>" + result.value("string").toString() + "</b> ";
+        prettystring += prettyPrintGrammarForm(result.value("grammarform").toInt());
+    }
+    return prettystring;
+}
+
+QList<int> database::searchForms(QString string, bool exact){
+    databasetable* formtable = getTableByName("form");
+    QList<int> form_ids;
+    QSqlQuery result;
+    if(exact)
+        result = formtable->select({"id"},{"string",string});
+    else
+        result = formtable->select({"id"},{"string","%" + string + "%"},true);
+    while(result.next())
+        form_ids.push_back(result.value("id").toInt());
+    return form_ids;
+}
+
+int database::grammarFormIdFromStrings(int language_id, QList<QList<QString> > grammarform){
+    databasetable* grammarexpressiontable = getTableByName("grammarexpression");
+    databasetable* grammarkeytable = getTableByName("grammarkey");
+    databasetable* grammarformcomponenttable = getTableByName("grammarformcomponent");
+    databasetable* grammarformtable = getTableByName("grammarform");
+    QList<int> i_grammarform;
+    // Get ids for grammar expressions:
+    QList<QString> grammarexpression;
+    foreach(grammarexpression, grammarform){
+        QSqlQuery result = grammarexpressiontable->select({"id","key"},
+                {"value",grammarexpression.last()});
+        while(result.next()){
+            QSqlQuery result2 = grammarkeytable->select({"id"},
+                    {{"id",result.value("key").toInt()},
+                    {"string",grammarexpression.first()}});
+            if(result2.next()){
+                i_grammarform.push_back(result.value("id").toInt());
+            }
+        }
+    }
+    // Check if grammarform exists already:
+    QSqlQuery result = grammarformcomponenttable->select({"id","grammarform"},{"grammarexpression",i_grammarform.first()});
+    int grammarform_id = 0;
+    while(result.next()){
+        bool grammarform_valid = true;
+        foreach(int grammarexpression, i_grammarform){
+            QSqlQuery result2 = grammarformcomponenttable->select({"id","grammarform"},
+                    {{"grammarform", result.value("grammarform").toInt()},
+                    {"grammarexpression",grammarexpression}});
+            if(!result2.next()) grammarform_valid = false;
+        }
+        if(grammarform_valid){
+            grammarform_id = result.value("grammarform").toInt();
+            // Check that this grammarform is for finnish:
+            QSqlQuery result2 = grammarformtable->select({"id"},{{"id",grammarform_id},{"language",language_id}});
+            if(result2.next())
+                break;
+            grammarform_id = 0;
+        }
+    }
+    // If grammarform does not exist, create it:
+    if(grammarform_id == 0){
+        QMap<QString,QVariant> add_grammarform;
+        add_grammarform["language"] = language_id;
+        grammarform_id = grammarformtable->insertRecord(add_grammarform);
+        QMap<QString,QVariant> add_grammarformcomponent;
+        foreach(int grammarexpression, i_grammarform){
+            add_grammarformcomponent["grammarform"] = grammarform_id;
+            add_grammarformcomponent["grammarexpression"] = grammarexpression;
+            grammarformcomponenttable->insertRecord(add_grammarformcomponent);
+        }
+    }
+    return grammarform_id;
+}
+ 
 QString database::languagenamefromid(int id){
     databasetable* languagenametable = getTableByName("languagename");
     QList<QString> selection;
@@ -691,7 +861,7 @@ public:
     int insertRecord(const QMap<QString, QVariant>& fields);
     int updateRecord(const QPair<QString, QVariant>& id, const QMap<QString, QVariant>& fields);
     int deleteRecord(const QPair<QString, QVariant>& id);
-    QSqlQuery select(const QList<QString>& selection, const QPair<QString, QVariant>& where = qMakePair(QString(),QVariant(0)));
+    QSqlQuery select(const QList<QString>& selection, const QPair<QString, QVariant>& where = qMakePair(QString(),QVariant(0)), bool like = false);
     QSqlQuery select(const QList<QString>& selection, const QList< QPair<QString, QVariant> >& where);
     QString name(){return m_name;};
 private:
@@ -780,8 +950,12 @@ int databasetable::insertRecord(const QMap<QString, QVariant>& fields){
     sqlStringValues.truncate(sqlStringValues.size()-2);
     sqlStringValues += ")";
     sqlString += sqlStringValues;
+    if(fields.size() == 0){
+        sqlString = "INSERT INTO " + m_name + " DEFAULT VALUES";
+    }
 
     QSqlQuery sqlQuery(m_vocableDatabase);
+    //qDebug() << "SQL query:" << sqlString;
     sqlQuery.prepare(sqlString);
     QPair<QString, QVariant> accepted_field;
     foreach(accepted_field, accepted_fields){
@@ -846,7 +1020,7 @@ int databasetable::deleteRecord(const QPair<QString, QVariant>& id){
     return id.second.toInt();
 }
 
-QSqlQuery databasetable::select(const QList<QString>& selection, const QPair<QString, QVariant>& where){
+QSqlQuery databasetable::select(const QList<QString>& selection, const QPair<QString, QVariant>& where, bool like){
     QString sqlString = "SELECT ";
     foreach(databasefield* field, m_fields){
         QString fieldname = field->field().name();
@@ -858,11 +1032,16 @@ QSqlQuery databasetable::select(const QList<QString>& selection, const QPair<QSt
     sqlString += " FROM " + m_name; 
     QSqlQuery sqlQuery(m_vocableDatabase);
     if(!where.first.isEmpty()){
-        sqlString += " WHERE " + where.first + "=:" + where.first;
+        if(like)
+            sqlString += " WHERE " + where.first + " LIKE :" + where.first;
+        else
+            sqlString += " WHERE " + where.first + "=:" + where.first;
     }
+    //qDebug() << "SQL query:" << sqlString;
     sqlQuery.prepare(sqlString);
     if(!where.first.isEmpty()){
         sqlQuery.bindValue(":" + where.first, where.second);
+        //qDebug() << "SQL bind:" << where.first + ":" << where.second;
     }
     if(!sqlQuery.exec()){
         QSqlError error = sqlQuery.lastError();
@@ -891,8 +1070,10 @@ QSqlQuery databasetable::select(const QList<QString>& selection, const QList< QP
         sqlString += " " + where.first + "=:" + where.first + " AND";
     }
     sqlString.truncate(sqlString.size()-4);
+    //qDebug() << "SQL query:" << sqlString;
     sqlQuery.prepare(sqlString);
     foreach(where, wheres){
+        //qDebug() << "SQL bind:" << ":" + where.first << where.second;
         sqlQuery.bindValue(":" + where.first, where.second);
     }
     if(!sqlQuery.exec()){

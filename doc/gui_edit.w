@@ -173,12 +173,29 @@ Popup {
     property int selectedId: selectedId.value
     property var okFunction: function() {};
     property var searchFunction: function() {};
+    property string searchValue: popupSearchValue.text
+    property var popupIdList: idList
     Column {
+        width: parent.width
         ColeitraGridLabel {
             text: popupSearchString
         }
         ColeitraGridTextInput {
+            id: popupSearchValue
             width: parent.width
+        }
+        ButtonGroup {
+            buttons: idList.children
+        }
+        ColeitraWidgetEditPartList {
+            property int selectedIdFromIdList: 0
+            id: idList
+            startWithOneElement: false
+            partType: "ColeitraWidgetEditIdRadioButton"
+            width: parent.width
+            onSelectedIdFromIdListChanged: function(){
+                selectedId.value = selectedIdFromIdList;
+            }
         }
         SpinBox {
             id: selectedId
@@ -228,11 +245,14 @@ Row {
     property bool existing: existingTranslation.checked
     property string existingText: ""
     property string searchText: ""
+    property string searchValue: searchPopup.searchValue
+    property var popupSearchFunction: function() {}
     property int idValue: idSelection.value
     property int existingId: 0
     property bool showImageButton: false
     property string imageButtonId: "www"
     property var imageButtonClicked: function() {}
+    property var idList: searchPopup.popupIdList
     width: parent.width
     ColeitraGridCheckBox {
         id: existingTranslation
@@ -258,6 +278,7 @@ Row {
         text: existingId.toString()
     }
     ColeitraWidgetEditSearchPopup {
+        width: parent.width
         id: searchPopup
         popupSearchString: searchText
         okFunction: function() {
@@ -265,6 +286,7 @@ Row {
             idSelection.enabled = false;
             searchPopup.close();
         }
+        searchFunction: popupSearchFunction
     }
     onExistingChanged: {
         if(existing){
@@ -400,12 +422,31 @@ Column {
 @{
 import QtQuick 2.14
 import EditLib 1.0
+import DatabaseLib 1.0
 
 Column {
     ColeitraWidgetEditIdSelection {
         id: formId
         existingText: "Form exists"
         searchText: "Search for form:"
+        popupSearchFunction: function() {
+            var formIds = Database.searchForms(formId.searchValue);
+            for(var i = idList.children.length; i > 0; i--) {
+                idList.children[i-1].destroy()
+            }
+            var numberOfDestroyedChildren = idList.children.length;
+            for(var formid of formIds){
+                idList.addPart();
+                idList.lastCreatedObject.text = Database.prettyPrintForm(formid);
+                idList.lastCreatedObject.value = formid;
+            }
+            if(idList.children.length > numberOfDestroyedChildren){
+                idList.children[numberOfDestroyedChildren].checked = true;
+            }
+            else {
+                console.log("No children in idList!");
+            }
+        }
         existingId: Edit.formId
     }
     ColeitraGridTextInput {
@@ -619,27 +660,43 @@ import QtQuick 2.14
 
 Column {
     property string partType: ""
+    property bool startWithOneElement: true
+    property var lastCreatedObject: null
     function addPart(){
         var component = Qt.createComponent(partType + ".qml");
         if (component.status == Component.Ready) {
             var newObject = component.createObject(this);
 	    newObject.width = Qt.binding(function() {return width});
+            lastCreatedObject = newObject;
         }
         else {
             console.log("Problem with creation of " + partType);
         }
     }
     Component.onCompleted: {
-        addPart();
+        if(startWithOneElement) addPart();
     }
 }
 @}
 
+@o ../src/ColeitraWidgetEditIdRadioButton.qml
+@{
+import QtQuick.Controls 2.14
+
+RadioButton {
+    property int value: 0
+    text: "Id"
+    onCheckedChanged: function() {
+        parent.selectedIdFromIdList = value;
+    }
+}
+@}
 
 @o ../src/ColeitraWidgetEditSearchTextPopup.qml
 @{
 import QtQuick 2.14
 import QtQuick.Controls 2.14
+import QtQuick.Layouts 1.14
 
 Popup {
     property string popupSearchString: ""

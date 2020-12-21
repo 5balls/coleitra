@@ -49,6 +49,7 @@ Here are the files described, which are needed for compiling code for the Qt fra
         <file>ColeitraWidgetEditSearchPopup.qml</file>
         <file>ColeitraWidgetEditSearchTextPopup.qml</file>
         <file>ColeitraWidgetEditPartList.qml</file>
+        <file>ColeitraWidgetEditIdRadioButton.qml</file>
         <file>main.qml</file>
         <file>settings.svg</file>
         <file>settings_pressed.svg</file>

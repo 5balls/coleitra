@@ -493,7 +493,6 @@ void grammarprovider::getPlainTextTableFromReply(QNetworkReply* reply, QList<gra
     QJsonDocument j_document = QJsonDocument::fromJson(s_reply.toUtf8());
     QString wikitemplate_text = j_document.object()["expandtemplates"].toObject()["wikitext"].toString();
     parseMediawikiTableToPlainText(wikitemplate_text, parsedTable);
-
 }
 
 void grammarprovider::parse_fi_verbs(QNetworkReply* reply){
