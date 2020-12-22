@@ -758,6 +758,25 @@ Column {
         id: lexemeId
         existingText: "Lexeme exists"
         searchText: "Search for lexeme:"
+	popupSearchFunction: function() {
+            var lexemeIds = Database.searchLexemes(lexemeId.searchValue);
+            for(var i = idList.children.length; i > 0; i--) {
+                idList.children[i-1].destroy()
+            }
+            var numberOfDestroyedChildren = idList.children.length;
+            for(var lexemeid of lexemeIds){
+                idList.addPart();
+                idList.lastCreatedObject.text = Database.prettyPrintLexeme(lexemeid);
+                idList.lastCreatedObject.value = lexemeid;
+            }
+            if(idList.children.length > numberOfDestroyedChildren){
+                idList.children[numberOfDestroyedChildren].checked = true;
+            }
+            else {
+                console.log("No children in idList!");
+            }
+
+	}
         existingId: Edit.lexemeId
         showImageButton: true
         imageButtonClicked: function() {

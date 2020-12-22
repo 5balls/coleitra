@@ -72,7 +72,10 @@ You should follow the instructions of Qt - either on their webpage or in the sou
    -android-ndk ~/src/foreign/android-sdk/ndk-bundle \
    -android-sdk ~/src/foreign/android-sdk \
    -no-warnings-are-errors \
-   -prefix ~/src/foreign/qt5-android-install-20201121
+   -openssl-runtime \
+   -optimize-size \
+   -I ~/src/foreign/openssl-1.1.1i/include \
+   -prefix ~/src/foreign/qt5-android-install-20201222
    make
    su
    make install
@@ -185,9 +188,10 @@ This requires a local installation of the android ndk and sdk. You can download 
    cmake -DANDROID_PLATFORM=21 \
    -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH \
    -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake \
-   -DCMAKE_PREFIX_PATH=~/src/foreign/qt5-android-install-20201022/ \
+   -DCMAKE_PREFIX_PATH=~/src/foreign/qt5-android-install-20201222/ \
    ../../src
+   cp ~/src/foreign/qt5-android-install-20201222/jar/QtAndroidNetwork.jar coleitra-armeabi-v7a/libs
    make
 
-You might not need to set `CMAKE_PREFIX_PATH` and `CMAKE_FIND_ROOT_PATH_MODE_PACKAGE` if you have installed thq Qt5 libraries for cross compiling for android system wide. Also this might download quite some android stuff on the first run. Subsequent runs should be faster.
+That the jar file is not copied seems to be a bug in recent Qt versions, there is probably a more elegant way to do this. You might not need to set `CMAKE_PREFIX_PATH` and `CMAKE_FIND_ROOT_PATH_MODE_PACKAGE` if you have installed the Qt5 libraries for cross compiling for android system wide. Also this might download quite some android stuff on the first run. Subsequent runs should be faster.
 

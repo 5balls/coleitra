@@ -30,10 +30,30 @@
     #error "Version of Qt >= 5.12.0 is required"
 #endif
 
+#ifdef QT_NO_SSL
+    #pragma message "Qt was compiled without OpenSSL support"
+    #error "OpenSSL support required!"
+#else
+    #pragma message "Qt was compiled with OpenSSL support"
+#endif
 
 #include <QApplication>
 #include <QQmlApplicationEngine>
 #include <QSslSocket>
+
+#ifdef QSSLSOCKET_H
+    #pragma message "QSslSocket included"
+#else
+    #pragma message "QSslSocket not included"
+#endif
+
+#ifdef QT_BUILD_NETWORK_LIB
+    #pragma message "QT_BUILD_NETWORK_LIB defined"
+#else
+    #pragma message "QT_BUILD_NETWORK_LIB not defined"
+#endif
+
+
 #include "about.h"
 #include "settings.h"
 #include "database.h"
@@ -109,6 +129,7 @@ int main(int argc, char *argv[])
     //qputenv("QT_ANDROID_VOLUME_KEYS", "1");
 
     QApplication app(argc, argv);
+    
     qDebug() << "Device supports OpenSSL: " << QSslSocket::supportsSsl();
 
     QQmlApplicationEngine engine;

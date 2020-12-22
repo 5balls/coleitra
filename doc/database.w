@@ -63,6 +63,8 @@ public:
     Q_INVOKABLE QString prettyPrintGrammarForm(int grammarForm_id);
     Q_INVOKABLE QString prettyPrintForm(int form_id);
     Q_INVOKABLE QList<int> searchForms(QString string, bool exact=false);
+    Q_INVOKABLE QString prettyPrintLexeme(int lexeme_id);
+    Q_INVOKABLE QList<int> searchLexemes(QString string, bool exact=false);
     Q_INVOKABLE int grammarFormIdFromStrings(int language_id, QList<QList<QString> > grammarform);
 private:
     QSqlDatabase vocableDatabase;
@@ -684,6 +686,32 @@ QList<int> database::searchForms(QString string, bool exact){
     while(result.next())
         form_ids.push_back(result.value("id").toInt());
     return form_ids;
+}
+
+QString database::prettyPrintLexeme(int lexeme_id){
+    QString prettystring;
+    databasetable* formtable = getTableByName("form");
+    QSqlQuery result = formtable->select({"string"},{"lexeme",lexeme_id});
+    while(result.next()){
+        prettystring += result.value("string").toString() + ", ";
+    }
+    prettystring.chop(2);
+    return prettystring;
+}
+
+QList<int> database::searchLexemes(QString string, bool exact){
+    QList<int> lexeme_ids;
+    QList<int> form_ids = searchForms(string,exact);
+    databasetable* formtable = getTableByName("form");
+    foreach(int form_id, form_ids){
+        QSqlQuery result = formtable->select({"lexeme"},{"id",form_id});
+        if(result.next()){
+            int lexeme_id = result.value("lexeme").toInt();
+            if(!lexeme_ids.contains(lexeme_id))
+                lexeme_ids.push_back(lexeme_id);
+        }
+    }
+    return lexeme_ids;
 }
 
 int database::grammarFormIdFromStrings(int language_id, QList<QList<QString> > grammarform){
