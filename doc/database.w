@@ -365,7 +365,7 @@ multiple word lexeme in a different language.
                 // Number
                 {"Number","Singular", "Plural"},
                 // Tense
-                {"Tense", "Future", "Future 1", "Future 2", "Past", "Perfect", "Plusquamperfekt", "Present", "Preterite", "Agent"},
+                {"Tense", "Future", "Future 1", "Future 2", "Past", "Perfect", "Plusquamperfect", "Present", "Preterite", "Agent"},
                 // Mood
                 {"Mood", "Imperative", "Indicative", "Potential", "Subjunctive", "Subjunctive 1", "Subjunctive 2", "Optative"},
                 // Part of speech
@@ -377,7 +377,7 @@ multiple word lexeme in a different language.
                 // Infinitive
                 {"Infinitive", "First", "Long first", "Second", "Third", "Fourth", "Fifth"},
                 // Verbform
-                {"Verbform", "Participle", "Auxiliary"},
+                {"Verbform", "Participle", "Auxiliary", "Connegative"},
             };
             QMap<QString,QVariant> add_ge;
             QMap<QString,QVariant> add_gk;
