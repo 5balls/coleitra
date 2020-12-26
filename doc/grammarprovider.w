@@ -51,12 +51,11 @@ public:
         SENTENCE,
     };
     enum lexemePartProcessInstruction {
-        NOPROCESSING,
-        SPLIT,
+        IGNOREFORM,
         LOOKUPFORM,
         LOOKUPFORM_LEXEME, // Match lexeme to current lexeme when looking up form
         ADDANDUSEFORM,
-        IGNOREFORM,
+        ADDANDIGNOREFORM,
     };
     struct lexemePartProcess {
         lexemePartProcess(lexemePartProcessInstruction y_instruction):
@@ -81,7 +80,8 @@ public:
             column(y_column),
             grammarexpressions(y_grammarexpressions),
             type(FORM),
-            processList({}){
+            processList({}),
+            string(""){
             }
 	grammarform(int y_index,
                 int y_row,
@@ -94,12 +94,13 @@ public:
             column(y_column),
             grammarexpressions(y_grammarexpressions),
             type(y_type),
-            processList(y_processList){
+            processList(y_processList),
+            string(""){
             }
-
         int index;
         int row;
         int column;
+        QString string;
         QList<QList<QString> > grammarexpressions;
         lexemePartType type;
         QList<lexemePartProcess> processList;
@@ -110,6 +111,8 @@ public:
     };
 public slots:
     Q_INVOKABLE void getWiktionarySections(QObject* caller);
+    Q_INVOKABLE void getNextGrammarObject(QObject* caller);
+    Q_INVOKABLE void getNextSentencePart(QObject* caller);
     void getWiktionarySection(QNetworkReply* reply);
     void getWiktionaryTemplate(QNetworkReply* reply);
     void networkReplyErrorOccurred(QNetworkReply::NetworkError code);
@@ -124,7 +127,17 @@ public slots:
     void process_grammar(QList<grammarform> grammarforms, QList<tablecell> parsedTable, QList<QList<QString> > additional_grammarforms = {});
     void getPlainTextTableFromReply(QNetworkReply* reply, QList<grammarprovider::tablecell>& parsedTable);
 signals:
-    void grammarobtained(QObject* caller, QStringList expressions, QList<QList<QList<QString> > > grammarexpressions);
+    void grammarInfoAvailable(QObject* caller, int numberOfObjects);
+    void formObtained(QObject* caller, QString form, QList<QList<QString> > grammarexpressions);
+    void compoundFormObtained(QObject* caller, QString form);
+    void sentenceAvailable(QObject* caller, int parts);
+    void sentenceLookupForm(QObject* caller, QString form, QList<QList<QString> > grammarexpressions);
+    void sentenceLookupFormLexeme(QObject* caller, QString form, QList<QList<QString> > grammarexpressions);
+    void sentenceAddAndUseForm(QObject* caller, QString form, QList<QList<QString> > grammarexpressions);
+    void sentenceAddAndIgnoreForm(QObject* caller, QString form, QList<QList<QString> > grammarexpressions);
+    void sentenceComplete(QObject* caller);
+    void grammarInfoComplete(QObject* caller);
+    //void grammarobtained(QObject* caller, QStringList expressions, QList<QList<QList<QString> > > grammarexpressions);
 private:
     int m_language;
     QString m_word;
@@ -136,9 +149,8 @@ private:
     database* m_database;
     QObject* m_caller;
     templatearguments m_currentarguments;
+    QList<grammarform> m_grammarforms;
     QMap<QString, void (grammarprovider::*)(QNetworkReply*)> m_parser_map; 
-signals:
-
 @<End of class and header @>
 @}
 
@@ -335,11 +347,11 @@ grammarprovider::templatearguments grammarprovider::parseTemplateArguments(QStri
         if(arg.contains(QLatin1Char('='))){
             QStringList keyval = arg.split(QLatin1Char('='));
             parsed_args.named[keyval.first()] = keyval.last();
-            qDebug() << keyval.first() << "=" << keyval.last();
+            //qDebug() << keyval.first() << "=" << keyval.last();
         }
         else {
             parsed_args.unnamed.push_back(arg);
-            qDebug() << arg;
+            //qDebug() << arg;
         }
     }
     return parsed_args;
@@ -480,7 +492,7 @@ void grammarprovider::parseMediawikiTableToPlainText(QString wikitext, QList<gra
             foreach(QString table_entry, table_entries){
                 table_entry = table_entry.trimmed();
                 table.push_back({row,column,table_entry});
-                qDebug() << row << column << table_entry;
+                //qDebug() << row << column << table_entry;
             }
             column += columnspan;
             continue;
@@ -493,7 +505,7 @@ void grammarprovider::parseMediawikiTableToPlainText(QString wikitext, QList<gra
             foreach(QString table_entry, table_entries){
                 table_entry = table_entry.trimmed();
                 table.push_back({row,column,table_entry});
-                qDebug() << row << column << table_entry;
+                //qDebug() << row << column << table_entry;
             }
             column += columnspan;
             continue;
@@ -503,8 +515,6 @@ void grammarprovider::parseMediawikiTableToPlainText(QString wikitext, QList<gra
 
 
 void grammarprovider::process_grammar(QList<grammarform> grammarforms, QList<tablecell> parsedTable, QList<QList<QString> > additional_grammarforms){
-    QStringList expressions;
-    QList<QList<QList<QString> > > grammarexpressions;
     if(!parsedTable.isEmpty()){
         foreach(const grammarform& gf_expectedcell, grammarforms){
             tablecell tc_current = parsedTable.first();
@@ -527,16 +537,106 @@ void grammarprovider::process_grammar(QList<grammarform> grammarforms, QList<tab
                 }
                 if(tc_current.column == gf_expectedcell.column){
                     if(tc_current.content != "—"){
-                        expressions.push_back(tc_current.content);
-                        grammarexpressions.push_back(gf_expectedcell.grammarexpressions + additional_grammarforms);
+                        grammarform currentGrammarForm = gf_expectedcell;
+                        currentGrammarForm.string = tc_current.content;
+                        currentGrammarForm.grammarexpressions += additional_grammarforms;
+                        m_grammarforms.push_back(currentGrammarForm);
                     }
                 }
             }
         }
     }
 out:
-    qDebug() << "Got" << grammarexpressions.size() << "==" << expressions.size();
-    emit grammarobtained(m_caller, expressions, grammarexpressions);
+    std::sort(m_grammarforms.begin(), m_grammarforms.end(), [](grammarform a, grammarform b) {
+        return a.index < b.index;
+    });
+    qDebug() << "Got" << m_grammarforms.size();
+
+    emit grammarInfoAvailable(m_caller, m_grammarforms.size());
+    //emit grammarobtained(m_caller, expressions, grammarexpressions);
+}
+
+void grammarprovider::getNextGrammarObject(QObject* caller){
+    m_caller = caller;
+    if(m_grammarforms.isEmpty()){
+        emit grammarInfoComplete(m_caller);
+        return;
+    }
+    grammarform form = m_grammarforms.first();
+    switch(form.type){
+        case FORM:
+            qDebug() << form.index << form.string << "FORM" << form.grammarexpressions;
+            m_grammarforms.removeFirst();
+            emit formObtained(m_caller, form.string, form.grammarexpressions);
+            return;
+            break;
+        case COMPOUNDFORM:
+            qDebug() << form.index << form.string << "COMPOUNDFORM" << form.grammarexpressions;
+            break;
+        case SENTENCE:
+            qDebug() << form.index << form.string << "SENTENCE" << form.grammarexpressions;
+            {
+                QStringList sentenceparts = form.string.split(QLatin1Char(' '));
+                if(sentenceparts.size() == form.processList.size()){
+                    emit sentenceAvailable(m_caller, form.processList.size());
+                }
+                else {
+                    qDebug() << "Process list size (=" + QString::number(form.processList.size()) +  ") does not match number of sentence parts (=" + sentenceparts.size() + ")!";
+                }
+            }
+            break;
+        default:
+            qDebug() << form.index << form.string << "unknown form!" << form.grammarexpressions;
+            break;
+    }
+}
+
+void grammarprovider::getNextSentencePart(QObject* caller){
+    m_caller = caller;
+    if(m_grammarforms.isEmpty()){
+        qDebug() << "getNextSentencePart is called with no grammar objects remaining!";
+        return;
+    }
+    grammarform form = m_grammarforms.first();
+    // We modify m_grammarforms, so we remove it always and add it back
+    // later:
+    m_grammarforms.removeFirst();
+    // Check that there is still stuff to process:
+    if(form.processList.isEmpty()){
+        emit sentenceComplete(m_caller);
+    }
+    // Process sentence parts:
+    lexemePartProcess process = form.processList.first();
+    form.processList.removeFirst();
+    QStringList sentenceparts = form.string.split(QLatin1Char(' '));
+    if(sentenceparts.size() > 1)
+        form.string.remove(0,sentenceparts.at(0).size()+1);
+    m_grammarforms.push_front(form);
+    switch(process.instruction){
+        case IGNOREFORM:
+            getNextSentencePart(m_caller);
+            break;
+        case LOOKUPFORM:
+            qDebug() << sentenceparts.at(0) << "LOOKUPFORM" << process.grammarexpressions;
+            emit sentenceLookupForm(m_caller,sentenceparts.at(0),process.grammarexpressions);
+            break;
+        case LOOKUPFORM_LEXEME:
+            qDebug() << sentenceparts.at(0) << "LOOKUPFORM_LEXEME" << process.grammarexpressions;
+            emit sentenceLookupFormLexeme(m_caller,sentenceparts.at(0),process.grammarexpressions);
+            break;
+        case ADDANDUSEFORM:
+            qDebug() << sentenceparts.at(0) << "ADDANDUSEFORM" << process.grammarexpressions;
+            emit sentenceAddAndUseForm(m_caller,sentenceparts.at(0),process.grammarexpressions);
+            break;
+        case ADDANDIGNOREFORM:
+            qDebug() << sentenceparts.at(0) << "ADDANDIGNOREFORM" << process.grammarexpressions;
+            emit sentenceAddAndIgnoreForm(m_caller,sentenceparts.at(0),process.grammarexpressions);
+            break;
+        default:
+            qDebug() << "Unknown processing instruction... ignoring!";
+            getNextSentencePart(m_caller);
+            break;
+    }
 }
 
 void grammarprovider::getPlainTextTableFromReply(QNetworkReply* reply, QList<grammarprovider::tablecell>& parsedTable){

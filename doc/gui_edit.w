@@ -26,6 +26,7 @@ import DatabaseLib 1.0
 
 Row {
     id: widget
+    height: 40
     property var gklabel: grammarkeylabel
     property var gvlabel: grammarvaluelabel
     property var pbutton: plusbutton
@@ -243,6 +244,7 @@ import QtQuick.Controls 2.14
 
 Row {
     property bool existing: existingTranslation.checked
+    property var existingtranslation: existingTranslation
     property string existingText: ""
     property string searchText: ""
     property string searchValue: searchPopup.searchValue
@@ -306,6 +308,11 @@ Column {
         if (component.status == Component.Ready) {
             var newObject = component.createObject(this);
 	    newObject.width = Qt.binding(function() {return width});
+            var children_sum_height = 0;
+            for(var i=0; i<children.length; i++){
+                children_sum_height += children[i].height;
+            }
+            height = children_sum_height;
         }
         else {
             console.log("Problem with creation of grammar expression edit widget");
@@ -323,6 +330,9 @@ import QtQuick 2.14
 import EditLib 1.0
 
 Column {
+    property var grammarformid: grammarFormId
+    property var grammarexpressionlist: grammarExpressionList
+    height: grammarFormId.height + grammarExpressionList.height
     ColeitraWidgetEditIdSelection {
         id: grammarFormId
         existingText: "Grammarform exists"
@@ -330,6 +340,7 @@ Column {
         existingId: Edit.grammarFormId
     }
     ColeitraWidgetEditGrammarFormComponentList {
+        id: grammarExpressionList
         visible: !grammarFormId.existing
         width: parent.width
     }
@@ -425,6 +436,9 @@ import EditLib 1.0
 import DatabaseLib 1.0
 
 Column {
+    property var form: formString
+    property var addgrammar: addGrammar
+    property var grammarform: grammarForm
     ColeitraWidgetEditIdSelection {
         id: formId
         existingText: "Form exists"
@@ -450,6 +464,7 @@ Column {
         existingId: Edit.formId
     }
     ColeitraGridTextInput {
+        id: formString
         visible: !formId.existing
         width: parent.width
     }
@@ -461,6 +476,7 @@ Column {
         text: "Add grammar form"
     }
     ColeitraWidgetEditGrammarForm {
+        id: grammarForm
         visible:  !formId.existing && addGrammar.checked
         width: parent.width
     }
@@ -549,7 +565,12 @@ import QtQuick.Controls 2.14
 
 Column {
     id: lexeme
+    height: row.height + (editForm? (editForm.visible ? editForm.height : 0) : 0) + (editCompoundForm? (editCompoundForm.visible ? editCompoundForm.height : 0) : 0) + (editSentence? (editSentence.visible ? editSentence.height : 0) : 0)
+    property var selection: lexemeTypeSelection
+    property var form: editForm
+    property var pbutton: plusbutton
     Row {
+        id: row
         visible: !lexemeId.existing
         width: parent.width
         ColeitraGridImageButton {
@@ -557,6 +578,7 @@ Column {
             visible: false
             imageid: "minus"
             clickhandler: function() {
+                lexeme.parent.childRemoved(lexeme);
                 lexeme.destroy();
             }
         }
@@ -651,6 +673,9 @@ Column {
         width: parent.width
         visible: !lexemeId.existing && ((lexemeTypeSelection == null) || (lexemeTypeSelection.currentIndex == 2))
     }
+    onHeightChanged: {
+        parent.height = height;
+    }
 }
 @}
 
@@ -675,6 +700,79 @@ Column {
     }
     Component.onCompleted: {
         if(startWithOneElement) addPart();
+    }
+}
+@}
+
+@o ../src/ColeitraWidgetEditPartStack.qml
+@{
+import QtQuick 2.14
+import QtQuick.Controls 2.14
+Column {
+
+    property string partType: ""
+    property bool startWithOneElement: true
+    property var lastCreatedObject: null
+    property var stackElements: new Array();
+    property var numberOfElements: 0
+    property var stack: columnLayout
+    Row {
+        width: parent.width
+        ColeitraGridLabel {
+            id: lexemePartLabel
+            text: "Lexeme part " + selectedLexemePart.value.toString() + " / " + numberOfElements
+        }
+        Rectangle {
+            height: 1
+            width: parent.width - lexemePartLabel.width - selectedLexemePart.width
+        }
+        SpinBox {
+            id: selectedLexemePart
+            from: 1
+            to: numberOfElements
+            onValueChanged: {
+                if(stackElements.length>=value){
+                    if(columnLayout.currentItem){
+                        console.log(columnLayout.currentItem);
+                        columnLayout.currentItem.visible = false;
+                    }
+                    else {
+                        console.log("No item on stack");
+                    }
+                    stackElements[value-1].visible = true;
+                    columnLayout.replace(stackElements[value-1]);
+                }
+            }
+        }
+    }
+    StackView {
+        id: columnLayout
+        width: parent.width
+        function addPart(){
+            var component = Qt.createComponent(partType + ".qml");
+            if (component.status == Component.Ready) {
+                var newObject = component.createObject(columnLayout);
+                newObject.width = Qt.binding(function() {return width});
+                lastCreatedObject = newObject;
+                stackElements.push(newObject);
+                numberOfElements++;
+                //columnLayout.replace(newObject);
+                selectedLexemePart.value = stackElements.indexOf(newObject) + 1;
+            }
+            else {
+                console.log("Problem with creation of " + partType);
+            }
+        }
+        function childRemoved(child){
+            selectedLexemePart.value++;
+            stackElements.splice(stackElements.indexOf(child),1);
+            numberOfElements--;
+            selectedLexemePart.value--;
+        }
+
+        Component.onCompleted: {
+            if(startWithOneElement) columnLayout.addPart();
+        }
     }
 }
 @}
@@ -789,8 +887,10 @@ Column {
         model: Database.languagenames();
         currentIndex: Database.alphabeticidfromlanguageid(languageId);
     }
-    ColeitraWidgetEditPartList {
+    ColeitraWidgetEditPartStack {
+        id: lexemePartList
         partType: "ColeitraWidgetEditLexemePart"
+        //partType: "ColeitraWidgetEditGrammarForm"
         width: parent.width
     }
     ColeitraWidgetEditSearchTextPopup {
@@ -799,40 +899,42 @@ Column {
         searchFunction: function() {
             GrammarProvider.language = languageId;
             GrammarProvider.word = searchPopup.popupSearchText;
-            GrammarProvider.getWiktionarySections(searchPopup)
+            GrammarProvider.getWiktionarySections(searchPopup);
         }
         cancelFunction: function() {
             searchPopup.close();
         }
         okFunction: function() {
             searchPopup.close();
+            GrammarProvider.getNextGrammarObject(searchPopup);
         }
         Connections {
             target: GrammarProvider
-            function onGrammarobtained(caller, expressions, grammarexpressions) {
+            function onGrammarInfoAvailable(caller, grammarforms_size){
                 if(searchPopup != caller) return;
-                receivedExpressions = expressions;
-                receivedGrammarExpressions = grammarexpressions;
+                console.log("Received " + grammarforms_size.toString() + " grammar forms!");
                 searchPopup.okEnabled = true;
-                /*var current_lexeme = lexeme;
-                var j_max = expressions.length;
-                for(var j=0; j<j_max; j++){
-                    var item = expressions[j];
-                    current_lexeme.text = item;
-                    var grammartags = grammarexpressions[j];
-                    var i_max = grammartags.length;
-                    for(var i=0; i<i_max; i++){
-                        var current_grammarexpression = current_lexeme.parent.children[current_lexeme.parent.children.length-1];
-                        current_grammarexpression.gklabel.text = grammartags[i][0];
-                        current_grammarexpression.gvlabel.text = grammartags[i][1];
-                        current_grammarexpression.pbutton.clickhandler();
-                    }
-                    current_lexeme.parent.pbutton.clickhandler();
-                    current_lexeme = current_lexeme.parent.parent.children[current_lexeme.parent.parent.children.length-1].lx;
-                }*/
+            }
+            function onFormObtained(caller, formstring, grammarexpressions){
+                if(searchPopup != caller) return;
+                console.log("Received form " + formstring);
+                console.log("Lexeme has " + lexemePartList.numberOfElements + " parts");
+                var currentLexemePart = lexemePartList.stack.currentItem;
+                console.log(currentLexemePart.selection.toString());
+                currentLexemePart.selection.currentIndex = 0;
+                currentLexemePart.form.form.text = formstring;
+                currentLexemePart.form.addgrammar.checked = true;
+                currentLexemePart.form.grammarform.grammarformid.existingtranslation.checked = false;
+                for(var i=0; i<grammarexpressions.length; i++){
+                    var currentGrammarExpression = currentLexemePart.form.grammarform.grammarexpressionlist.children[currentLexemePart.form.grammarform.grammarexpressionlist.children.length-1];
+                    currentGrammarExpression.gklabel.text = grammarexpressions[i][0];
+                    currentGrammarExpression.gvlabel.text = grammarexpressions[i][1];
+                    currentGrammarExpression.pbutton.clickhandler();
+                }
+                currentLexemePart.pbutton.clickhandler();
+                GrammarProvider.getNextGrammarObject(searchPopup);
             }
         }
-
     }
 }
 @}
