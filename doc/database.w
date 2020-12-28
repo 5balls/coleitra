@@ -61,7 +61,8 @@ public:
     Q_INVOKABLE int newLexeme(int language_id);
     Q_INVOKABLE int newForm(int lexeme_id, int grammarFormId, QString string);
     Q_INVOKABLE QString prettyPrintGrammarForm(int grammarForm_id);
-    Q_INVOKABLE QString prettyPrintForm(int form_id);
+    Q_INVOKABLE QString prettyPrintForm(int form_id, QString form = "", int grammarformid = 0);
+    Q_INVOKABLE int grammarFormFromFormId(int form_id);
     Q_INVOKABLE QList<int> searchForms(QString string, bool exact=false);
     Q_INVOKABLE QString prettyPrintLexeme(int lexeme_id);
     Q_INVOKABLE QList<int> searchLexemes(QString string, bool exact=false);
@@ -664,8 +665,12 @@ QString database::prettyPrintGrammarForm(int grammarForm_id){
     return prettystring;
 }
 
-QString database::prettyPrintForm(int form_id){
+QString database::prettyPrintForm(int form_id, QString form, int grammarformid){
     QString prettystring;
+    if(form_id<1){
+        prettystring += "<b>" + form + "</b> ";
+        prettystring += prettyPrintGrammarForm(grammarformid);
+    } 
     databasetable* formtable = getTableByName("form");
     QSqlQuery result = formtable->select({"string","grammarform"},{"id",form_id});
     if(result.next()){
@@ -673,6 +678,15 @@ QString database::prettyPrintForm(int form_id){
         prettystring += prettyPrintGrammarForm(result.value("grammarform").toInt());
     }
     return prettystring;
+}
+
+int database::grammarFormFromFormId(int form_id){
+    databasetable* formtable = getTableByName("form");
+    QSqlQuery result = formtable->select({"grammarform"},{"id",form_id});
+    if(result.next())
+        return result.value("grammarform").toInt();
+    else
+        return 0;
 }
 
 QList<int> database::searchForms(QString string, bool exact){

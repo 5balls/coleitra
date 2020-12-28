@@ -80,90 +80,6 @@ Row {
 }
 @}
 
-@o ../src/ColeitraWidgetEditGrammarForm.qml
-@{
-/*
-import QtQuick 2.14
-import QtQuick.Layouts 1.14
-import GrammarProviderLib 1.0
-import DatabaseLib 1.0
-
-ColeitraGridInGridLayout {
-    id: widget
-    property var language: 1
-    property var pbutton: plusbutton
-    property var lx: lexeme
-    ColeitraGridImageButton {
-        id: minusbutton
-        visible: false
-        imageid: "minus"
-        clickhandler: function() { 
-            widget.destroy();
-        }
-    }
-    ColeitraGridTextInput {
-        id: lexeme
-        Layout.columnSpan: 6
-        Layout.preferredWidth: 120
-        Connections {
-            target: GrammarProvider
-            function onGrammarobtained(caller, expressions, grammarexpressions) {
-                if(widget != caller) return;
-                var current_lexeme = lexeme;
-                var j_max = expressions.length;
-                for(var j=0; j<j_max; j++){
-                    var item = expressions[j];
-                    current_lexeme.text = item;
-                    var grammartags = grammarexpressions[j];
-                    var i_max = grammartags.length;
-                    for(var i=0; i<i_max; i++){
-                        var current_grammarexpression = current_lexeme.parent.children[current_lexeme.parent.children.length-1];
-                        current_grammarexpression.gklabel.text = grammartags[i][0];
-                        current_grammarexpression.gvlabel.text = grammartags[i][1];
-                        current_grammarexpression.pbutton.clickhandler();
-                    }
-                    current_lexeme.parent.pbutton.clickhandler();
-                    current_lexeme = current_lexeme.parent.parent.children[current_lexeme.parent.parent.children.length-1].lx;
-                }
-            }
-        }
-    }
-    ColeitraGridImageButton {
-        imageid: "www"
-        clickhandler: function() { 
-            GrammarProvider.language = language;
-            GrammarProvider.word = lexeme.text;
-            GrammarProvider.getWiktionarySections(widget)
-        }
-    }
-    ColeitraGridImageButton {
-        id: plusbutton
-        imageid: "plus"
-        clickhandler: function() { 
-            plusbutton.visible = false;
-            minusbutton.visible = true;
-            parent.parent.addAddRemoveGrammarForm();
-        }
-    }
-    function addAddRemoveGrammarExpression(){
-        var component = Qt.createComponent("ColeitraWidgetEditGrammarExpression.qml");
-        if (component.status == Component.Ready) {
-            var newObject = component.createObject(this);
-        }
-        else {
-            console.log("Problem with creation of grammar expression edit widget");
-        }
-    }
-    Component.onCompleted: {
-        width = parent.width;
-        Layout.preferredWidth = parent.width;
-        lexeme.Layout.preferredWidth = parent.width - 80;
-        addAddRemoveGrammarExpression();
-    }
-}
-*/
-@}
-
 @o ../src/ColeitraWidgetEditSearchPopup.qml
 @{
 import QtQuick 2.14
@@ -202,8 +118,8 @@ Popup {
             id: selectedId
             width: parent.width
             editable: true
-            from: -99
-            to: 99
+            from: -9999
+            to: 9999
         }
         Row {
             ColeitraGridButton {
@@ -223,17 +139,6 @@ Popup {
         }
     }
     @<Background grey rounded control@>
-/*            DropShadow
-    {
-        width: searchLexeme.width;
-        height: searchLexeme.height;
-//                source: searchLexeme.background;
-        horizontalOffset: 0;
-        verticalOffset: 5;
-        radius: 10;
-        samples: 7;
-        color: "black";
-    }*/
 }
 @}
 
@@ -250,11 +155,13 @@ Row {
     property string searchValue: searchPopup.searchValue
     property var popupSearchFunction: function() {}
     property int idValue: idSelection.value
+    property var idselection: idSelection
     property int existingId: 0
     property bool showImageButton: false
     property string imageButtonId: "www"
     property var imageButtonClicked: function() {}
     property var idList: searchPopup.popupIdList
+    property bool popupEnabled: true
     width: parent.width
     ColeitraGridCheckBox {
         id: existingTranslation
@@ -265,8 +172,8 @@ Row {
     SpinBox {
         id: idSelection
         visible: existingTranslation.checked
-        from: -99
-        to: 99
+        from: -9999
+        to: 9999
     }
     ColeitraGridImageButton {
         id: plusButton
@@ -291,7 +198,7 @@ Row {
         searchFunction: popupSearchFunction
     }
     onExistingChanged: {
-        if(existing){
+        if(existing && popupEnabled){
             searchPopup.open()
         }
     }
@@ -328,11 +235,12 @@ Column {
 @{
 import QtQuick 2.14
 import EditLib 1.0
+import DatabaseLib 1.0
 
 Column {
     property var grammarformid: grammarFormId
     property var grammarexpressionlist: grammarExpressionList
-    height: grammarFormId.height + grammarExpressionList.height
+    height: grammarFormId.height + (grammarExpressionList.visible ? grammarExpressionList.height : prettyText.height);
     ColeitraWidgetEditIdSelection {
         id: grammarFormId
         existingText: "Grammarform exists"
@@ -342,6 +250,12 @@ Column {
     ColeitraWidgetEditGrammarFormComponentList {
         id: grammarExpressionList
         visible: !grammarFormId.existing
+        width: parent.width
+    }
+    ColeitraGridLabel {
+        id: prettyText
+        visible: grammarFormId.existing
+        text: Database.prettyPrintGrammarForm(grammarFormId.idValue);
         width: parent.width
     }
 }
@@ -402,8 +316,8 @@ Row {
         id: idSelection
         visible: false
         editable: true
-        from: -99
-        to: 99
+        from: -9999
+        to: 9999
     }
 
 }
@@ -434,15 +348,19 @@ Column {
 import QtQuick 2.14
 import EditLib 1.0
 import DatabaseLib 1.0
+import EditLib 1.0
 
 Column {
     property var form: formString
+    property var formid: formId.existingId
     property var addgrammar: addGrammar
     property var grammarform: grammarForm
+    property var popupenabled: true
     ColeitraWidgetEditIdSelection {
         id: formId
         existingText: "Form exists"
         searchText: "Search for form:"
+        popupEnabled: popupenabled
         popupSearchFunction: function() {
             var formIds = Database.searchForms(formId.searchValue);
             for(var i = idList.children.length; i > 0; i--) {
@@ -451,7 +369,14 @@ Column {
             var numberOfDestroyedChildren = idList.children.length;
             for(var formid of formIds){
                 idList.addPart();
-                idList.lastCreatedObject.text = Database.prettyPrintForm(formid);
+                if(formid<0){
+                    var formstring = Edit.stringFromFormId(formid);
+                    var grammarid = Edit.grammarIdFromFormId(formid);
+                    idList.lastCreatedObject.text = Database.prettyPrintForm(formid, formstring, grammarid);
+                }
+                else {
+                    idList.lastCreatedObject.text = Database.prettyPrintForm(formid);
+                }
                 idList.lastCreatedObject.value = formid;
             }
             if(idList.children.length > numberOfDestroyedChildren){
@@ -487,9 +412,15 @@ Column {
 @{
 import QtQuick 2.14
 import QtQuick.Controls 2.14
+import DatabaseLib 1.0
+import EditLib 1.0
 
 Row {
     id: sentencePart
+    property var selectedparttype: selectedPartType
+    property var capitalizedcheckbox: capitalizedCheckbox
+    property var idselection: idSelection
+    property var searchpopup: searchPopup
     ColeitraGridImageButton {
         id: minusButton
         visible: false
@@ -501,7 +432,12 @@ Row {
     ColeitraGridComboBox {
         id: selectedPartType
         model: ["Form", "Compoundform", "Grammarform", "Punctuation mark"]
-        width: idSelection.visible ? parent.width - capitalizedCheckbox.width - 40 - idSelection.width : parent.width - capitalizedCheckbox.width - 40
+        width: idSelection.visible ? parent.width - capitalizedCheckbox.width - 40 - idSelection.width - prettyText.width : parent.width - capitalizedCheckbox.width - 40
+    }
+    ColeitraGridLabel {
+        visible: idSelection.visible
+        id: prettyText
+        text: ""
     }
     ColeitraGridCheckBox {
         id: capitalizedCheckbox
@@ -517,8 +453,25 @@ Row {
     SpinBox {
         id: idSelection
         visible: false
-        from: -99
-        to: 99
+        from: -9999
+        to: 9999
+        onValueChanged: {
+            switch(selectedPartType.currentIndex){
+                case 0:
+                    if(value<0){
+                        var formstring = Edit.stringFromFormId(value);
+                        var grammarid = Edit.grammarIdFromFormId(value);
+                        prettyText.text = Database.prettyPrintForm(value, formstring, grammarid);
+                    }
+                    else {
+                        prettyText.text = Database.prettyPrintForm(value);
+                    }
+                    break;
+                default:
+                    prettyText.text = "";
+                    break;
+            }
+        }
     }
     ColeitraWidgetEditSearchPopup {
         id: searchPopup
@@ -545,6 +498,11 @@ import QtQuick 2.14
 import EditLib 1.0
 
 Column {
+    property var sentenceid: sentenceId
+    property var sentencepartlist: sentencePartList
+    property var addgrammar: addGrammar
+    property var grammarform: grammarForm
+    property var sentenceidid: sentenceId.existingId
     ColeitraWidgetEditIdSelection {
         id: sentenceId
         existingText: "Sentence exists"
@@ -552,7 +510,19 @@ Column {
         existingId: Edit.sentenceId
     }
     ColeitraWidgetEditPartList {
+        id: sentencePartList
         partType: "ColeitraWidgetEditSentencePart"
+        width: parent.width
+    }
+    ColeitraGridCheckBox {
+        id: addGrammar
+        width: parent.width
+        checked: true
+        text: "Add grammar form"
+    }
+    ColeitraWidgetEditGrammarForm {
+        id: grammarForm
+        visible:  !sentenceId.existing && addGrammar.checked
         width: parent.width
     }
 }
@@ -562,13 +532,18 @@ Column {
 @{
 import QtQuick 2.14
 import QtQuick.Controls 2.14
+import EditLib 1.0
 
 Column {
     id: lexeme
     height: row.height + (editForm? (editForm.visible ? editForm.height : 0) : 0) + (editCompoundForm? (editCompoundForm.visible ? editCompoundForm.height : 0) : 0) + (editSentence? (editSentence.visible ? editSentence.height : 0) : 0)
     property var selection: lexemeTypeSelection
     property var form: editForm
+    property var compoundform: editCompoundForm
+    property var sentence: editSentence
     property var pbutton: plusbutton
+    property var language: 1
+    property var lexemeid: 0
     Row {
         id: row
         visible: !lexemeId.existing
@@ -662,6 +637,22 @@ Column {
         id: editForm
         width: parent.width
         visible: !lexemeId.existing && ((lexemeTypeSelection == null) || (lexemeTypeSelection.currentIndex == 0))
+        onEnabledChanged: {
+            if(enabled==false){
+                var numberOfGrammarExpressions = grammarform.grammarexpressionlist.children.length;
+                var grammarexpressions = [];
+                for(var i=0; i<numberOfGrammarExpressions-1; i++){
+                    var key = grammarform.grammarexpressionlist.children[i].gklabel.text;
+                    var value = grammarform.grammarexpressionlist.children[i].gvlabel.text;
+                    grammarexpressions.push([key,value]);
+                }
+                var grammarformid = Edit.createGrammarFormId(language,grammarexpressions);
+                grammarform.grammarformid.idselection.value = grammarformid;
+                grammarform.grammarformid.popupEnabled = false;
+                grammarform.grammarformid.existingtranslation.checked = true;
+                Edit.addForm(lexemeid,editForm.formid,grammarformid,editForm.form.text);
+            }
+        }
     }
     ColeitraWidgetEditCompoundForm {
         id: editCompoundForm
@@ -672,6 +663,32 @@ Column {
         id: editSentence
         width: parent.width
         visible: !lexemeId.existing && ((lexemeTypeSelection == null) || (lexemeTypeSelection.currentIndex == 2))
+        onEnabledChanged: {
+            if(enabled==false){
+                var numberOfGrammarExpressions = grammarform.grammarexpressionlist.children.length;
+                var grammarexpressions = [];
+                for(var i=0; i<numberOfGrammarExpressions-1; i++){
+                    var key = grammarform.grammarexpressionlist.children[i].gklabel.text;
+                    var value = grammarform.grammarexpressionlist.children[i].gvlabel.text;
+                    grammarexpressions.push([key,value]);
+                }
+                var grammarformid = Edit.createGrammarFormId(language,grammarexpressions);
+                grammarform.grammarformid.idselection.value = grammarformid;
+                grammarform.grammarformid.popupEnabled = false;
+                grammarform.grammarformid.existingtranslation.checked = true;
+
+                var numberOfSentenceParts = sentencepartlist.children.length;
+                var sentenceparts = [];
+                for(var i=0; i<numberOfSentenceParts-1; i++){
+                    var currentSentencePart = sentencepartlist.children[i];
+                    var id = currentSentencePart.idselection.value;
+                    var type = currentSentencePart.selectedparttype.currentIndex;
+                    var capitalized = currentSentencePart.capitalizedcheckbox.checked;
+                    sentenceparts.push([id,type,capitalized]);
+                }
+                Edit.addSentence(lexemeid,editSentence.sentenceidid,grammarformid,sentenceparts);
+            }
+        }
     }
     onHeightChanged: {
         parent.height = height;
@@ -716,6 +733,7 @@ Column {
     property var stackElements: new Array();
     property var numberOfElements: 0
     property var stack: columnLayout
+    property var onCreation: function(createdObject) {};
     Row {
         width: parent.width
         ColeitraGridLabel {
@@ -733,11 +751,7 @@ Column {
             onValueChanged: {
                 if(stackElements.length>=value){
                     if(columnLayout.currentItem){
-                        console.log(columnLayout.currentItem);
                         columnLayout.currentItem.visible = false;
-                    }
-                    else {
-                        console.log("No item on stack");
                     }
                     stackElements[value-1].visible = true;
                     columnLayout.replace(stackElements[value-1]);
@@ -758,6 +772,7 @@ Column {
                 numberOfElements++;
                 //columnLayout.replace(newObject);
                 selectedLexemePart.value = stackElements.indexOf(newObject) + 1;
+                onCreation(newObject);
             }
             else {
                 console.log("Problem with creation of " + partType);
@@ -890,16 +905,23 @@ Column {
     ColeitraWidgetEditPartStack {
         id: lexemePartList
         partType: "ColeitraWidgetEditLexemePart"
-        //partType: "ColeitraWidgetEditGrammarForm"
         width: parent.width
+        onCreation: function(createdLexemePart){
+            createdLexemePart.language = languageId;
+            createdLexemePart.lexemeid = lexemeId.existingId;
+        }
+    }
+    onLanguageIdChanged: {
+        var lexemeParts = lexemePartList.stack.children;
+        for(var i=0; i<lexemeParts.length; i++){
+            lexemeParts[i].language = languageId;
+        }
     }
     ColeitraWidgetEditSearchTextPopup {
         id: searchPopup
         popupSearchString: "Search en.wiktionary.org:"
         searchFunction: function() {
-            GrammarProvider.language = languageId;
-            GrammarProvider.word = searchPopup.popupSearchText;
-            GrammarProvider.getWiktionarySections(searchPopup);
+            GrammarProvider.getGrammarInfoForWord(searchPopup, languageId, searchPopup.popupSearchText);
         }
         cancelFunction: function() {
             searchPopup.close();
@@ -910,28 +932,104 @@ Column {
         }
         Connections {
             target: GrammarProvider
-            function onGrammarInfoAvailable(caller, grammarforms_size){
+            property var silentLexemeId: 0
+            property var silentSentenceId: 0
+            property var silentSentenceParts: []
+            function onGrammarInfoAvailable(caller, grammarforms_size, silent){
                 if(searchPopup != caller) return;
-                console.log("Received " + grammarforms_size.toString() + " grammar forms!");
-                searchPopup.okEnabled = true;
-            }
-            function onFormObtained(caller, formstring, grammarexpressions){
-                if(searchPopup != caller) return;
-                console.log("Received form " + formstring);
-                console.log("Lexeme has " + lexemePartList.numberOfElements + " parts");
-                var currentLexemePart = lexemePartList.stack.currentItem;
-                console.log(currentLexemePart.selection.toString());
-                currentLexemePart.selection.currentIndex = 0;
-                currentLexemePart.form.form.text = formstring;
-                currentLexemePart.form.addgrammar.checked = true;
-                currentLexemePart.form.grammarform.grammarformid.existingtranslation.checked = false;
-                for(var i=0; i<grammarexpressions.length; i++){
-                    var currentGrammarExpression = currentLexemePart.form.grammarform.grammarexpressionlist.children[currentLexemePart.form.grammarform.grammarexpressionlist.children.length-1];
-                    currentGrammarExpression.gklabel.text = grammarexpressions[i][0];
-                    currentGrammarExpression.gvlabel.text = grammarexpressions[i][1];
-                    currentGrammarExpression.pbutton.clickhandler();
+                if(silent){
+                    silentLexemeId = Edit.lexemeId;
+                    GrammarProvider.getNextGrammarObject(searchPopup);
                 }
-                currentLexemePart.pbutton.clickhandler();
+		else{
+                    searchPopup.okEnabled = true;
+		}
+            }
+            function onFormObtained(caller, formstring, grammarexpressions, silent){
+                if(searchPopup != caller) return;
+                if(silent){
+                    var formid = Edit.formId;
+                    var grammarformid = Edit.createGrammarFormId(languageId,grammarexpressions);
+                    Edit.addForm(silentLexemeId,formid,grammarformid,formstring);
+                }
+                else{
+                    var currentLexemePart = lexemePartList.stack.currentItem;
+                    currentLexemePart.selection.currentIndex = 0;
+                    currentLexemePart.form.form.text = formstring;
+                    currentLexemePart.form.addgrammar.checked = true;
+                    currentLexemePart.form.grammarform.grammarformid.existingtranslation.checked = false;
+                    for(var i=0; i<grammarexpressions.length; i++){
+                        var currentGrammarExpression = currentLexemePart.form.grammarform.grammarexpressionlist.children[currentLexemePart.form.grammarform.grammarexpressionlist.children.length-1];
+                        currentGrammarExpression.gklabel.text = grammarexpressions[i][0];
+                        currentGrammarExpression.gvlabel.text = grammarexpressions[i][1];
+                        currentGrammarExpression.pbutton.clickhandler();
+                    }
+                    currentLexemePart.pbutton.clickhandler();
+                }
+                GrammarProvider.getNextGrammarObject(searchPopup);
+            }
+            function onSentenceAvailable(caller, parts, silent){
+                if(searchPopup != caller) return;
+                if(silent){
+                    silentSentenceId = Edit.sentenceId;
+                }
+                else{
+                    var currentLexemePart = lexemePartList.stack.currentItem;
+                    currentLexemePart.selection.currentIndex = 2;
+                }
+                GrammarProvider.getNextSentencePart(searchPopup);
+            }
+            function onSentenceLookupForm(caller,sentencepart,grammarexpressions,silent){
+                if(searchPopup != caller) return;
+                var formId = Edit.lookupForm(languageId, lexemeId.existingId, sentencepart, grammarexpressions);
+                if(silent){
+                    silentSentenceParts.push([formId,0,false]);
+                }
+                else{
+                    var currentLexemePart = lexemePartList.stack.currentItem;
+                    var currentSentencePart = currentLexemePart.sentence.sentencepartlist.children[currentLexemePart.sentence.sentencepartlist.children.length-1];
+                    currentSentencePart.selectedparttype.currentIndex = 0;
+                    currentSentencePart.capitalizedcheckbox.checked = false;
+                    currentSentencePart.searchpopup.okFunction();
+                    currentSentencePart.idselection.value = formId;
+                }
+                GrammarProvider.getNextSentencePart(searchPopup);
+            }
+            function onSentenceLookupFormLexeme(caller,sentencepart,grammarexpressions,silent){
+                if(searchPopup != caller) return;
+                var formId = Edit.lookupFormLexeme(languageId, lexemeId.existingId, sentencepart, grammarexpressions);
+                if(silent){
+                    silentSentenceParts.push([formId,0,false]);
+                }
+                else{
+                    var currentLexemePart = lexemePartList.stack.currentItem;
+                    var currentSentencePart = currentLexemePart.sentence.sentencepartlist.children[currentLexemePart.sentence.sentencepartlist.children.length-1];
+                    currentSentencePart.selectedparttype.currentIndex = 0;
+                    currentSentencePart.capitalizedcheckbox.checked = false;
+                    currentSentencePart.searchpopup.okFunction();
+                    currentSentencePart.idselection.value = formId;
+                }
+                GrammarProvider.getNextSentencePart(searchPopup);
+
+            }
+            function onSentenceComplete(caller,grammarexpressions,silent){
+                if(searchPopup != caller) return;
+                if(silent){
+                    var grammarid = Edit.createGrammarFormId(languageId, grammarexpressions);
+                    Edit.addSentence(silentLexemeId,silentSentenceId,grammarid,silentSentenceParts);
+                }
+                else{
+                    var currentLexemePart = lexemePartList.stack.currentItem;
+                    currentLexemePart.sentence.addgrammar.checked = true;
+                    currentLexemePart.sentence.grammarform.grammarformid.existingtranslation.checked = false;
+                    for(var i=0; i<grammarexpressions.length; i++){
+                        var currentGrammarExpression = currentLexemePart.sentence.grammarform.grammarexpressionlist.children[currentLexemePart.sentence.grammarform.grammarexpressionlist.children.length-1];
+                        currentGrammarExpression.gklabel.text = grammarexpressions[i][0];
+                        currentGrammarExpression.gvlabel.text = grammarexpressions[i][1];
+                        currentGrammarExpression.pbutton.clickhandler();
+                    }
+                    currentLexemePart.pbutton.clickhandler();
+                }
                 GrammarProvider.getNextGrammarObject(searchPopup);
             }
         }
