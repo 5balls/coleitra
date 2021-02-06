@@ -457,7 +457,7 @@ void grammarprovider::parseMediawikiTableToPlainText(QString wikitext, QList<gra
     foreach(QString table_line, table_lines){
         int columnspan = 0;
         auto process_line = [&columnspan,&rowspan](QString table_line){
-            qDebug() << "__P 0 (input)" << table_line;
+            //qDebug() << "__P 0 (input)" << table_line;
             int colspan_i = table_line.indexOf("colspan=\"");
             if(colspan_i != -1){
                 int colspan_j = table_line.indexOf("\"",colspan_i+9);
@@ -528,7 +528,7 @@ void grammarprovider::parseMediawikiTableToPlainText(QString wikitext, QList<gra
             column++;
             table_line = process_line(table_line);
 	    QStringList table_entries = table_line.split(QLatin1Char(','));
-            qDebug() << "__P 10" << table_entries;
+            //qDebug() << "__P 10" << table_entries;
             foreach(QString table_entry, table_entries){
                 table_entry = table_entry.trimmed();
                 table.push_back({row,column,table_entry});
@@ -542,7 +542,7 @@ void grammarprovider::parseMediawikiTableToPlainText(QString wikitext, QList<gra
             column++;
             table_line = process_line(table_line);
 	    QStringList table_entries = table_line.split(QLatin1Char(','));
-            qDebug() << "__P 10" << table_entries;
+            //qDebug() << "__P 10" << table_entries;
             foreach(QString table_entry, table_entries){
                 table_entry = table_entry.trimmed();
                 table.push_back({row,column,table_entry});
