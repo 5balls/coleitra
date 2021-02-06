@@ -48,6 +48,7 @@ public:
     };
     enum lexemePartType {
         FORM,
+        FORM_WITH_IGNORED_PARTS,
         COMPOUNDFORM,
         SENTENCE,
     };
@@ -124,6 +125,7 @@ private slots:
     void fi_requirements(QObject* caller, int fi_id);
     void parse_fi_verbs(QNetworkReply* reply);
     void parse_fi_nominals(QNetworkReply* reply);
+    void de_requirements(QObject* caller, int fi_id);
     void parse_de_noun_n(QNetworkReply* reply);
     void parse_de_noun_m(QNetworkReply* reply);
     void parse_de_noun_f(QNetworkReply* reply);
@@ -177,6 +179,8 @@ grammarprovider::grammarprovider(QObject *parent) : QObject(parent)
     m_parsesections.push_back("Declension");
     int fi_id = m_database->idfromlanguagename("Finnish");
     m_requirements_map[fi_id] = &grammarprovider::fi_requirements;
+    int de_id = m_database->idfromlanguagename("German");
+    m_requirements_map[de_id] = &grammarprovider::de_requirements;
     m_parser_map["fi-conj-sanoa"] = &grammarprovider::parse_fi_verbs;
     m_parser_map["fi-conj-muistaa"] = &grammarprovider::parse_fi_verbs;
     m_parser_map["fi-conj-huutaa"] = &grammarprovider::parse_fi_verbs;
@@ -254,7 +258,7 @@ grammarprovider::grammarprovider(QObject *parent) : QObject(parent)
     m_parser_map["de-decl-noun-n"] = &grammarprovider::parse_de_noun_n;
     m_parser_map["de-decl-noun-m"] = &grammarprovider::parse_de_noun_m;
     m_parser_map["de-decl-noun-f"] = &grammarprovider::parse_de_noun_f;
-    m_parser_map["de-conj-strong"] = &grammarprovider::parse_de_verb;
+    m_parser_map["de-conj"] = &grammarprovider::parse_de_verb;
 }
 
 grammarprovider::~grammarprovider() {
@@ -263,7 +267,8 @@ grammarprovider::~grammarprovider() {
 
 void grammarprovider::getGrammarInfoForWord(QObject* caller, int languageid, QString word){
     // Check requirements:
-    (this->*(m_requirements_map[languageid]))(caller,languageid);
+    if(m_requirements_map.contains(languageid))
+        (this->*(m_requirements_map[languageid]))(caller,languageid);
     m_caller = caller;
     m_language = languageid;
     m_word = word;
@@ -452,6 +457,7 @@ void grammarprovider::parseMediawikiTableToPlainText(QString wikitext, QList<gra
     foreach(QString table_line, table_lines){
         int columnspan = 0;
         auto process_line = [&columnspan,&rowspan](QString table_line){
+            qDebug() << "__P 0 (input)" << table_line;
             int colspan_i = table_line.indexOf("colspan=\"");
             if(colspan_i != -1){
                 int colspan_j = table_line.indexOf("\"",colspan_i+9);
@@ -466,7 +472,12 @@ void grammarprovider::parseMediawikiTableToPlainText(QString wikitext, QList<gra
             if(!table_line.left(formatting_i).contains("[[")){
                 table_line.remove(0,formatting_i+1);
             }
+            //qDebug() << "__P 1 (removed wiki braces)" << table_line;
+            table_line.remove(QRegularExpression("<sup.*?<\\/sup>"));
+            //qDebug() << "__P 2 (removed sup)" << table_line;
 	    table_line.replace(QString("<br/>"),QString(","));
+	    table_line.replace(QString("<br />"),QString(","));
+            //qDebug() << "__P 3" << table_line;
             QStringList html_markupstrings = table_line.split("<");
             if(html_markupstrings.size() > 1){
                 table_line = "";
@@ -476,6 +487,7 @@ void grammarprovider::parseMediawikiTableToPlainText(QString wikitext, QList<gra
                     table_line += html_markupstring;
                 }
             }
+            //qDebug() << "__P 4" << table_line;
             QStringList wiki_links = table_line.split("[[");
             if(wiki_links.size() > 1){
                 table_line = "";
@@ -490,10 +502,16 @@ void grammarprovider::parseMediawikiTableToPlainText(QString wikitext, QList<gra
                     }
                 }
             }
+            //qDebug() << "__P 6" << table_line;
+            table_line.remove("(");
+            table_line.remove(")");
+            //qDebug() << "__P 7" << table_line;
             table_line = table_line.trimmed();
+            //qDebug() << "__P 8" << table_line;
             QTextDocument text;
             text.setHtml(table_line);
             table_line = text.toPlainText();
+            //qDebug() << "__P 9" << table_line;
             return table_line;
         };
         if(table_line.startsWith("|-")){
@@ -510,6 +528,7 @@ void grammarprovider::parseMediawikiTableToPlainText(QString wikitext, QList<gra
             column++;
             table_line = process_line(table_line);
 	    QStringList table_entries = table_line.split(QLatin1Char(','));
+            qDebug() << "__P 10" << table_entries;
             foreach(QString table_entry, table_entries){
                 table_entry = table_entry.trimmed();
                 table.push_back({row,column,table_entry});
@@ -523,6 +542,7 @@ void grammarprovider::parseMediawikiTableToPlainText(QString wikitext, QList<gra
             column++;
             table_line = process_line(table_line);
 	    QStringList table_entries = table_line.split(QLatin1Char(','));
+            qDebug() << "__P 10" << table_entries;
             foreach(QString table_entry, table_entries){
                 table_entry = table_entry.trimmed();
                 table.push_back({row,column,table_entry});
@@ -539,11 +559,14 @@ void grammarprovider::process_grammar(QList<grammarform> grammarforms, QList<tab
     if(!parsedTable.isEmpty()){
         foreach(const grammarform& gf_expectedcell, grammarforms){
             tablecell tc_current = parsedTable.first();
+            //qDebug() << "__PG 0" << tc_current.row << tc_current.column << tc_current.content << "exp:" << gf_expectedcell.row << gf_expectedcell.column;
             while(tc_current.row < gf_expectedcell.row){
                 if(!parsedTable.isEmpty()){
                     parsedTable.pop_front();
-                    if(!parsedTable.isEmpty())
+                    if(!parsedTable.isEmpty()){
                         tc_current = parsedTable.first();
+                        //qDebug() << "__PG 1" << tc_current.row << tc_current.column << tc_current.content << "exp:" << gf_expectedcell.row << gf_expectedcell.column;
+                    }
                     else goto out;
                 }
                 else break;
@@ -552,16 +575,37 @@ void grammarprovider::process_grammar(QList<grammarform> grammarforms, QList<tab
                 while(tc_current.column < gf_expectedcell.column){
                     if(!parsedTable.isEmpty()){
                         parsedTable.pop_front();
-                        tc_current = parsedTable.first();
+                        if(!parsedTable.isEmpty()){
+                            tc_current = parsedTable.first();
+                            //qDebug() << "__PG 2" << tc_current.row << tc_current.column << tc_current.content << "exp:" << gf_expectedcell.row << gf_expectedcell.column;
+                        }
+                        else goto out;
                     }
                     else break;
                 }
                 if(tc_current.column == gf_expectedcell.column){
+matching_form:
                     if(tc_current.content != "—"){
+                        //qDebug() << "__PG A" << tc_current.row << tc_current.column << tc_current.content << "exp:" << gf_expectedcell.row << gf_expectedcell.column;
                         grammarform currentGrammarForm = gf_expectedcell;
                         currentGrammarForm.string = tc_current.content;
                         currentGrammarForm.grammarexpressions += additional_grammarforms;
                         m_grammarforms.push_back(currentGrammarForm);
+                        // There may be more than one:
+                        parsedTable.pop_front();
+                        if(!parsedTable.isEmpty()){
+                            tc_current = parsedTable.first();
+                            //qDebug() << "__PG 3" << tc_current.row << tc_current.column << tc_current.content << "exp:" << gf_expectedcell.row << gf_expectedcell.column;
+                        }
+                        else goto out;
+                        // A "while" would be worse than this "goto" as it would
+                        // have to include or treat the column search again.
+                        if(tc_current.row == gf_expectedcell.row)
+                            if(tc_current.column == gf_expectedcell.column){
+                                //qDebug() << "__PG E going back...";
+                                goto matching_form;
+                            }
+                        //qDebug() << "__PG E not going back!";
                     }
                 }
             }
@@ -578,22 +622,67 @@ out:
 }
 
 void grammarprovider::getNextGrammarObject(QObject* caller){
+    qDebug() << "grammarprovider::getNextGrammarObject enter";
     m_caller = caller;
     if(m_grammarforms.isEmpty()){
         emit grammarInfoComplete(m_caller,m_silent);
+        qDebug() << "grammarprovider::getNextGrammarObject exit" << __LINE__;
         return;
     }
     QMutableListIterator<grammarform> grammarFormI(m_grammarforms);
     grammarform& form = grammarFormI.next();
+    qDebug() << "form.string" << form.string;
     switch(form.type){
         case FORM:
             {
-                //qDebug() << form.index << form.string << "FORM" << form.grammarexpressions;
+                qDebug() << form.index << form.string << "FORM" << form.grammarexpressions;
                 QString string = form.string;
                 QList<QList<QString > > ge = form.grammarexpressions;
-                m_grammarforms.removeFirst();
+                if(!m_grammarforms.isEmpty())
+                    m_grammarforms.removeFirst();
+                else 
+                    qDebug() << "ERROR m_grammarforms is empty!" << __LINE__;
                 emit formObtained(m_caller, string, ge, m_silent);
+                qDebug() << "grammarprovider::getNextGrammarObject exit" << __LINE__;
                 return;
+            }
+            break;
+        case FORM_WITH_IGNORED_PARTS:
+            {
+                QList<QList<QString > > ge = form.grammarexpressions;
+                QStringList formparts = form.string.split(QLatin1Char(' '));
+                if(formparts.size() == form.processList.size()){
+                    int formparti = 0;
+                    foreach(const QString& formpart, formparts){
+                        switch(form.processList.at(formparti).instruction){
+                            case IGNOREFORM:
+                                qDebug() << "IGNOREFORM" << formpart;
+                                break;
+                            case LOOKUPFORM:
+                                qDebug() << "LOOKUPFORM" << formpart;
+                                break;
+                            case LOOKUPFORM_LEXEME:
+                                qDebug() << "LOOKUPFORM_LEXEME" << formpart;
+                                break;
+                            case ADDANDUSEFORM:
+                                qDebug() << "ADDANDUSEFORM" << formpart;
+                                if(!m_grammarforms.isEmpty())
+                                    m_grammarforms.removeFirst();
+                                else 
+                                    qDebug() << "ERROR m_grammarforms is empty!" << __LINE__;
+                                emit formObtained(m_caller, formpart, ge, m_silent);
+                                // return needed here to be reentrant:
+                                return;
+                                break;
+                            case ADDANDIGNOREFORM:
+                                break;
+                        }
+                        formparti++;
+                    }
+                }
+                else {
+                    qDebug() << "Process list size (=" + QString::number(form.processList.size()) +  ") does not match number of form parts (=" + formparts.size() + ")!";
+                }
             }
             break;
         case COMPOUNDFORM:
@@ -613,6 +702,7 @@ void grammarprovider::getNextGrammarObject(QObject* caller){
                             //qDebug() << "ADDANDUSEFORM for part" << sentenceparts.at(sentencepartid) << sentencepartid << currentProcess.grammarexpressions;
                             currentProcess.instruction = LOOKUPFORM_LEXEME;
                             emit formObtained(m_caller, sentenceparts.at(sentencepartid), currentProcess.grammarexpressions, m_silent);
+                            qDebug() << "grammarprovider::getNextGrammarObject exit" << __LINE__;
                             return;
                         }
                         sentencepartid++;
@@ -628,6 +718,7 @@ void grammarprovider::getNextGrammarObject(QObject* caller){
             qDebug() << form.index << form.string << "unknown form!" << form.grammarexpressions;
             break;
     }
+    qDebug() << "grammarprovider::getNextGrammarObject exit" << __LINE__;
 }
 
 void grammarprovider::getNextSentencePart(QObject* caller){
@@ -692,7 +783,7 @@ void grammarprovider::getPlainTextTableFromReply(QNetworkReply* reply, QList<gra
 
 void grammarprovider::fi_requirements(QObject* caller, int fi_id){
     QList<int> olla_forms = m_database->searchForms("olla",true);
-    int expected_grammarform = m_database->grammarFormIdFromStrings(fi_id,{{"Infinitive","First"},{"Voice","Active"}});
+    int expected_grammarform = m_database->grammarFormIdFromStrings(fi_id,{{"Infinitive","First"},{"Voice","Active"},{"Part of speech","Verb"}});
     bool found_form = false;
     foreach(int olla_form, olla_forms){
         int grammarform = m_database->grammarFormFromFormId(olla_form);
@@ -938,6 +1029,29 @@ void grammarprovider::parse_fi_nominals(QNetworkReply* reply){
         process_grammar(grammarforms,parsedTable,{{"Part of speech","Noun"}});
 }
 
+void grammarprovider::de_requirements(QObject* caller, int de_id){
+    QList<int> sein_forms = m_database->searchForms("sein",true);
+    int expected_grammarform = m_database->grammarFormIdFromStrings(de_id,{{"Infinitive","First"},{"Part of speech","Verb"}});
+    bool found_form = false;
+    foreach(int sein_form, sein_forms){
+        int grammarform = m_database->grammarFormFromFormId(sein_form);
+        if(grammarform == expected_grammarform){
+            found_form = true;
+            break;
+        }
+    }
+    if(!found_form){
+        m_caller = caller;
+        m_language = de_id;
+        m_word = "sein";
+        m_silent = true;
+        QEventLoop waitloop;
+        connect( this, &grammarprovider::grammarInfoComplete, &waitloop, &QEventLoop::quit );
+        getWiktionarySections();
+        waitloop.exec();
+    }
+}
+
 void grammarprovider::parse_de_noun_n(QNetworkReply* reply){
     QList<grammarprovider::tablecell> parsedTable;
     getPlainTextTableFromReply(reply, parsedTable);
@@ -1001,94 +1115,94 @@ void grammarprovider::parse_de_verb(QNetworkReply* reply){
         {2,2,3,{{"Verbform","Participle"},{"Tense","Present"}}},
         {3,3,3,{{"Verbform","Participle"},{"Tense","Past"}}},
         {4,4,3,{{"Verbform","Auxiliary"}}},
-        {5,6,2,{{"Mood","Indicative"},{"Tense","Present"},{"Person","First"},{"Number","Singular"}}},
-        {6,6,3,{{"Mood","Indicative"},{"Tense","Present"},{"Person","First"},{"Number","Plural"}}},
-        {7,6,5,{{"Mood","Subjunctive 1"},{"Tense","Present"},{"Person","First"},{"Number","Singular"}}},
-        {8,6,6,{{"Mood","Subjunctive 1"},{"Tense","Present"},{"Person","First"},{"Number","Plural"}}},
-        {9,7,2,{{"Mood","Indicative"},{"Tense","Present"},{"Person","Second"},{"Number","Singular"}}},
-        {10,7,3,{{"Mood","Indicative"},{"Tense","Present"},{"Person","Second"},{"Number","Plural"}}},
-        {11,7,4,{{"Mood","Subjunctive 1"},{"Tense","Present"},{"Person","Second"},{"Number","Singular"}}},
-        {12,7,5,{{"Mood","Subjunctive 1"},{"Tense","Present"},{"Person","Second"},{"Number","Plural"}}},
-        {13,8,2,{{"Mood","Indicative"},{"Tense","Present"},{"Person","Third"},{"Number","Singular"}}},
-        {14,8,3,{{"Mood","Indicative"},{"Tense","Present"},{"Person","Third"},{"Number","Plural"}}},
-        {15,8,4,{{"Mood","Subjunctive 1"},{"Tense","Present"},{"Person","Third"},{"Number","Singular"}}},
-        {16,8,5,{{"Mood","Subjunctive 1"},{"Tense","Present"},{"Person","Third"},{"Number","Plural"}}},
-        {17,10,2,{{"Mood","Indicative"},{"Tense","Preterite"},{"Person","First"},{"Number","Singular"}}},
-        {18,10,3,{{"Mood","Indicative"},{"Tense","Preterite"},{"Person","First"},{"Number","Plural"}}},
-        {19,10,5,{{"Mood","Subjunctive 2"},{"Tense","Preterite"},{"Person","First"},{"Number","Singular"}}},
-        {20,10,6,{{"Mood","Subjunctive 2"},{"Tense","Preterite"},{"Person","First"},{"Number","Plural"}}},
-        {21,11,2,{{"Mood","Indicative"},{"Tense","Preterite"},{"Person","Second"},{"Number","Singular"}}},
-        {22,11,3,{{"Mood","Indicative"},{"Tense","Preterite"},{"Person","Second"},{"Number","Plural"}}},
-        {23,11,4,{{"Mood","Subjunctive 2"},{"Tense","Preterite"},{"Person","Second"},{"Number","Singular"}}},
-        {24,11,5,{{"Mood","Subjunctive 2"},{"Tense","Preterite"},{"Person","Second"},{"Number","Plural"}}},
-        {25,12,2,{{"Mood","Indicative"},{"Tense","Preterite"},{"Person","Third"},{"Number","Singular"}}},
-        {26,12,3,{{"Mood","Indicative"},{"Tense","Preterite"},{"Person","Third"},{"Number","Plural"}}},
-        {27,12,4,{{"Mood","Subjunctive 2"},{"Tense","Preterite"},{"Person","Third"},{"Number","Singular"}}},
-        {28,12,5,{{"Mood","Subjunctive 2"},{"Tense","Preterite"},{"Person","Third"},{"Number","Plural"}}},
-        {29,14,2,{{"Mood","Imperative"},{"Person","Second"},{"Number","Singular"}}},
-        {30,14,3,{{"Mood","Imperative"},{"Person","Second"},{"Number","Plural"}}},
-        {31,16,2,{{"Mood","Indicative"},{"Tense","Perfect"},{"Person","First"},{"Number","Singular"}}},
-        {32,16,3,{{"Mood","Indicative"},{"Tense","Perfect"},{"Person","First"},{"Number","Plural"}}},
-        {33,16,5,{{"Mood","Subjunctive"},{"Tense","Perfect"},{"Person","First"},{"Number","Singular"}}},
-        {34,16,6,{{"Mood","Subjunctive"},{"Tense","Perfect"},{"Person","First"},{"Number","Plural"}}},
-        {35,17,2,{{"Mood","Indicative"},{"Tense","Perfect"},{"Person","Second"},{"Number","Singular"}}},
-        {36,17,3,{{"Mood","Indicative"},{"Tense","Perfect"},{"Person","Second"},{"Number","Plural"}}},
-        {37,17,4,{{"Mood","Subjunctive"},{"Tense","Perfect"},{"Person","Second"},{"Number","Singular"}}},
-        {38,17,5,{{"Mood","Subjunctive"},{"Tense","Perfect"},{"Person","Second"},{"Number","Plural"}}},
-        {39,18,2,{{"Mood","Indicative"},{"Tense","Perfect"},{"Person","Third"},{"Number","Singular"}}},
-        {40,18,3,{{"Mood","Indicative"},{"Tense","Perfect"},{"Person","Third"},{"Number","Plural"}}},
-        {41,18,4,{{"Mood","Subjunctive"},{"Tense","Perfect"},{"Person","Third"},{"Number","Singular"}}},
-        {42,18,5,{{"Mood","Subjunctive"},{"Tense","Perfect"},{"Person","Third"},{"Number","Plural"}}},
-        {43,20,2,{{"Mood","Indicative"},{"Tense","Plusquamperfect"},{"Person","First"},{"Number","Singular"}}},
-        {44,20,3,{{"Mood","Indicative"},{"Tense","Plusquamperfect"},{"Person","First"},{"Number","Plural"}}},
-        {45,20,5,{{"Mood","Subjunctive"},{"Tense","Plusquamperfect"},{"Person","First"},{"Number","Singular"}}},
-        {46,20,6,{{"Mood","Subjunctive"},{"Tense","Plusquamperfect"},{"Person","First"},{"Number","Plural"}}},
-        {47,21,2,{{"Mood","Indicative"},{"Tense","Plusquamperfect"},{"Person","Second"},{"Number","Singular"}}},
-        {48,21,3,{{"Mood","Indicative"},{"Tense","Plusquamperfect"},{"Person","Second"},{"Number","Plural"}}},
-        {49,21,4,{{"Mood","Subjunctive"},{"Tense","Plusquamperfect"},{"Person","Second"},{"Number","Singular"}}},
-        {50,21,5,{{"Mood","Subjunctive"},{"Tense","Plusquamperfect"},{"Person","Second"},{"Number","Plural"}}},
-        {51,22,2,{{"Mood","Indicative"},{"Tense","Plusquamperfect"},{"Person","Third"},{"Number","Singular"}}},
-        {52,22,3,{{"Mood","Indicative"},{"Tense","Plusquamperfect"},{"Person","Third"},{"Number","Plural"}}},
-        {53,22,4,{{"Mood","Subjunctive"},{"Tense","Plusquamperfect"},{"Person","Third"},{"Number","Singular"}}},
-        {54,22,5,{{"Mood","Subjunctive"},{"Tense","Plusquamperfect"},{"Person","Third"},{"Number","Plural"}}},
-        {55,24,2,{{"Infinitive","First"},{"Tense","Future 1"},{"Person","Third"},{"Number","Plural"}}},
-        {56,24,5,{{"Mood","Subjunctive 1"},{"Tense","Future 1"},{"Person","First"},{"Number","Singular"}}},
-        {57,24,6,{{"Mood","Subjunctive 1"},{"Tense","Future 1"},{"Person","First"},{"Number","Plural"}}},
-        {58,25,2,{{"Mood","Subjunctive 1"},{"Tense","Future 1"},{"Person","Second"},{"Number","Singular"}}},
-        {59,25,3,{{"Mood","Subjunctive 1"},{"Tense","Future 1"},{"Person","Second"},{"Number","Plural"}}},
-        {60,26,2,{{"Mood","Subjunctive 1"},{"Tense","Future 1"},{"Person","Third"},{"Number","Singular"}}},
-        {61,26,3,{{"Mood","Subjunctive 1"},{"Tense","Future 1"},{"Person","Third"},{"Number","Plural"}}},
-        {62,28,2,{{"Mood","Indicative"},{"Tense","Future 1"},{"Person","First"},{"Number","Singular"}}},
-        {63,28,3,{{"Mood","Indicative"},{"Tense","Future 1"},{"Person","First"},{"Number","Plural"}}},
-        {64,28,5,{{"Mood","Subjunctive 2"},{"Tense","Future 1"},{"Person","First"},{"Number","Singular"}}},
-        {65,28,6,{{"Mood","Subjunctive 2"},{"Tense","Future 1"},{"Person","First"},{"Number","Plural"}}},
-        {66,29,2,{{"Mood","Indicative"},{"Tense","Future 1"},{"Person","Second"},{"Number","Singular"}}},
-        {67,29,3,{{"Mood","Indicative"},{"Tense","Future 1"},{"Person","Second"},{"Number","Plural"}}},
-        {68,29,4,{{"Mood","Subjunctive 2"},{"Tense","Future 1"},{"Person","Second"},{"Number","Singular"}}},
-        {69,29,5,{{"Mood","Subjunctive 2"},{"Tense","Future 1"},{"Person","Second"},{"Number","Plural"}}},
-        {70,30,2,{{"Mood","Indicative"},{"Tense","Future 1"},{"Person","Third"},{"Number","Singular"}}},
-        {71,30,3,{{"Mood","Indicative"},{"Tense","Future 1"},{"Person","Third"},{"Number","Plural"}}},
-        {72,30,4,{{"Mood","Subjunctive 2"},{"Tense","Future 1"},{"Person","Third"},{"Number","Singular"}}},
-        {73,30,5,{{"Mood","Subjunctive 2"},{"Tense","Future 1"},{"Person","Third"},{"Number","Plural"}}},
-        {74,32,2,{{"Infinitive","First"},{"Tense","Future 2"},{"Person","Third"},{"Number","Plural"}}},
-        {75,32,5,{{"Mood","Subjunctive 1"},{"Tense","Future 2"},{"Person","First"},{"Number","Singular"}}},
-        {76,32,6,{{"Mood","Subjunctive 1"},{"Tense","Future 2"},{"Person","First"},{"Number","Plural"}}},
-        {77,33,2,{{"Mood","Subjunctive 1"},{"Tense","Future 2"},{"Person","Second"},{"Number","Singular"}}},
-        {78,33,3,{{"Mood","Subjunctive 1"},{"Tense","Future 2"},{"Person","Second"},{"Number","Plural"}}},
-        {79,34,2,{{"Mood","Subjunctive 1"},{"Tense","Future 2"},{"Person","Third"},{"Number","Singular"}}},
-        {80,34,3,{{"Mood","Subjunctive 1"},{"Tense","Future 2"},{"Person","Third"},{"Number","Plural"}}},
-        {81,36,2,{{"Mood","Indicative"},{"Tense","Future 2"},{"Person","First"},{"Number","Singular"}}},
-        {82,36,3,{{"Mood","Indicative"},{"Tense","Future 2"},{"Person","First"},{"Number","Plural"}}},
-        {83,36,5,{{"Mood","Subjunctive 2"},{"Tense","Future 2"},{"Person","First"},{"Number","Singular"}}},
-        {84,36,6,{{"Mood","Subjunctive 2"},{"Tense","Future 2"},{"Person","First"},{"Number","Plural"}}},
-        {85,37,2,{{"Mood","Indicative"},{"Tense","Future 2"},{"Person","Second"},{"Number","Singular"}}},
-        {86,37,3,{{"Mood","Indicative"},{"Tense","Future 2"},{"Person","Second"},{"Number","Plural"}}},
-        {87,37,4,{{"Mood","Subjunctive 2"},{"Tense","Future 2"},{"Person","Second"},{"Number","Singular"}}},
-        {88,37,5,{{"Mood","Subjunctive 2"},{"Tense","Future 2"},{"Person","Second"},{"Number","Plural"}}},
-        {89,38,2,{{"Mood","Indicative"},{"Tense","Future 2"},{"Person","Third"},{"Number","Singular"}}},
-        {90,38,3,{{"Mood","Indicative"},{"Tense","Future 2"},{"Person","Third"},{"Number","Plural"}}},
-        {91,38,4,{{"Mood","Subjunctive 2"},{"Tense","Future 2"},{"Person","Third"},{"Number","Singular"}}},
-        {92,38,5,{{"Mood","Subjunctive 2"},{"Tense","Future 2"},{"Person","Third"},{"Number","Plural"}}},
+        {5,6,2,{{"Mood","Indicative"},{"Tense","Present"},{"Person","First"},{"Number","Singular"}}, FORM_WITH_IGNORED_PARTS, {IGNOREFORM, ADDANDUSEFORM}},
+        {6,6,3,{{"Mood","Indicative"},{"Tense","Present"},{"Person","First"},{"Number","Plural"}}, FORM_WITH_IGNORED_PARTS, {IGNOREFORM, ADDANDUSEFORM}},
+        {7,6,5,{{"Mood","Subjunctive 1"},{"Tense","Present"},{"Person","First"},{"Number","Singular"}}, FORM_WITH_IGNORED_PARTS, {IGNOREFORM, ADDANDUSEFORM}},
+        {8,6,6,{{"Mood","Subjunctive 1"},{"Tense","Present"},{"Person","First"},{"Number","Plural"}}, FORM_WITH_IGNORED_PARTS, {IGNOREFORM, ADDANDUSEFORM}},
+        {9,7,2,{{"Mood","Indicative"},{"Tense","Present"},{"Person","Second"},{"Number","Singular"}}, FORM_WITH_IGNORED_PARTS, {IGNOREFORM, ADDANDUSEFORM}},
+        {10,7,3,{{"Mood","Indicative"},{"Tense","Present"},{"Person","Second"},{"Number","Plural"}}, FORM_WITH_IGNORED_PARTS, {IGNOREFORM, ADDANDUSEFORM}},
+        {11,7,4,{{"Mood","Subjunctive 1"},{"Tense","Present"},{"Person","Second"},{"Number","Singular"}}, FORM_WITH_IGNORED_PARTS, {IGNOREFORM, ADDANDUSEFORM}},
+        {12,7,5,{{"Mood","Subjunctive 1"},{"Tense","Present"},{"Person","Second"},{"Number","Plural"}}, FORM_WITH_IGNORED_PARTS, {IGNOREFORM, ADDANDUSEFORM}},
+        {13,8,2,{{"Mood","Indicative"},{"Tense","Present"},{"Person","Third"},{"Number","Singular"}}, FORM_WITH_IGNORED_PARTS, {IGNOREFORM, ADDANDUSEFORM}},
+        {14,8,3,{{"Mood","Indicative"},{"Tense","Present"},{"Person","Third"},{"Number","Plural"}}, FORM_WITH_IGNORED_PARTS, {IGNOREFORM, ADDANDUSEFORM}},
+        {15,8,4,{{"Mood","Subjunctive 1"},{"Tense","Present"},{"Person","Third"},{"Number","Singular"}}, FORM_WITH_IGNORED_PARTS, {IGNOREFORM, ADDANDUSEFORM}},
+        {16,8,5,{{"Mood","Subjunctive 1"},{"Tense","Present"},{"Person","Third"},{"Number","Plural"}}, FORM_WITH_IGNORED_PARTS, {IGNOREFORM, ADDANDUSEFORM}},
+        {17,10,2,{{"Mood","Indicative"},{"Tense","Preterite"},{"Person","First"},{"Number","Singular"}}, FORM_WITH_IGNORED_PARTS, {IGNOREFORM, ADDANDUSEFORM}},
+        {18,10,3,{{"Mood","Indicative"},{"Tense","Preterite"},{"Person","First"},{"Number","Plural"}}, FORM_WITH_IGNORED_PARTS, {IGNOREFORM, ADDANDUSEFORM}},
+        {19,10,5,{{"Mood","Subjunctive 2"},{"Tense","Preterite"},{"Person","First"},{"Number","Singular"}}, FORM_WITH_IGNORED_PARTS, {IGNOREFORM, ADDANDUSEFORM}},
+        {20,10,6,{{"Mood","Subjunctive 2"},{"Tense","Preterite"},{"Person","First"},{"Number","Plural"}}, FORM_WITH_IGNORED_PARTS, {IGNOREFORM, ADDANDUSEFORM}},
+        {21,11,2,{{"Mood","Indicative"},{"Tense","Preterite"},{"Person","Second"},{"Number","Singular"}}, FORM_WITH_IGNORED_PARTS, {IGNOREFORM, ADDANDUSEFORM}},
+        {22,11,3,{{"Mood","Indicative"},{"Tense","Preterite"},{"Person","Second"},{"Number","Plural"}}, FORM_WITH_IGNORED_PARTS, {IGNOREFORM, ADDANDUSEFORM}},
+        {23,11,4,{{"Mood","Subjunctive 2"},{"Tense","Preterite"},{"Person","Second"},{"Number","Singular"}}, FORM_WITH_IGNORED_PARTS, {IGNOREFORM, ADDANDUSEFORM}},
+        {24,11,5,{{"Mood","Subjunctive 2"},{"Tense","Preterite"},{"Person","Second"},{"Number","Plural"}}, FORM_WITH_IGNORED_PARTS, {IGNOREFORM, ADDANDUSEFORM}},
+        {25,12,2,{{"Mood","Indicative"},{"Tense","Preterite"},{"Person","Third"},{"Number","Singular"}}, FORM_WITH_IGNORED_PARTS, {IGNOREFORM, ADDANDUSEFORM}},
+        {26,12,3,{{"Mood","Indicative"},{"Tense","Preterite"},{"Person","Third"},{"Number","Plural"}}, FORM_WITH_IGNORED_PARTS, {IGNOREFORM, ADDANDUSEFORM}},
+        {27,12,4,{{"Mood","Subjunctive 2"},{"Tense","Preterite"},{"Person","Third"},{"Number","Singular"}}, FORM_WITH_IGNORED_PARTS, {IGNOREFORM, ADDANDUSEFORM}},
+        {28,12,5,{{"Mood","Subjunctive 2"},{"Tense","Preterite"},{"Person","Third"},{"Number","Plural"}}, FORM_WITH_IGNORED_PARTS, {IGNOREFORM, ADDANDUSEFORM}},
+        {29,14,2,{{"Mood","Imperative"},{"Person","Second"},{"Number","Singular"}}, FORM_WITH_IGNORED_PARTS, {ADDANDUSEFORM, IGNOREFORM}},
+        {30,14,3,{{"Mood","Imperative"},{"Person","Second"},{"Number","Plural"}}, FORM_WITH_IGNORED_PARTS, {ADDANDUSEFORM, IGNOREFORM}},
+        {31,16,2,{{"Mood","Indicative"},{"Tense","Perfect"},{"Person","First"},{"Number","Singular"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}}}},
+        {32,16,3,{{"Mood","Indicative"},{"Tense","Perfect"},{"Person","First"},{"Number","Plural"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}}}},
+        {33,16,5,{{"Mood","Subjunctive"},{"Tense","Perfect"},{"Person","First"},{"Number","Singular"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}}}},
+        {34,16,6,{{"Mood","Subjunctive"},{"Tense","Perfect"},{"Person","First"},{"Number","Plural"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}}}},
+        {35,17,2,{{"Mood","Indicative"},{"Tense","Perfect"},{"Person","Second"},{"Number","Singular"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}}}},
+        {36,17,3,{{"Mood","Indicative"},{"Tense","Perfect"},{"Person","Second"},{"Number","Plural"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}}}},
+        {37,17,4,{{"Mood","Subjunctive"},{"Tense","Perfect"},{"Person","Second"},{"Number","Singular"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}}}},
+        {38,17,5,{{"Mood","Subjunctive"},{"Tense","Perfect"},{"Person","Second"},{"Number","Plural"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}}}},
+        {39,18,2,{{"Mood","Indicative"},{"Tense","Perfect"},{"Person","Third"},{"Number","Singular"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}}}},
+        {40,18,3,{{"Mood","Indicative"},{"Tense","Perfect"},{"Person","Third"},{"Number","Plural"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}}}},
+        {41,18,4,{{"Mood","Subjunctive"},{"Tense","Perfect"},{"Person","Third"},{"Number","Singular"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}}}},
+        {42,18,5,{{"Mood","Subjunctive"},{"Tense","Perfect"},{"Person","Third"},{"Number","Plural"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}}}},
+        {43,20,2,{{"Mood","Indicative"},{"Tense","Plusquamperfect"},{"Person","First"},{"Number","Singular"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}}}},
+        {44,20,3,{{"Mood","Indicative"},{"Tense","Plusquamperfect"},{"Person","First"},{"Number","Plural"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}}}},
+        {45,20,5,{{"Mood","Subjunctive"},{"Tense","Plusquamperfect"},{"Person","First"},{"Number","Singular"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}}}},
+        {46,20,6,{{"Mood","Subjunctive"},{"Tense","Plusquamperfect"},{"Person","First"},{"Number","Plural"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}}}},
+        {47,21,2,{{"Mood","Indicative"},{"Tense","Plusquamperfect"},{"Person","Second"},{"Number","Singular"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}}}},
+        {48,21,3,{{"Mood","Indicative"},{"Tense","Plusquamperfect"},{"Person","Second"},{"Number","Plural"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}}}},
+        {49,21,4,{{"Mood","Subjunctive"},{"Tense","Plusquamperfect"},{"Person","Second"},{"Number","Singular"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}}}},
+        {50,21,5,{{"Mood","Subjunctive"},{"Tense","Plusquamperfect"},{"Person","Second"},{"Number","Plural"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}}}},
+        {51,22,2,{{"Mood","Indicative"},{"Tense","Plusquamperfect"},{"Person","Third"},{"Number","Singular"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}}}},
+        {52,22,3,{{"Mood","Indicative"},{"Tense","Plusquamperfect"},{"Person","Third"},{"Number","Plural"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}}}},
+        {53,22,4,{{"Mood","Subjunctive"},{"Tense","Plusquamperfect"},{"Person","Third"},{"Number","Singular"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}}}},
+        {54,22,5,{{"Mood","Subjunctive"},{"Tense","Plusquamperfect"},{"Person","Third"},{"Number","Plural"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}}}},
+        {55,24,2,{{"Infinitive","First"},{"Tense","Future 1"},{"Person","Third"},{"Number","Plural"}},SENTENCE,{LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Infinitive","First"}}}}},
+        {56,24,5,{{"Mood","Subjunctive 1"},{"Tense","Future 1"},{"Person","First"},{"Number","Singular"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Infinitive","First"}}}}},
+        {57,24,6,{{"Mood","Subjunctive 1"},{"Tense","Future 1"},{"Person","First"},{"Number","Plural"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Infinitive","First"}}}}},
+        {58,25,2,{{"Mood","Subjunctive 1"},{"Tense","Future 1"},{"Person","Second"},{"Number","Singular"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Infinitive","First"}}}}},
+        {59,25,3,{{"Mood","Subjunctive 1"},{"Tense","Future 1"},{"Person","Second"},{"Number","Plural"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Infinitive","First"}}}}},
+        {60,26,2,{{"Mood","Subjunctive 1"},{"Tense","Future 1"},{"Person","Third"},{"Number","Singular"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Infinitive","First"}}}}},
+        {61,26,3,{{"Mood","Subjunctive 1"},{"Tense","Future 1"},{"Person","Third"},{"Number","Plural"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Infinitive","First"}}}}},
+        {62,28,2,{{"Mood","Indicative"},{"Tense","Future 1"},{"Person","First"},{"Number","Singular"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Infinitive","First"}}}}},
+        {63,28,3,{{"Mood","Indicative"},{"Tense","Future 1"},{"Person","First"},{"Number","Plural"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Infinitive","First"}}}}},
+        {64,28,5,{{"Mood","Subjunctive 2"},{"Tense","Future 1"},{"Person","First"},{"Number","Singular"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Infinitive","First"}}}}},
+        {65,28,6,{{"Mood","Subjunctive 2"},{"Tense","Future 1"},{"Person","First"},{"Number","Plural"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Infinitive","First"}}}}},
+        {66,29,2,{{"Mood","Indicative"},{"Tense","Future 1"},{"Person","Second"},{"Number","Singular"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Infinitive","First"}}}}},
+        {67,29,3,{{"Mood","Indicative"},{"Tense","Future 1"},{"Person","Second"},{"Number","Plural"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Infinitive","First"}}}}},
+        {68,29,4,{{"Mood","Subjunctive 2"},{"Tense","Future 1"},{"Person","Second"},{"Number","Singular"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Infinitive","First"}}}}},
+        {69,29,5,{{"Mood","Subjunctive 2"},{"Tense","Future 1"},{"Person","Second"},{"Number","Plural"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Infinitive","First"}}}}},
+        {70,30,2,{{"Mood","Indicative"},{"Tense","Future 1"},{"Person","Third"},{"Number","Singular"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Infinitive","First"}}}}},
+        {71,30,3,{{"Mood","Indicative"},{"Tense","Future 1"},{"Person","Third"},{"Number","Plural"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Infinitive","First"}}}}},
+        {72,30,4,{{"Mood","Subjunctive 2"},{"Tense","Future 1"},{"Person","Third"},{"Number","Singular"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Infinitive","First"}}}}},
+        {73,30,5,{{"Mood","Subjunctive 2"},{"Tense","Future 1"},{"Person","Third"},{"Number","Plural"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Infinitive","First"}}}}},
+        {74,32,2,{{"Infinitive","First"},{"Tense","Future 2"},{"Person","Third"},{"Number","Plural"}},SENTENCE,{{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}},LOOKUPFORM,LOOKUPFORM}},
+        {75,32,5,{{"Mood","Subjunctive 1"},{"Tense","Future 2"},{"Person","First"},{"Number","Singular"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}},LOOKUPFORM}},
+        {76,32,6,{{"Mood","Subjunctive 1"},{"Tense","Future 2"},{"Person","First"},{"Number","Plural"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}},LOOKUPFORM}},
+        {77,33,2,{{"Mood","Subjunctive 1"},{"Tense","Future 2"},{"Person","Second"},{"Number","Singular"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}},LOOKUPFORM}},
+        {78,33,3,{{"Mood","Subjunctive 1"},{"Tense","Future 2"},{"Person","Second"},{"Number","Plural"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}},LOOKUPFORM}},
+        {79,34,2,{{"Mood","Subjunctive 1"},{"Tense","Future 2"},{"Person","Third"},{"Number","Singular"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}},LOOKUPFORM}},
+        {80,34,3,{{"Mood","Subjunctive 1"},{"Tense","Future 2"},{"Person","Third"},{"Number","Plural"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}},LOOKUPFORM}},
+        {81,36,2,{{"Mood","Indicative"},{"Tense","Future 2"},{"Person","First"},{"Number","Singular"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}},LOOKUPFORM}},
+        {82,36,3,{{"Mood","Indicative"},{"Tense","Future 2"},{"Person","First"},{"Number","Plural"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}},LOOKUPFORM}},
+        {83,36,5,{{"Mood","Subjunctive 2"},{"Tense","Future 2"},{"Person","First"},{"Number","Singular"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}},LOOKUPFORM}},
+        {84,36,6,{{"Mood","Subjunctive 2"},{"Tense","Future 2"},{"Person","First"},{"Number","Plural"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}},LOOKUPFORM}},
+        {85,37,2,{{"Mood","Indicative"},{"Tense","Future 2"},{"Person","Second"},{"Number","Singular"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}},LOOKUPFORM}},
+        {86,37,3,{{"Mood","Indicative"},{"Tense","Future 2"},{"Person","Second"},{"Number","Plural"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}},LOOKUPFORM}},
+        {87,37,4,{{"Mood","Subjunctive 2"},{"Tense","Future 2"},{"Person","Second"},{"Number","Singular"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}},LOOKUPFORM}},
+        {88,37,5,{{"Mood","Subjunctive 2"},{"Tense","Future 2"},{"Person","Second"},{"Number","Plural"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}},LOOKUPFORM}},
+        {89,38,2,{{"Mood","Indicative"},{"Tense","Future 2"},{"Person","Third"},{"Number","Singular"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}},LOOKUPFORM}},
+        {90,38,3,{{"Mood","Indicative"},{"Tense","Future 2"},{"Person","Third"},{"Number","Plural"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}},LOOKUPFORM}},
+        {91,38,4,{{"Mood","Subjunctive 2"},{"Tense","Future 2"},{"Person","Third"},{"Number","Singular"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}},LOOKUPFORM}},
+        {92,38,5,{{"Mood","Subjunctive 2"},{"Tense","Future 2"},{"Person","Third"},{"Number","Plural"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Verbform","Participle"},{"Tense","Past"}}},LOOKUPFORM}},
     };
     process_grammar(grammarforms,parsedTable,{{"Part of speech","Verb"}});
 }

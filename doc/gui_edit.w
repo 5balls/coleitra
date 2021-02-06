@@ -650,7 +650,7 @@ Column {
                 grammarform.grammarformid.idselection.value = grammarformid;
                 grammarform.grammarformid.popupEnabled = false;
                 grammarform.grammarformid.existingtranslation.checked = true;
-                Edit.addForm(lexemeid,editForm.formid,grammarformid,editForm.form.text);
+                Edit.addForm(lexemeid,editForm.formid,grammarformid,editForm.form.text,language,1);
             }
         }
     }
@@ -686,7 +686,7 @@ Column {
                     var capitalized = currentSentencePart.capitalizedcheckbox.checked;
                     sentenceparts.push([id,type,capitalized]);
                 }
-                Edit.addSentence(lexemeid,editSentence.sentenceidid,grammarformid,sentenceparts);
+                Edit.addSentence(lexemeid,editSentence.sentenceidid,grammarformid,sentenceparts,language,1);
             }
         }
     }
@@ -704,12 +704,14 @@ Column {
     property string partType: ""
     property bool startWithOneElement: true
     property var lastCreatedObject: null
+    property var afterCreation: function(){}
     function addPart(){
         var component = Qt.createComponent(partType + ".qml");
         if (component.status == Component.Ready) {
             var newObject = component.createObject(this);
 	    newObject.width = Qt.binding(function() {return width});
             lastCreatedObject = newObject;
+            afterCreation();
         }
         else {
             console.log("Problem with creation of " + partType);
@@ -950,7 +952,7 @@ Column {
                 if(silent){
                     var formid = Edit.formId;
                     var grammarformid = Edit.createGrammarFormId(languageId,grammarexpressions);
-                    Edit.addForm(silentLexemeId,formid,grammarformid,formstring);
+                    Edit.addForm(silentLexemeId,formid,grammarformid,formstring,languageId);
                 }
                 else{
                     var currentLexemePart = lexemePartList.stack.currentItem;
@@ -981,11 +983,12 @@ Column {
             }
             function onSentenceLookupForm(caller,sentencepart,grammarexpressions,silent){
                 if(searchPopup != caller) return;
-                var formId = Edit.lookupForm(languageId, lexemeId.existingId, sentencepart, grammarexpressions);
                 if(silent){
+                    var formId = Edit.lookupForm(languageId, silentLexemeId, sentencepart, grammarexpressions);
                     silentSentenceParts.push([formId,0,false]);
                 }
                 else{
+                    var formId = Edit.lookupForm(languageId, lexemeId.existingId, sentencepart, grammarexpressions);
                     var currentLexemePart = lexemePartList.stack.currentItem;
                     var currentSentencePart = currentLexemePart.sentence.sentencepartlist.children[currentLexemePart.sentence.sentencepartlist.children.length-1];
                     currentSentencePart.selectedparttype.currentIndex = 0;
@@ -997,11 +1000,12 @@ Column {
             }
             function onSentenceLookupFormLexeme(caller,sentencepart,grammarexpressions,silent){
                 if(searchPopup != caller) return;
-                var formId = Edit.lookupFormLexeme(languageId, lexemeId.existingId, sentencepart, grammarexpressions);
                 if(silent){
+                    var formId = Edit.lookupFormLexeme(languageId, silentLexemeId, sentencepart, grammarexpressions);
                     silentSentenceParts.push([formId,0,false]);
                 }
                 else{
+                    var formId = Edit.lookupFormLexeme(languageId, lexemeId.existingId, sentencepart, grammarexpressions);
                     var currentLexemePart = lexemePartList.stack.currentItem;
                     var currentSentencePart = currentLexemePart.sentence.sentencepartlist.children[currentLexemePart.sentence.sentencepartlist.children.length-1];
                     currentSentencePart.selectedparttype.currentIndex = 0;
@@ -1016,7 +1020,8 @@ Column {
                 if(searchPopup != caller) return;
                 if(silent){
                     var grammarid = Edit.createGrammarFormId(languageId, grammarexpressions);
-                    Edit.addSentence(silentLexemeId,silentSentenceId,grammarid,silentSentenceParts);
+                    Edit.addSentence(silentLexemeId,silentSentenceId,grammarid,silentSentenceParts, languageId);
+                    silentSentenceParts = [];
                 }
                 else{
                     var currentLexemePart = lexemePartList.stack.currentItem;
@@ -1046,16 +1051,10 @@ import EditLib 1.0
 
 Column {
     property int translationLanguageId: 1
+    property int translationId: 0
     Layout.columnSpan: 12
-    ColeitraWidgetEditIdSelection {
-        id: translationPartId
-        existingText: "Translationpart exists"
-        searchText: "Search for translationpart:"
-        existingId: Edit.translationId
-    }
     Column {
         width: parent.width
-        visible: !translationPartId.existing
         ColeitraGridComboBox {
             id: translationPartType
             width: parent.width
@@ -1099,6 +1098,7 @@ import GrammarProviderLib 1.0
 
 ColeitraPage {
     title: "Edit translation"
+    property int translationid: Edit.translationId
     ScrollView {
         anchors.fill: parent
         Column {
@@ -1107,31 +1107,81 @@ ColeitraPage {
                 width: parent.width
                 Image {
                     source: "scrollprogress.svg"
-                    height: learningTranslationPart.height
+                    height: learningTranslationPartList.height
                     width: 40
                 }
-                ColeitraWidgetEditTranslationPart {
+                ColeitraWidgetEditPartList {
+                    id: learningTranslationPartList
+                    partType: "ColeitraWidgetEditTranslationPart"
+                    width: parent.width - 40
+                    afterCreation: function() {
+                        learningTranslationPartList.lastCreatedObject.translationLanguageId = Settings.learninglanguage;
+                        learningTranslationPartList.lastCreatedObject.translationId = translationid;
+                    }
+                }
+
+               /* ColeitraWidgetEditTranslationPart {
                     id: learningTranslationPart
                     translationLanguageId: Settings.learninglanguage
+                    translationId: translationid
                     width: parent.width - 40
-                }
+                }*/
             }
             Row {
                 width: parent.width
                 Image {
                     source: "scrollprogress.svg"
-                    height: nativeTranslationPart.height
+                    height: nativeTranslationPartList.height
                     width: 40
                 }
-                ColeitraWidgetEditTranslationPart {
+                ColeitraWidgetEditPartList {
+                    id: nativeTranslationPartList
+                    partType: "ColeitraWidgetEditTranslationPart"
+                    width: parent.width - 40
+                    afterCreation: function() {
+                        nativeTranslationPartList.lastCreatedObject.translationLanguageId = Settings.nativelanguage;
+                        nativeTranslationPartList.lastCreatedObject.translationId = translationid;
+                    }
+                }
+
+                /*ColeitraWidgetEditTranslationPart {
                     id: nativeTranslationPart
                     translationLanguageId: Settings.nativelanguage
+                    translationId: translationid
                     width: parent.width - 40
-                }
+                }*/
             }
         }
     }
-    footer: ColeitraGridLayout {
+    footer: Column {
+       width: parent.width
+        Row {
+            width: parent.width
+            ColeitraGridRedButton {
+                text: "Reset"
+                width: parent.width / 2
+                height: 80
+                onClicked: {
+                    Edit.resetEverything();
+                    learningTranslationPartList.lastCreatedObject.destroy();
+                    learningTranslationPartList.addPart();
+                    nativeTranslationPartList.lastCreatedObject.destroy();
+                    nativeTranslationPartList.addPart();
+                }
+            }
+            ColeitraGridGreenButton {
+                text: "Save"
+                width: parent.width / 2
+                height: 80
+                onClicked: {
+                    Edit.saveToDatabase();
+                }
+            }
+        }
+        Item {
+            height: 20
+            width: parent.width
+        }
     }
 }
 @}

@@ -58,8 +58,12 @@ public:
     Q_INVOKABLE QString languagenamefromid(int id);
     Q_INVOKABLE int alphabeticidfromlanguagename(QString languagename);
     Q_INVOKABLE int alphabeticidfromlanguageid(int languageid);
+    Q_INVOKABLE int newTranslation(void);
+    Q_INVOKABLE int newTranslationPart(int translation, int lexeme, int sentence, int form, int compoundform, int grammarform);
     Q_INVOKABLE int newLexeme(int language_id);
     Q_INVOKABLE int newForm(int lexeme_id, int grammarFormId, QString string);
+    Q_INVOKABLE int newSentence(int lexeme_id, int grammarFormId);
+    Q_INVOKABLE int newSentencePart(int sentenceid, int part, int capitalized, int form, int compoundform, int grammarform, int punctuationmark);
     Q_INVOKABLE QString prettyPrintGrammarForm(int grammarForm_id);
     Q_INVOKABLE QString prettyPrintForm(int form_id, QString form = "", int grammarformid = 0);
     Q_INVOKABLE int grammarFormFromFormId(int form_id);
@@ -456,12 +460,72 @@ help verbs.
             // Create lexeme for negation verb:
             int lexeme_id = newLexeme(fi_id);
             foreach(const struct newform& fi_negation_verb_form, fi_negation_verb_forms){
-                int grammarform_id = grammarFormIdFromStrings(fi_id, fi_negation_verb_form.grammarform);
+                QList<QList<QString> > grammarform = fi_negation_verb_form.grammarform;
+                grammarform.push_back({"Part of speech","Verb"});
+                int grammarform_id = grammarFormIdFromStrings(fi_id, grammarform);
                 newForm(lexeme_id, grammarform_id, fi_negation_verb_form.form);
             }
         }
 @}
 
+We need to add also some german forms to bootstrap it.
+
+@o ../src/database.cpp -d
+@{
+        if(database_is_empty){
+            struct newform{
+                QString form;
+                QList<QList<QString> > grammarform;
+            };
+            QList<newform> de_werden_verb_forms = {
+                {"werden",{{"Infinitive","First"}}},
+                {"werdend",{{"Verbform","Participle"},{"Tense","Present"}}},
+                {"geworden",{{"Verbform","Participle"},{"Tense","Past"}}},
+                {"worden",{{"Verbform","Participle"},{"Tense","Past"}}},
+                {"sein",{{"Verbform","Auxiliary"}}},
+                {"werde",{{"Mood","Indicative"},{"Tense","Present"},{"Person","First"},{"Number","Singular"}}},
+                {"werden",{{"Mood","Indicative"},{"Tense","Present"},{"Person","First"},{"Number","Plural"}}},
+                {"werde",{{"Mood","Subjunctive 1"},{"Tense","Present"},{"Person","First"},{"Number","Singular"}}},
+                {"werden",{{"Mood","Subjunctive 1"},{"Tense","Present"},{"Person","First"},{"Number","Plural"}}},
+                {"wirst",{{"Mood","Indicative"},{"Tense","Present"},{"Person","Second"},{"Number","Singular"}}},
+                {"werdet",{{"Mood","Indicative"},{"Tense","Present"},{"Person","Second"},{"Number","Plural"}}},
+                {"werdest",{{"Mood","Subjunctive 1"},{"Tense","Present"},{"Person","Second"},{"Number","Singular"}}},
+                {"werdet",{{"Mood","Subjunctive 1"},{"Tense","Present"},{"Person","Second"},{"Number","Plural"}}},
+                {"wird",{{"Mood","Indicative"},{"Tense","Present"},{"Person","Third"},{"Number","Singular"}}},
+                {"werden",{{"Mood","Indicative"},{"Tense","Present"},{"Person","Third"},{"Number","Plural"}}},
+                {"werde",{{"Mood","Subjunctive 1"},{"Tense","Present"},{"Person","Third"},{"Number","Singular"}}},
+                {"werden",{{"Mood","Subjunctive 1"},{"Tense","Present"},{"Person","Third"},{"Number","Plural"}}},
+                {"wurde",{{"Mood","Indicative"},{"Tense","Preterite"},{"Person","First"},{"Number","Singular"}}},
+                {"ward",{{"Mood","Indicative"},{"Tense","Preterite"},{"Person","First"},{"Number","Singular"}}},
+                {"wurden",{{"Mood","Indicative"},{"Tense","Preterite"},{"Person","First"},{"Number","Plural"}}},
+                {"würde",{{"Mood","Subjunctive 2"},{"Tense","Preterite"},{"Person","First"},{"Number","Singular"}}},
+                {"würden",{{"Mood","Subjunctive 2"},{"Tense","Preterite"},{"Person","First"},{"Number","Plural"}}},
+                {"wurdest",{{"Mood","Indicative"},{"Tense","Preterite"},{"Person","Second"},{"Number","Singular"}}},
+                {"wardst",{{"Mood","Indicative"},{"Tense","Preterite"},{"Person","Second"},{"Number","Singular"}}},
+                {"wurdet",{{"Mood","Indicative"},{"Tense","Preterite"},{"Person","Second"},{"Number","Plural"}}},
+                {"würdest",{{"Mood","Subjunctive 2"},{"Tense","Preterite"},{"Person","Second"},{"Number","Singular"}}},
+                {"würdet",{{"Mood","Subjunctive 2"},{"Tense","Preterite"},{"Person","Second"},{"Number","Plural"}}},
+                {"wurde",{{"Mood","Indicative"},{"Tense","Preterite"},{"Person","Third"},{"Number","Singular"}}},
+                {"ward",{{"Mood","Indicative"},{"Tense","Preterite"},{"Person","Third"},{"Number","Singular"}}},
+                {"wurden",{{"Mood","Indicative"},{"Tense","Preterite"},{"Person","Third"},{"Number","Plural"}}},
+                {"würde",{{"Mood","Subjunctive 2"},{"Tense","Preterite"},{"Person","Third"},{"Number","Singular"}}},
+                {"würden",{{"Mood","Subjunctive 2"},{"Tense","Preterite"},{"Person","Third"},{"Number","Plural"}}},
+                {"werd",{{"Mood","Imperative"},{"Person","Second"},{"Number","Singular"}}},
+                {"werde",{{"Mood","Imperative"},{"Person","Second"},{"Number","Singular"}}},
+                {"werdet",{{"Mood","Imperative"},{"Person","Second"},{"Number","Plural"}}},
+            };
+            // Check if finnish exists in database:
+            int de_id = idfromlanguagename("German");
+            // Create lexeme for negation verb:
+            int lexeme_id = newLexeme(de_id);
+            foreach(const struct newform& de_werden_verb_form, de_werden_verb_forms){
+                QList<QList<QString> > grammarform = de_werden_verb_form.grammarform;
+                grammarform.push_back({"Part of speech","Verb"});
+                int grammarform_id = grammarFormIdFromStrings(de_id, grammarform);
+                newForm(lexeme_id, grammarform_id, de_werden_verb_form.form);
+            }
+        }
+@}
 
 @o ../src/database.cpp -d
 @{
@@ -629,6 +693,24 @@ int database::alphabeticidfromlanguageid(int languageid){
     return alphabeticidfromlanguagename(languagenamefromid(languageid));
 }
 
+int database::newTranslation(void){
+    databasetable* translationtable = getTableByName("translation");
+    QMap<QString,QVariant> add_translation;
+    return translationtable->insertRecord(add_translation);
+}
+
+int database::newTranslationPart(int translation, int lexeme, int sentence, int form, int compoundform, int grammarform){
+    databasetable* translationparttable = getTableByName("translationpart");
+    QMap<QString,QVariant> add_translationpart;
+    add_translationpart["translation"] = translation;
+    add_translationpart["lexeme"] = lexeme;
+    add_translationpart["sentence"] = sentence;
+    add_translationpart["form"] = form;
+    add_translationpart["compoundform"] = compoundform;
+    add_translationpart["grammarform"] = grammarform;
+    return translationparttable->insertRecord(add_translationpart);
+}
+
 int database::newLexeme(int language_id){
     databasetable* lexemetable = getTableByName("lexeme");
     QMap<QString,QVariant> add_lexeme;
@@ -643,6 +725,27 @@ int database::newForm(int lexeme_id, int grammarFormId, QString string){
     add_form["grammarform"] = grammarFormId;
     add_form["string"] = string;
     return formtable->insertRecord(add_form);
+}
+
+int database::newSentence(int lexeme_id, int grammarFormId){
+    databasetable* sentencetable = getTableByName("sentence");
+    QMap<QString,QVariant> add_sentence;
+    add_sentence["lexeme"] = lexeme_id;
+    add_sentence["grammarform"] = grammarFormId;
+    return sentencetable->insertRecord(add_sentence);
+}
+
+int database::newSentencePart(int sentence, int part, int capitalized, int form, int compoundform, int grammarform, int punctuationmark){
+    databasetable* sentenceparttable = getTableByName("sentencepart");
+    QMap<QString,QVariant> add_sentencepart;
+    add_sentencepart["sentence"] = sentence;
+    add_sentencepart["part"] = part;
+    add_sentencepart["capitalized"] = capitalized;
+    add_sentencepart["form"] = form;
+    add_sentencepart["compoundform"] = compoundform;
+    add_sentencepart["grammarform"] = grammarform;
+    add_sentencepart["punctuationmark"] = punctuationmark;
+    return sentenceparttable->insertRecord(add_sentencepart);
 }
 
 QString database::prettyPrintGrammarForm(int grammarForm_id){

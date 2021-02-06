@@ -168,6 +168,34 @@ Button {
 }
 @}
 
+@o ../src/ColeitraGridGreenButton.qml
+@{
+import QtQuick 2.11
+import QtQuick.Controls 2.14
+import QtQuick.Layouts 1.3
+
+Button {
+    Layout.columnSpan: 6
+    Layout.preferredWidth: parent.width / 2.0
+    @<Background green rounded control button @>
+}
+@}
+
+@o ../src/ColeitraGridRedButton.qml
+@{
+import QtQuick 2.11
+import QtQuick.Controls 2.14
+import QtQuick.Layouts 1.3
+
+Button {
+    Layout.columnSpan: 6
+    Layout.preferredWidth: parent.width / 2.0
+    @<Background red rounded control button @>
+}
+@}
+
+
+
 \subsection{Grid image button}
 @o ../src/ColeitraGridImageButton.qml
 @{
@@ -226,6 +254,28 @@ background: Rectangle {
     border.color: "black"
     border.width: 1
     color: pressed? "#99FFFF" : "#DDFFFF"
+    radius: 4
+    implicitHeight: 40
+}
+@}
+
+@d Background green rounded control button
+@{
+background: Rectangle {
+    border.color: "black"
+    border.width: 1
+    color: pressed? "#99FF99" : "#DDFFDD"
+    radius: 4
+    implicitHeight: 40
+}
+@}
+
+@d Background red rounded control button
+@{
+background: Rectangle {
+    border.color: "black"
+    border.width: 1
+    color: pressed? "#FF9999" : "#FFDDDD"
     radius: 4
     implicitHeight: 40
 }
