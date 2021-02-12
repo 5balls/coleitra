@@ -20,5 +20,6 @@
 \usepackage{imakeidx}
 \usepackage[margin=2cm]{geometry}
 \usepackage[nottoc]{tocbibind}
+\usepackage{longtable}
 \usepackage[colorlinks=true]{hyperref}
 \makeindex
