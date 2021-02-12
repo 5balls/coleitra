@@ -16,6 +16,43 @@
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 \chapter{Grammar provider}
+This is an implementation of a grammar provider querying information from the API of \url{https://en.wiktionary.org}. There are other grammar providers planned later for obtaining grammar information from other sources but for now this is the only one.
+\section{Helper script}
+
+This helper script queries recursively for Template pages and can be used to create the TODO lists for the various languages above.
+
+@o ../src/scripts/get_templates.py
+@{#!/usr/bin/python3
+
+import sys
+import requests
+
+def get_categorymembers(categorytitle):
+    session = requests.Session()
+    cm_params = {
+        "action": "query",
+        "format": "json",
+        "list": "categorymembers",
+        "cmtitle": categorytitle,
+        "cmlimit": 500
+    }
+
+    request = session.get(url="https://en.wiktionary.org/w/api.php", params=cm_params)
+    data = request.json()
+    categorymembers = data["query"]["categorymembers"]
+
+    for page in categorymembers:
+        pagetitle = page["title"]
+        pagetitlesplit = pagetitle.split(":",1)
+        if pagetitlesplit[0] == "Category":
+            get_categorymembers(pagetitle)
+        elif pagetitlesplit[0] == "Template":
+            print(pagetitlesplit[1])
+
+
+get_categorymembers("Category:" + str(sys.argv[1]))
+@}
+
 \section{Interface}
 @o ../src/grammarprovider.h -d
 @{
