@@ -1,4 +1,4 @@
-% Copyright 2020 Florian Pesth
+% Copyright 2020, 2021 Florian Pesth
 %
 % This file is part of coleitra.
 %

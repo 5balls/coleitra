@@ -1,4 +1,4 @@
-% Copyright 2020 Florian Pesth
+% Copyright 2020, 2021 Florian Pesth
 %
 % This file is part of coleitra.
 %
@@ -54,7 +54,11 @@
   sensitive=true
 }
 
-\newcommand\codecpp{\lstset{language=C++,breaklines=true}}
+\newcommand\codecpp{\lstset{language=C++,
+breaklines=true,
+extendedchars=true,
+literate={ä}{{\"a}}1 {ö}{{\"o}}1 {ü}{{\"u}}1 {é}{{\'e}}1 {—}{{-}}1,
+}}
 \newcommand\codeqtproject{\lstset{language=QtProject,breaklines=true}}
 \newcommand\codeqml{\lstset{language=QML,breaklines=true}}
 \newcommand\codeqrc{\lstset{language=XML,breaklines=true}}

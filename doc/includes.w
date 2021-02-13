@@ -1,4 +1,4 @@
-% Copyright 2020 Florian Pesth
+% Copyright 2020, 2021 Florian Pesth
 %
 % This file is part of coleitra.
 %
@@ -21,5 +21,6 @@
 \usepackage[margin=2cm]{geometry}
 \usepackage[nottoc]{tocbibind}
 \usepackage{longtable}
+\usepackage{cprotect}
 \usepackage[colorlinks=true]{hyperref}
 \makeindex
