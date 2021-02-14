@@ -145,7 +145,6 @@ definitions and make them more easy to read.
 @o ../src/database.cpp -d
 @{
     {
-
         auto d = [this](QString name, QList<databasefield*> fields){
             databasetable* table = new databasetable(name,fields);
             tables.push_back(table);

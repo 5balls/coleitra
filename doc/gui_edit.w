@@ -1090,6 +1090,7 @@ Column {
 import QtQuick 2.14
 import QtQuick.Layouts 1.14
 import QtQuick.Controls 2.14
+import QtQuick.Controls.impl 2.14
 import QtQml 2.14
 import EditLib 1.0
 import SettingsLib 1.0
@@ -1099,8 +1100,71 @@ import GrammarProviderLib 1.0
 ColeitraPage {
     title: "Edit translation"
     property int translationid: Edit.translationId
+    property string popupString: ""
     ScrollView {
         anchors.fill: parent
+        Connections {
+            target: GrammarProvider
+            function onProcessingStart(waitingString){
+                popupString = waitingString;
+                waitpopup.open();
+            }
+            function onProcessingStop(){
+                waitpopup.close();
+            }
+        }
+        Connections {
+            target: Edit
+            function onProcessingStart(waitingString){
+                popupString = waitingString;
+                waitpopup.open();
+            }
+            function onProcessingStop(){
+                waitpopup.close();
+            }
+        }
+
+        Popup {
+            id: waitpopup
+            width: parent.width
+            Column {
+                width: parent.width
+                ColeitraGridLabel {
+                    width: parent.width
+                    text: popupString
+                }
+                ProgressBar {
+                    id: pgcontrol
+                    width: parent.width
+                    indeterminate: true
+                    from: 0
+                    to: 1
+                    @<Background yellow rounded control@>
+                    contentItem: Item {
+                        Rectangle {
+                            implicitHeight: pgcontrol.height
+                            implicitWidth: parent.width / 3.0
+                            color: "#DDFFDD"
+                            radius: 4
+                            border.color: "black"
+                            border.width: 1
+                            SequentialAnimation on x {
+                                loops: Animation.Infinite
+                                PropertyAnimation {
+                                    duration: 1000
+                                    to: parent.x + parent.width - parent.width / 3.0
+                                }
+                                PropertyAnimation {
+                                    duration: 1000
+                                    to: parent.x
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            @<Background grey rounded control@>
+        }
         Column {
             width: parent.width
             Row {

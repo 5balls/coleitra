@@ -663,6 +663,8 @@ private slots:
     void process_grammar(QList<grammarform> grammarforms, QList<tablecell> parsedTable, QList<QList<QString> > additional_grammarforms = {});
     void getPlainTextTableFromReply(QNetworkReply* reply, QList<grammarprovider::tablecell>& parsedTable);
 signals:
+    void processingStart(const QString& waitingstring);
+    void processingStop(void);
     void grammarInfoAvailable(QObject* caller, int numberOfObjects, bool silent);
     void formObtained(QObject* caller, QString form, QList<QList<QString> > grammarexpressions, bool silent);
     void compoundFormObtained(QObject* caller, QString form, bool silent);
@@ -823,6 +825,7 @@ void grammarprovider::getGrammarInfoForWord(QObject* caller, int languageid, QSt
 @{
 void grammarprovider::getWiktionarySections(){
     //qDebug() << "getWiktionarySections enter";
+    emit processingStart("Querying en.wiktionary for word \"" + m_word + "\"...");
 
     QUrl url(s_baseurl + "action=parse&page=" + m_word + "&prop=sections&format=json");
     qDebug() << url.toString();
@@ -834,6 +837,7 @@ void grammarprovider::getWiktionarySections(){
 #if QT_VERSION >= 0x051500
     connect(reply, &QNetworkReply::errorOccurred, this,
                 [reply](QNetworkReply::NetworkError) {
+                emit processingStop();
                 qDebug() << "Error " << reply->errorString(); 
             });
 #endif
@@ -897,6 +901,7 @@ void grammarprovider::getWiktionarySection(QNetworkReply* reply){
 #if QT_VERSION >= 0x051500
         connect(reply, &QNetworkReply::errorOccurred, this,
                 [reply](QNetworkReply::NetworkError) {
+                emit processingStop();
                 qDebug() << "Error " << reply->errorString(); 
             });
 #endif
@@ -913,6 +918,7 @@ void grammarprovider::getWiktionarySection(QNetworkReply* reply){
 @O ../src/grammarprovider.cpp -d
 @{
 void grammarprovider::networkReplyErrorOccurred(QNetworkReply::NetworkError code){
+    emit processingStop();
 //    qWarning() << "Error occured in network request in grammar provider:" << QIODevice::errorString();
 }
 @}
@@ -1001,6 +1007,8 @@ void grammarprovider::getWiktionaryTemplate(QNetworkReply* reply){
                 request.setRawHeader("User-Agent", "Coleitra/0.1 (https://coleitra.org; fpesth@@gmx.de)");
                 m_tmp_connection = connect(m_manager, &QNetworkAccessManager::finished,
                         this, parser.value());
+                emit processingStop();
+                emit processingStart("Parsing wiktionary data...");
                 m_manager->get(request);
                 return;
             }
@@ -1184,6 +1192,7 @@ out:
     });
     //qDebug() << "Got" << m_grammarforms.size();
 
+    emit processingStop();
     emit grammarInfoAvailable(m_caller, m_grammarforms.size(), m_silent);
     //emit grammarobtained(m_caller, expressions, grammarexpressions);
 }
@@ -1193,20 +1202,20 @@ out:
 @O ../src/grammarprovider.cpp -d
 @{
 void grammarprovider::getNextGrammarObject(QObject* caller){
-    qDebug() << "grammarprovider::getNextGrammarObject enter";
+    //qDebug() << "grammarprovider::getNextGrammarObject enter";
     m_caller = caller;
     if(m_grammarforms.isEmpty()){
         emit grammarInfoComplete(m_caller,m_silent);
-        qDebug() << "grammarprovider::getNextGrammarObject exit" << __LINE__;
+        //qDebug() << "grammarprovider::getNextGrammarObject exit" << __LINE__;
         return;
     }
     QMutableListIterator<grammarform> grammarFormI(m_grammarforms);
     grammarform& form = grammarFormI.next();
-    qDebug() << "form.string" << form.string;
+    //qDebug() << "form.string" << form.string;
     switch(form.type){
         case FORM:
             {
-                qDebug() << form.index << form.string << "FORM" << form.grammarexpressions;
+                //qDebug() << form.index << form.string << "FORM" << form.grammarexpressions;
                 QString string = form.string;
                 QList<QList<QString > > ge = form.grammarexpressions;
                 if(!m_grammarforms.isEmpty())
@@ -1214,7 +1223,7 @@ void grammarprovider::getNextGrammarObject(QObject* caller){
                 else 
                     qDebug() << "ERROR m_grammarforms is empty!" << __LINE__;
                 emit formObtained(m_caller, string, ge, m_silent);
-                qDebug() << "grammarprovider::getNextGrammarObject exit" << __LINE__;
+                //qDebug() << "grammarprovider::getNextGrammarObject exit" << __LINE__;
                 return;
             }
             break;
@@ -1227,16 +1236,16 @@ void grammarprovider::getNextGrammarObject(QObject* caller){
                     foreach(const QString& formpart, formparts){
                         switch(form.processList.at(formparti).instruction){
                             case IGNOREFORM:
-                                qDebug() << "IGNOREFORM" << formpart;
+                                //qDebug() << "IGNOREFORM" << formpart;
                                 break;
                             case LOOKUPFORM:
-                                qDebug() << "LOOKUPFORM" << formpart;
+                                //qDebug() << "LOOKUPFORM" << formpart;
                                 break;
                             case LOOKUPFORM_LEXEME:
-                                qDebug() << "LOOKUPFORM_LEXEME" << formpart;
+                                //qDebug() << "LOOKUPFORM_LEXEME" << formpart;
                                 break;
                             case ADDANDUSEFORM:
-                                qDebug() << "ADDANDUSEFORM" << formpart;
+                                //qDebug() << "ADDANDUSEFORM" << formpart;
                                 if(!m_grammarforms.isEmpty())
                                     m_grammarforms.removeFirst();
                                 else 
@@ -1273,7 +1282,7 @@ void grammarprovider::getNextGrammarObject(QObject* caller){
                             //qDebug() << "ADDANDUSEFORM for part" << sentenceparts.at(sentencepartid) << sentencepartid << currentProcess.grammarexpressions;
                             currentProcess.instruction = LOOKUPFORM_LEXEME;
                             emit formObtained(m_caller, sentenceparts.at(sentencepartid), currentProcess.grammarexpressions, m_silent);
-                            qDebug() << "grammarprovider::getNextGrammarObject exit" << __LINE__;
+                            //qDebug() << "grammarprovider::getNextGrammarObject exit" << __LINE__;
                             return;
                         }
                         sentencepartid++;
@@ -1289,7 +1298,7 @@ void grammarprovider::getNextGrammarObject(QObject* caller){
             qDebug() << form.index << form.string << "unknown form!" << form.grammarexpressions;
             break;
     }
-    qDebug() << "grammarprovider::getNextGrammarObject exit" << __LINE__;
+    //qDebug() << "grammarprovider::getNextGrammarObject exit" << __LINE__;
 }
 @}
 

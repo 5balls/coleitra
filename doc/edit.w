@@ -104,6 +104,8 @@ public:
     void addLexeme(int lexemeid, int languageid, int translationid=0);
 signals:
     void dbversionChanged(const QString &newVersion);
+    void processingStart(const QString &waitingString);
+    void processingStop(void);
 @<End of class and header @>
 @}
 
@@ -329,6 +331,7 @@ void edit::resetEverything(void){
 }
 
 void edit::saveToDatabase(void){
+    emit processingStart("Saving to database...");
     QList<lexeme>* lexemes;
     m_translation.newid = m_database->newTranslation();
     for(int i=0; i<2; i++){
@@ -403,5 +406,6 @@ void edit::saveToDatabase(void){
             }
         }
     }
+    emit processingStop();
 }
 @}
