@@ -132,7 +132,9 @@ public:
     Q_INVOKABLE int lookupFormLexeme(int language, int lexemeid, QString string, QList<QList<QString> > grammarexpressions);
     Q_INVOKABLE void resetEverything(void);
     Q_INVOKABLE void saveToDatabase(void);
+    Q_INVOKABLE void moveLexemeOutOfTranslation(int language, QString text);
     Q_INVOKABLE void addLexemeHeuristically(QObject* caller, int languageid, QString lexeme, int translationid);
+    Q_INVOKABLE void debugStatusCuedLexemes();
     void addLexeme(int lexemeid, int languageid, int translationid=0);
 signals:
     void dbversionChanged(const QString &newVersion);
@@ -406,6 +408,43 @@ void edit::addScheduledLexemeHeuristically(void){
         // m_add_busy == true should not happen here:
         if(m_add_busy) qDebug() << "This seems to be a bug / race condition in edit::addScheduledLexemeHeuristically";
         m_add_busy = false;
+    }
+}
+
+void edit::debugStatusCuedLexemes(){
+    QList<lexeme>* lexemes;
+    for(int i=0; i<2; i++){
+        switch(i){
+            case 0:
+                lexemes = &m_lexemes;
+                qDebug() << "Lexemes outside of translation:";
+                break;
+            case 1:
+                lexemes = &(m_translation.lexemes);
+                qDebug() << "Translation lexemes:";
+                break;
+        }
+        foreach(const lexeme& m_lexeme, *lexemes)
+            qDebug() << "  " << m_database->languagenamefromid(m_lexeme.languageid) << prettyPrintLexeme(m_lexeme.id);
+    }
+}
+
+void edit::moveLexemeOutOfTranslation(int language, QString text){
+    int form_id = lookupForm(language, 0, text, {});
+    if(form_id == 0) return;
+    int lexeme_id = lookupLexeme(form_id);
+    if(lexeme_id == 0) return;
+    QList<lexeme>* lexemes = &(m_translation.lexemes);
+    int i=0;
+    lexeme found_lexeme;
+    foreach(const lexeme& m_lexeme, *lexemes){
+        if(m_lexeme.id == lexeme_id){
+            found_lexeme = m_lexeme;
+            m_translation.lexemes.removeAt(i);
+            m_lexemes.append(found_lexeme);
+            return;
+        }
+        i++;
     }
 }
 

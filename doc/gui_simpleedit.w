@@ -43,6 +43,9 @@ Column {
         property var oldtext: ""
 	onEditingFinished: function(){
             if(!(text === oldtext)){
+                if(!(oldtext === "")){
+                    Edit.moveLexemeOutOfTranslation(language, oldtext);
+                }
                 Edit.addLexemeHeuristically(simpleeditinput,language, text, translationid);
             }
             oldtext = text;
