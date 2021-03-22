@@ -40,8 +40,12 @@ Column {
     }
     ColeitraGridTextInput {
 	width: parent.width
+        property var oldtext: ""
 	onEditingFinished: function(){
-            Edit.addLexemeHeuristically(simpleeditinput,language, text, translationid);
+            if(!(text === oldtext)){
+                Edit.addLexemeHeuristically(simpleeditinput,language, text, translationid);
+            }
+            oldtext = text;
 	}
     }
     ColeitraGridLabel {
