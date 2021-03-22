@@ -1147,7 +1147,8 @@ void grammarprovider::parseMediawikiTableToPlainText(QString wikitext, QList<gra
             //qDebug() << "__P 10" << table_entries;
             foreach(QString table_entry, table_entries){
                 table_entry = table_entry.trimmed();
-                table.push_back({row,column,table_entry});
+                if(!table_entry.isEmpty())
+                    table.push_back({row,column,table_entry});
                 //qDebug() << row << column << table_entry;
             }
             column += columnspan;
@@ -1161,7 +1162,8 @@ void grammarprovider::parseMediawikiTableToPlainText(QString wikitext, QList<gra
             //qDebug() << "__P 10" << table_entries;
             foreach(QString table_entry, table_entries){
                 table_entry = table_entry.trimmed();
-                table.push_back({row,column,table_entry});
+                if(!table_entry.isEmpty())
+                    table.push_back({row,column,table_entry});
                 //qDebug() << row << column << table_entry;
             }
             column += columnspan;
