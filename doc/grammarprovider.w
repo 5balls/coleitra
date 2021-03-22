@@ -641,6 +641,11 @@ public:
         QMap<QString, QString> named;
         QList<QString> unnamed;
     };
+    struct scheduled_lookup {
+        QObject* m_caller;
+        int m_languageid;
+        QString m_word;
+    };
 public slots:
     Q_INVOKABLE void getGrammarInfoForWord(QObject* caller, int languageid, QString word);
     Q_INVOKABLE void getNextGrammarObject(QObject* caller);
@@ -679,16 +684,20 @@ signals:
 private:
     int m_language;
     bool m_silent;
+    bool m_busy;
     QString m_word;
     QString s_baseurl;
     QNetworkAccessManager* m_manager;
     QMetaObject::Connection m_tmp_connection;
+    QMetaObject::Connection m_tmp_error_connection;
+    QNetworkReply* m_networkreply;
     QList<QString> m_parsesections;
     settings* m_settings;
     database* m_database;
     QObject* m_caller;
     templatearguments m_currentarguments;
     QList<grammarform> m_grammarforms;
+    QList<scheduled_lookup> m_scheduled_lookups;
     QMap<int, void (grammarprovider::*)(QObject*,int)> m_requirements_map;
     QMap<QString, void (grammarprovider::*)(QNetworkReply*)> m_parser_map; 
 @<End of class and header @>
@@ -703,9 +712,10 @@ private:
 \cprotect\subsection{\verb#grammarprovider#}
 @O ../src/grammarprovider.cpp -d
 @{
-grammarprovider::grammarprovider(QObject *parent) : QObject(parent)
+grammarprovider::grammarprovider(QObject *parent) : QObject(parent), m_busy(false)
 {
     m_manager = new QNetworkAccessManager(this);
+    m_manager->setTransferTimeout(1000);
     s_baseurl = "https://en.wiktionary.org/w/api.php?";
     QQmlEngine* engine = qobject_cast<QQmlEngine*>(parent);
     m_settings = engine->singletonInstance<settings*>(qmlTypeId("SettingsLib", 1, 0, "Settings"));
@@ -809,9 +819,17 @@ grammarprovider::~grammarprovider() {
 @O ../src/grammarprovider.cpp -d
 @{
 void grammarprovider::getGrammarInfoForWord(QObject* caller, int languageid, QString word){
+    if(m_busy == true){
+        m_scheduled_lookups.push_back({caller,languageid,word});
+        qDebug() << "Grammarprovider is busy... " + QString::number(m_scheduled_lookups.size()) + " requests waiting";
+        return;
+    }
+    m_busy = true;
+    // TODO: Add timeout in case lookup is not successfull
     // Check requirements:
     if(m_requirements_map.contains(languageid))
         (this->*(m_requirements_map[languageid]))(caller,languageid);
+    qDebug() << "...requirements done";
     m_caller = caller;
     m_language = languageid;
     m_word = word;
@@ -835,7 +853,7 @@ void grammarprovider::getWiktionarySections(){
         this, &grammarprovider::getWiktionarySection);
     QNetworkReply *reply = m_manager->get(request);
 #if QT_VERSION >= 0x051500
-    connect(reply, &QNetworkReply::errorOccurred, this,
+    m_tmp_error_connection = connect(reply, &QNetworkReply::errorOccurred, this,
                 [reply](QNetworkReply::NetworkError) {
                 emit processingStop();
                 qDebug() << "Error " << reply->errorString(); 
@@ -851,10 +869,36 @@ void grammarprovider::getWiktionarySections(){
 @{
 void grammarprovider::getWiktionarySection(QNetworkReply* reply){
     //qDebug() << "getWiktionarySection enter";
+    static int retrycount = 0;
+    if(!reply->isOpen()){
+        retrycount++;
+        qDebug() << "Closed reply, retrying" << retrycount;
+        getWiktionarySections();
+        return;
+    }
+    if(reply->error()!=QNetworkReply::NoError){
+        retrycount++;
+        qDebug() << "Network error " << reply->error() << "retrying" << retrycount;
+        getWiktionarySections();
+        return;
+    }
+    else{
+        qDebug() << "No network error";
+    }
     QObject::disconnect(m_tmp_connection);
-    QString s_reply = QString(reply->readAll());
+    QString s_reply;
+    if(reply->isReadable()){
+        s_reply = QString(reply->readAll());
+    }
+    else {
+        retrycount++;
+        qDebug() << "Empty reply, retrying" << retrycount;
+        getWiktionarySections();
+        return;
+    }
     //qDebug() << s_reply;
     reply->deleteLater();
+    retrycount = 0;
 
     int languageid = m_language;
     QString language = m_database->languagenamefromid(languageid);
@@ -1000,9 +1044,9 @@ void grammarprovider::getWiktionaryTemplate(QNetworkReply* reply){
         parser.next();
         foreach(const QString& wt_finished, wt_finisheds){
             if(wt_finished.startsWith("{{" + parser.key())){
-                QUrl url(s_baseurl + "action=expandtemplates&text=" + wt_finished + "&title=" + m_word + "&prop=wikitext&format=json");
+                QUrl url(s_baseurl + "action=expandtemplates&text=" + QUrl::toPercentEncoding(wt_finished) + "&title=" + m_word + "&prop=wikitext&format=json");
                 m_currentarguments = parseTemplateArguments(wt_finished);
-                qDebug() << url.toString();
+                qDebug() << url.toString(QUrl::None);
                 QNetworkRequest request(url);
                 request.setRawHeader("User-Agent", "Coleitra/0.1 (https://coleitra.org; fpesth@@gmx.de)");
                 m_tmp_connection = connect(m_manager, &QNetworkAccessManager::finished,
@@ -1205,7 +1249,17 @@ void grammarprovider::getNextGrammarObject(QObject* caller){
     //qDebug() << "grammarprovider::getNextGrammarObject enter";
     m_caller = caller;
     if(m_grammarforms.isEmpty()){
+        qDebug() << __FUNCTION__ << __LINE__ << "*** EMIT ***";
         emit grammarInfoComplete(m_caller,m_silent);
+        if(!m_scheduled_lookups.isEmpty()){
+            scheduled_lookup next_lookup = m_scheduled_lookups.first();
+            m_scheduled_lookups.removeFirst();
+            m_busy = false;
+            getGrammarInfoForWord(next_lookup.m_caller, next_lookup.m_languageid, next_lookup.m_word);
+        }
+        else {
+            m_busy = false;
+        }
         //qDebug() << "grammarprovider::getNextGrammarObject exit" << __LINE__;
         return;
     }

@@ -15,51 +15,11 @@
 % You should have received a copy of the GNU Affero General Public License
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-% Those are latex includes and defines, not for the program:
-@i includes.w
-@i defines.w
-
-\makeindex
-
-\begin{document}
-
-@i title.w
-
-\tableofcontents
-
-@i abstract.w
-
-@i version.w
-
-@i infrastructure.w
-
-@i settings.w
-
-@i about.w
-
-@i database.w
-
-@i train.w
-
-@i edit.w
-
-@i grammarprovider.w
-
-@i gui.w
-
-@i qt.w
-
-\begin{appendix}
-\chapter{Code indices}
-\section{Files}
-@f
-
-\section{Fragments}
-@m
-
-\section{User identifiers}
-@u
-
-\cleardoublepage\printindex
-\end{appendix}
-\end{document}
+\chapter*{Document info}
+\begin{description}
+\item[GIT commit]
+\verbatiminput{\string"| git describe --always --tags\string"}
+\item[Clean?]
+\item[pdflatex version]
+\verbatiminput{\string"| pdflatex -version\string"}
+\end{description}

@@ -22,5 +22,6 @@
 \usepackage[nottoc]{tocbibind}
 \usepackage{longtable}
 \usepackage{cprotect}
+\usepackage{verbatim}
 \usepackage[colorlinks=true]{hyperref}
 \makeindex
