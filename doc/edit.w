@@ -269,24 +269,27 @@ int edit::lookupLexeme(int formid){
 
 QString edit::prettyPrintLexeme(int lexeme_id){
     QString pretty_string;
-    // First search the cued forms:
-    QList<lexeme>* lexemes;
-    for(int i=0; i<2; i++){
-        switch(i){
-            case 0:
-                lexemes = &m_lexemes;
-                break;
-            case 1:
-                lexemes = &(m_translation.lexemes);
-                break;
-        }
-        foreach(const lexeme& m_lexeme, *lexemes)
-            if(lexeme_id == m_lexeme.id){
-                foreach(const form& m_form, m_lexeme.forms)
-                    pretty_string += m_form.string + ", ";
-                pretty_string.chop(2);
-                return pretty_string;
+    if(lexeme_id < 0){
+        // First search the cued forms:
+        QList<lexeme>* lexemes;
+        for(int i=0; i<2; i++){
+            switch(i){
+                case 0:
+                    lexemes = &m_lexemes;
+                    break;
+                case 1:
+                    lexemes = &(m_translation.lexemes);
+                    break;
             }
+            foreach(const lexeme& m_lexeme, *lexemes)
+                if(lexeme_id == m_lexeme.id){
+                    foreach(const form& m_form, m_lexeme.forms)
+                        pretty_string += m_form.string + ", ";
+                    pretty_string.chop(2);
+                    return pretty_string;
+                }
+        }
+        qDebug() << "Unexpected error: lexeme_id < 0 but could not find any forms!";
     }
     return m_database->prettyPrintLexeme(lexeme_id);
 }
@@ -483,6 +486,7 @@ void edit::addLexemeHeuristically(QObject* caller, int languageid, QString lexem
             int lexeme_id = lookupLexeme(form_id);
             // We found it, great!
             qDebug() << "lexeme_id =" << lexeme_id;
+            addLexeme(lexeme_id, m_current_language_id, m_current_translation_id);
             emit addLexemeHeuristicallyResult(m_caller, prettyPrintLexeme(lexeme_id));
             m_add_busy = false;
             addScheduledLexemeHeuristically();
@@ -561,7 +565,6 @@ void edit::sentenceLookupFormFromGramarProvider(QObject* caller, QString form, Q
     m_grammarprovider->getNextSentencePart(caller);
 }
 
-
 void edit::sentenceLookupFormLexemeFromGrammarProvider(QObject* caller, QString form, QList<QList<QString> > grammarexpressions, bool silent){
     qDebug() << __FUNCTION__ << __LINE__ << "silent" << silent;
     int form_id = lookupFormLexeme(m_current_language_id, m_current_lexeme_id, form, grammarexpressions);
@@ -571,7 +574,6 @@ void edit::sentenceLookupFormLexemeFromGrammarProvider(QObject* caller, QString 
     m_current_sentence_parts.push_back({form_id,0,false});
     m_grammarprovider->getNextSentencePart(caller);
 }
-
 
 void edit::sentenceAddAndUseFormFromGrammarProvider(QObject* caller, QString form, QList<QList<QString> > grammarexpressions, bool silent){
     qDebug() << __FUNCTION__ << __LINE__ << "silent" << silent;
@@ -587,7 +589,6 @@ void edit::sentenceAddAndIgnoreFormFromGrammerProvider(QObject* caller, QString 
     //qDebug() << "sentenceAddAndIgnoreFormFromGrammerProvider not implemented yet!";
     m_grammarprovider->getNextSentencePart(caller);
 }
-
 
 void edit::sentenceCompleteFromGrammarProvider(QObject* caller, QList<QList<QString> > grammarexpressions, bool silent){
     qDebug() << __FUNCTION__ << __LINE__ << "silent" << silent;
@@ -660,23 +661,32 @@ void edit::saveToDatabase(void){
         while(lexemei.hasNext()){
             lexeme& currentLexeme = lexemei.next();
             qDebug() << "newLexeme" << currentLexeme.languageid;
-            currentLexeme.newid = m_database->newLexeme(currentLexeme.languageid);
+            if(currentLexeme.id < 0)
+                currentLexeme.newid = m_database->newLexeme(currentLexeme.languageid);
+            else
+                currentLexeme.newid = currentLexeme.id;
             if(i==1){
-                qDebug() << "newTranslationPart" << m_translation.newid << currentLexeme.newid;
+                //qDebug() << "newTranslationPart" << m_translation.newid << currentLexeme.newid;
                 m_database->newTranslationPart(m_translation.newid, currentLexeme.newid, 0, 0, 0, 0);
-                qDebug() << "<<newTranslationPart";
+                //qDebug() << "<<newTranslationPart";
             }
             QMutableListIterator<form> formi(currentLexeme.forms);
             while(formi.hasNext()){
                 form& currentForm = formi.next();
-                qDebug() << "newForm" << currentLexeme.newid << currentForm.grammarform << currentForm.string;
-                currentForm.newid = m_database->newForm(currentLexeme.newid, currentForm.grammarform, currentForm.string);
+                //qDebug() << "newForm" << currentLexeme.newid << currentForm.grammarform << currentForm.string;
+                if(currentForm.id < 0)
+                    currentForm.newid = m_database->newForm(currentLexeme.newid, currentForm.grammarform, currentForm.string);
+                else
+                    currentForm.newid = currentForm.id;
             }
             QMutableListIterator<sentence> sentencei(currentLexeme.sentences);
             while(sentencei.hasNext()){
                 sentence& currentSentence = sentencei.next();
                 //qDebug() << "saveSentence" << currentLexeme.newid << currentSentence.grammarform;
-                currentSentence.newid = m_database->newSentence(currentLexeme.newid, currentSentence.grammarform);
+                if(currentSentence.id < 0)
+                    currentSentence.newid = m_database->newSentence(currentLexeme.newid, currentSentence.grammarform);
+                else
+                    currentSentence.newid = currentSentence.id;
                 QMutableListIterator<sentencepart> sentenceparti(currentSentence.parts);
                 int spart=1;
                 int sn=0;
@@ -692,7 +702,7 @@ void edit::saveToDatabase(void){
                             if(formid < 0){
                                 formid = formIdToNewId(formid);
                             }
-                            qDebug() << m_database->prettyPrintForm(formid);
+                            //qDebug() << m_database->prettyPrintForm(formid);
                             break;
                         case COMPOUNDFORM:
                             compoundformid = currentSentencePart.id;
@@ -711,8 +721,11 @@ void edit::saveToDatabase(void){
                             break;
                     }
                     //qDebug() << "saveSentencePart" << currentSentence.newid << spart << currentSentencePart.capitalized << formid << compoundformid << grammarformid << punctuationmarkid;
-                    qDebug() << "newSentencePart" << currentSentence.newid << spart << currentSentencePart.capitalized << formid << compoundformid << grammarformid << punctuationmarkid;
-                    currentSentencePart.newid = m_database->newSentencePart(currentSentence.newid, spart, currentSentencePart.capitalized, formid, compoundformid, grammarformid, punctuationmarkid); 
+                    //qDebug() << "newSentencePart" << currentSentence.newid << spart << currentSentencePart.capitalized << formid << compoundformid << grammarformid << punctuationmarkid;
+                    if(currentSentencePart.id < 0)
+                        currentSentencePart.newid = m_database->newSentencePart(currentSentence.newid, spart, currentSentencePart.capitalized, formid, compoundformid, grammarformid, punctuationmarkid); 
+                    else
+                        currentSentencePart.newid = currentSentencePart.id;
                     spart++;
                 }
             }
