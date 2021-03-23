@@ -114,7 +114,10 @@ ColeitraPage {
                 width: parent.width / 2
                 height: 80
                 onClicked: {
-                    //Edit.saveToDatabase();
+                    Edit.debugStatusCuedLexemes();
+                    Edit.saveToDatabase();
+                    Edit.resetEverything();
+                    Edit.debugStatusCuedLexemes();
                 }
             }
         }

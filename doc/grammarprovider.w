@@ -872,8 +872,14 @@ void grammarprovider::getWiktionarySection(QNetworkReply* reply){
     static int retrycount = 0;
     if(!reply->isOpen()){
         retrycount++;
-        qDebug() << "Closed reply, retrying" << retrycount;
-        getWiktionarySections();
+        if(retrycount < 3){
+            qDebug() << "Closed reply, retrying" << retrycount;
+            getWiktionarySections();
+        }
+        else{
+            qDebug() << "Tried 3 times, giving up...";
+            retrycount = 0;
+        }
         return;
     }
     if(reply->error()!=QNetworkReply::NoError){

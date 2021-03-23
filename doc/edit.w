@@ -152,7 +152,6 @@ signals:
 
 edit::edit(QObject *parent) : QObject(parent), m_add_busy(false), m_current_sentence_parts({})
 {
-
     QQmlEngine* engine = qobject_cast<QQmlEngine*>(parent);
     m_database = engine->singletonInstance<database*>(qmlTypeId("DatabaseLib", 1, 0, "Database"));
     m_dbversion = m_database->property("version").toString();
@@ -497,7 +496,7 @@ void edit::addLexemeHeuristically(QObject* caller, int languageid, QString lexem
 }
 
 void edit::grammarInfoAvailableFromGrammarProvider(QObject* caller, int numberOfObjects, bool silent){
-    // qDebug() << __FUNCTION__ << __LINE__ << "silent" << silent;
+    qDebug() << __FUNCTION__ << __LINE__ << "silent" << silent;
     this->disconnect();
     disconnect(m_grammarprovider,&grammarprovider::grammarInfoAvailable,this,&edit::grammarInfoAvailableFromGrammarProvider);
     disconnect(m_grammarprovider,&grammarprovider::formObtained,this,&edit::formObtainedFromGrammarProvider);
@@ -529,8 +528,14 @@ void edit::formObtainedFromGrammarProvider(QObject* caller, QString form, QList<
     int grammar_id = createGrammarFormId(m_current_language_id, grammarexpressions);
     int form_id = formId();
     //qDebug() << "Obtained form " << form << "id" << form_id;
-    m_current_pretty_lexeme += form + ", ";
-    addForm(m_current_lexeme_id,form_id,grammar_id,form,m_current_language_id, m_current_translation_id);
+    if(!silent){
+        m_current_pretty_lexeme += form + ", ";
+        addForm(m_current_lexeme_id,form_id,grammar_id,form,m_current_language_id, m_current_translation_id);
+    }
+    else{
+        // Don't add to translation but as normal lexeme:
+        addForm(m_current_lexeme_id,form_id,grammar_id,form,m_current_language_id, 0);
+    }
     m_grammarprovider->getNextGrammarObject(caller);
 }
 
@@ -550,7 +555,8 @@ void edit::sentenceLookupFormFromGramarProvider(QObject* caller, QString form, Q
     qDebug() << __FUNCTION__ << __LINE__ << "silent" << silent;
     int form_id = lookupForm(m_current_language_id, m_current_lexeme_id, form, grammarexpressions);
     //qDebug() << "Sentence part " << form << "looked up as id" << form_id << "for sentence id " << m_current_sentence_id;
-    m_current_pretty_lexeme += form + " ";
+    if(!silent)
+        m_current_pretty_lexeme += form + " ";
     m_current_sentence_parts.push_back({form_id,0,false});
     m_grammarprovider->getNextSentencePart(caller);
 }
@@ -560,7 +566,8 @@ void edit::sentenceLookupFormLexemeFromGrammarProvider(QObject* caller, QString 
     qDebug() << __FUNCTION__ << __LINE__ << "silent" << silent;
     int form_id = lookupFormLexeme(m_current_language_id, m_current_lexeme_id, form, grammarexpressions);
     //qDebug() << "Sentence part " << form << "looked up with lexeme as id" << form_id << "for sentence id " << m_current_sentence_id;
-    m_current_pretty_lexeme += form + " ";
+    if(!silent)
+        m_current_pretty_lexeme += form + " ";
     m_current_sentence_parts.push_back({form_id,0,false});
     m_grammarprovider->getNextSentencePart(caller);
 }
@@ -586,8 +593,10 @@ void edit::sentenceCompleteFromGrammarProvider(QObject* caller, QList<QList<QStr
     qDebug() << __FUNCTION__ << __LINE__ << "silent" << silent;
     int grammar_id = createGrammarFormId(m_current_language_id, grammarexpressions);
     //qDebug() << "Sentence with id " << m_current_sentence_id << "complete";
-    m_current_pretty_lexeme.chop(1);
-    m_current_pretty_lexeme += ", ";
+    if(!silent){
+        m_current_pretty_lexeme.chop(1);
+        m_current_pretty_lexeme += ", ";
+    }
     addSentence(m_current_lexeme_id, m_current_sentence_id, grammar_id, m_current_sentence_parts, m_current_language_id);
     m_current_sentence_parts.clear();
     m_grammarprovider->getNextGrammarObject(caller);
@@ -609,9 +618,14 @@ void edit::grammarInfoCompleteFromGrammarProvider(QObject* caller, bool silent){
 
     qDebug() << __FUNCTION__ << __LINE__ << "silent" << silent << numberofcalls << "caller" << caller;
     qDebug() << "Grammar info complete";
-    m_current_pretty_lexeme.chop(2);
-    emit addLexemeHeuristicallyResult(m_caller, m_current_pretty_lexeme);
-    m_current_pretty_lexeme.clear();
+    if(!silent){
+        m_current_pretty_lexeme.chop(2);
+        emit addLexemeHeuristicallyResult(m_caller, m_current_pretty_lexeme);
+        m_current_pretty_lexeme.clear();
+    }
+    else {
+        connect(m_grammarprovider,&grammarprovider::grammarInfoAvailable,this,&edit::grammarInfoAvailableFromGrammarProvider);
+    }
     m_add_busy = false;
     addScheduledLexemeHeuristically();
 }
