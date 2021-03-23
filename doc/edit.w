@@ -88,6 +88,8 @@ private:
     };
     QObject* m_caller;
     translation m_translation;
+    QList<translation> m_translations;
+    translation* m_current_translation;
     QList<lexeme> m_lexemes;
     database* m_database;
     QString m_dbversion;
@@ -150,12 +152,15 @@ signals:
 @{
 #include "edit.h"
 
-edit::edit(QObject *parent) : QObject(parent), m_add_busy(false), m_current_sentence_parts({})
+edit::edit(QObject *parent) : QObject(parent), m_add_busy(false), m_current_sentence_parts({}), m_translationId(-1)
 {
     QQmlEngine* engine = qobject_cast<QQmlEngine*>(parent);
     m_database = engine->singletonInstance<database*>(qmlTypeId("DatabaseLib", 1, 0, "Database"));
     m_dbversion = m_database->property("version").toString();
     m_grammarprovider = engine->singletonInstance<grammarprovider*>(qmlTypeId("GrammarProviderLib", 1, 0, "GrammarProvider"));
+    translation newTranslation = {translationId(),0,{}};
+    m_translations.append(newTranslation);
+    m_current_translation = &(m_translations.last());
 }
 
 int edit::createGrammarFormId(int language, QList<QList<QString> > grammarexpressions){
@@ -174,7 +179,7 @@ edit::lexeme& edit::getCreateLexeme(int lexemeid, int languageid, int translatio
     if(translationid==0)
         lexemes = &m_lexemes;
     else{
-        lexemes = &(m_translation.lexemes);
+        lexemes = &(m_current_translation->lexemes);
     }
     bool foundLexeme = false;
     QMutableListIterator<lexeme> lexemei(*lexemes);
@@ -228,7 +233,7 @@ int edit::lookupForm(int language, int lexemeid, QString string, QList<QList<QSt
                 lexemes = &m_lexemes;
                 break;
             case 1:
-                lexemes = &(m_translation.lexemes);
+                lexemes = &(m_current_translation->lexemes);
                 break;
         }
         foreach(const lexeme& m_lexeme, *lexemes)
@@ -255,7 +260,7 @@ int edit::lookupLexeme(int formid){
                 lexemes = &m_lexemes;
                 break;
             case 1:
-                lexemes = &(m_translation.lexemes);
+                lexemes = &(m_current_translation->lexemes);
                 break;
         }
         foreach(const lexeme& m_lexeme, *lexemes)
@@ -278,7 +283,7 @@ QString edit::prettyPrintLexeme(int lexeme_id){
                     lexemes = &m_lexemes;
                     break;
                 case 1:
-                    lexemes = &(m_translation.lexemes);
+                    lexemes = &(m_current_translation->lexemes);
                     break;
             }
             foreach(const lexeme& m_lexeme, *lexemes)
@@ -302,7 +307,7 @@ int edit::formIdToNewId(int id){
                 lexemes = &m_lexemes;
                 break;
             case 1:
-                lexemes = &(m_translation.lexemes);
+                lexemes = &(m_current_translation->lexemes);
                 break;
         }
         foreach(const lexeme& m_lexeme, *lexemes)
@@ -321,7 +326,7 @@ QString edit::stringFromFormId(int formid){
                 lexemes = &m_lexemes;
                 break;
             case 1:
-                lexemes = &(m_translation.lexemes);
+                lexemes = &(m_current_translation->lexemes);
                 break;
         }
         foreach(const lexeme& m_lexeme, *lexemes)
@@ -340,7 +345,7 @@ int edit::grammarIdFromFormId(int formid){
                 lexemes = &m_lexemes;
                 break;
             case 1:
-                lexemes = &(m_translation.lexemes);
+                lexemes = &(m_current_translation->lexemes);
                 break;
         }
         foreach(const lexeme& m_lexeme, *lexemes)
@@ -368,7 +373,7 @@ int edit::lookupFormLexeme(int language, int lexemeid, QString string, QList<QLi
                 lexemes = &m_lexemes;
                 break;
             case 1:
-                lexemes = &(m_translation.lexemes);
+                lexemes = &(m_current_translation->lexemes);
                 break;
         }
         foreach(const lexeme& m_lexeme, *lexemes)
@@ -393,7 +398,7 @@ void edit::addLexeme(int lexemeid, int languageid, int translationid){
     if(translationid==0)
         lexemes = &m_lexemes;
     else{
-        lexemes = &(m_translation.lexemes);
+        lexemes = &(m_current_translation->lexemes);
     }
     lexeme newLexeme = {lexemeid,0,languageid,{}};
     lexemes->push_back(newLexeme);
@@ -422,7 +427,7 @@ void edit::debugStatusCuedLexemes(){
                 qDebug() << "Lexemes outside of translation:";
                 break;
             case 1:
-                lexemes = &(m_translation.lexemes);
+                lexemes = &(m_current_translation->lexemes);
                 qDebug() << "Translation lexemes:";
                 break;
         }
@@ -436,13 +441,13 @@ void edit::moveLexemeOutOfTranslation(int language, QString text){
     if(form_id == 0) return;
     int lexeme_id = lookupLexeme(form_id);
     if(lexeme_id == 0) return;
-    QList<lexeme>* lexemes = &(m_translation.lexemes);
+    QList<lexeme>* lexemes = &(m_current_translation->lexemes);
     int i=0;
     lexeme found_lexeme;
     foreach(const lexeme& m_lexeme, *lexemes){
         if(m_lexeme.id == lexeme_id){
             found_lexeme = m_lexeme;
-            m_translation.lexemes.removeAt(i);
+            m_current_translation->lexemes.removeAt(i);
             m_lexemes.append(found_lexeme);
             return;
         }
@@ -632,7 +637,7 @@ void edit::grammarInfoCompleteFromGrammarProvider(QObject* caller, bool silent){
 }
 
 void edit::resetEverything(void){
-    m_translation.lexemes.clear();
+    m_current_translation->lexemes.clear();
     m_lexemes.clear();
     m_translationId = -1;
     m_lexemeId = -1;
@@ -646,7 +651,7 @@ void edit::resetEverything(void){
 void edit::saveToDatabase(void){
     emit processingStart("Saving to database...");
     QList<lexeme>* lexemes;
-    m_translation.newid = m_database->newTranslation();
+    m_current_translation->newid = m_database->newTranslation();
     for(int i=0; i<2; i++){
         qDebug() << "Lexeme" << i;
         switch(i){
@@ -654,7 +659,7 @@ void edit::saveToDatabase(void){
                 lexemes = &m_lexemes;
                 break;
             case 1:
-                lexemes = &(m_translation.lexemes);
+                lexemes = &(m_current_translation->lexemes);
                 break;
         }
         QMutableListIterator<lexeme> lexemei(*lexemes);
@@ -667,7 +672,7 @@ void edit::saveToDatabase(void){
                 currentLexeme.newid = currentLexeme.id;
             if(i==1){
                 //qDebug() << "newTranslationPart" << m_translation.newid << currentLexeme.newid;
-                m_database->newTranslationPart(m_translation.newid, currentLexeme.newid, 0, 0, 0, 0);
+                m_database->newTranslationPart(m_current_translation->newid, currentLexeme.newid, 0, 0, 0, 0);
                 //qDebug() << "<<newTranslationPart";
             }
             QMutableListIterator<form> formi(currentLexeme.forms);
