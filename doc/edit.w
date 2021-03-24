@@ -245,8 +245,12 @@ int edit::lookupForm(int language, int lexemeid, QString string, QList<QList<QSt
     QList<int> formids = m_database->searchForms(string,true);
     foreach(int formid, formids){
         int gf = m_database->grammarFormFromFormId(formid);
-        if((gf == grammarid) || (grammarid == 0))
-            return formid;
+        if((gf == grammarid) || (grammarid == 0)){
+            int lexeme_id = m_database->lexemeFromFormId(formid);
+            int found_lang_id = m_database->languageIdFromLexemeId(lexeme_id);
+            if((found_lang_id == language) || (language == 0))
+                return formid;
+        }
     }
     return 0;
 }

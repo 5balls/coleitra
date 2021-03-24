@@ -68,6 +68,7 @@ public:
     Q_INVOKABLE QString prettyPrintForm(int form_id, QString form = "", int grammarformid = 0);
     Q_INVOKABLE int grammarFormFromFormId(int form_id);
     Q_INVOKABLE int lexemeFromFormId(int form_id);
+    Q_INVOKABLE int languageIdFromLexemeId(int lexeme_id);
     Q_INVOKABLE QList<int> searchForms(QString string, bool exact=false);
     Q_INVOKABLE QString prettyPrintLexeme(int lexeme_id);
     Q_INVOKABLE QList<int> searchLexemes(QString string, bool exact=false);
@@ -797,6 +798,15 @@ int database::lexemeFromFormId(int form_id){
     QSqlQuery result = formtable->select({"lexeme"},{"id",form_id});
     if(result.next())
         return result.value("lexeme").toInt();
+    else
+        return 0;
+}
+
+int database::languageIdFromLexemeId(int lexeme_id){
+    databasetable* lexemetable = getTableByName("lexeme");
+    QSqlQuery result = lexemetable->select({"language"},{"id", lexeme_id});
+    if(result.next())
+        return result.value("language").toInt();
     else
         return 0;
 }
