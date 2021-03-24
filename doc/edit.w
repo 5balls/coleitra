@@ -128,6 +128,7 @@ public:
     Q_INVOKABLE void addForm(int lexemeid, int formid, int grammarform, QString string, int languageid, int translationid=0);
     Q_INVOKABLE void addSentence(int lexemeid, int sentenceid, int grammarform, QList<QList<int> > parts, int languageid, int translationid=0);
     Q_INVOKABLE int lookupForm(int language, int lexemeid, QString string, QList<QList<QString> > grammarexpressions);
+    Q_INVOKABLE int placeOfLexeme(int lexemeid);
     Q_INVOKABLE int lookupLexeme(int formid);
     Q_INVOKABLE QString prettyPrintLexeme(int lexeme_id);
     Q_INVOKABLE int formIdToNewId(int id);
@@ -135,11 +136,14 @@ public:
     Q_INVOKABLE int grammarIdFromFormId(int formid);
     Q_INVOKABLE int lookupFormLexeme(int language, int lexemeid, QString string, QList<QList<QString> > grammarexpressions);
     Q_INVOKABLE void resetEverything(void);
+    Q_INVOKABLE bool isReadyToSave(void);
     Q_INVOKABLE void saveToDatabase(void);
     Q_INVOKABLE void moveLexemeOutOfTranslation(int language, QString text);
     Q_INVOKABLE void addLexemeHeuristically(QObject* caller, int languageid, QString lexeme, int translationid);
     Q_INVOKABLE void debugStatusCuedLexemes();
     void addLexeme(int lexemeid, int languageid, int translationid=0);
+    bool removeLexeme(int lexemeid);
+    lexeme getLexeme(int lexeme_id);
 signals:
     void dbversionChanged(const QString &newVersion);
     void processingStart(const QString &waitingString);
@@ -172,6 +176,7 @@ int edit::createGrammarFormId(int language, QList<QList<QString> > grammarexpres
 void edit::addForm(int lexemeid, int formid, int grammarform, QString string, int languageid, int translationid){
     //qDebug() << "addForm" << lexemeid << formid << grammarform << string << languageid << translationid;
     form newForm = {formid,0,string,grammarform};
+    //qDebug() << __FILE__ << __FUNCTION__ << __LINE__ << lexemeid << languageid << translationid;
     lexeme& currentLexeme = getCreateLexeme(lexemeid, languageid, translationid);
     currentLexeme.forms.push_back(newForm);
 }
@@ -191,6 +196,7 @@ edit::lexeme& edit::getCreateLexeme(int lexemeid, int languageid, int translatio
             return currentLexeme;
         }
     }
+    //qDebug() << __FILE__ << __FUNCTION__ << __LINE__ << lexemeid << languageid << translationid;
     addLexeme(lexemeid, languageid, translationid);
     return (*lexemes)[lexemes->size()-1];
 }
@@ -214,6 +220,7 @@ void edit::addSentence(int lexemeid, int sentenceid, int grammarform, QList<QLis
         sparts.push_back(newSentencePart);
     }
     sentence newSentence = {sentenceid,0,grammarform,sparts};
+    //qDebug() << __FILE__ << __FUNCTION__ << __LINE__ << lexemeid << languageid << translationid;
     lexeme& currentLexeme = getCreateLexeme(lexemeid, languageid, translationid);
     currentLexeme.sentences.push_back(newSentence);
 }
@@ -257,6 +264,34 @@ int edit::lookupForm(int language, int lexemeid, QString string, QList<QList<QSt
     return 0;
 }
 
+int edit::placeOfLexeme(int lexemeid){
+    /* Return values:
+       0 not found
+       1 lexeme list outside translation
+       2 lexeme of translation
+       3 database
+     */
+    // First search the cued forms:
+    QList<lexeme>* lexemes;
+    for(int i=0; i<2; i++){
+        switch(i){
+            case 0:
+                lexemes = &m_lexemes;
+                break;
+            case 1:
+                lexemes = &(m_current_translation->lexemes);
+                break;
+        }
+        foreach(const lexeme& m_lexeme, *lexemes)
+            if(m_lexeme.id == lexemeid){
+                return i+1;
+            }
+    }
+    int found_lang_id = m_database->languageIdFromLexemeId(lexemeid);
+    if(found_lang_id != 0) return 3;
+    return 0;
+}
+
 int edit::lookupLexeme(int formid){
     // First search the cued forms:
     QList<lexeme>* lexemes;
@@ -280,6 +315,7 @@ int edit::lookupLexeme(int formid){
 
 QString edit::prettyPrintLexeme(int lexeme_id){
     QString pretty_string;
+    if(lexeme_id == 0) qDebug() << "Error, can't pretty print lexeme with id 0!";
     if(lexeme_id < 0){
         // First search the cued forms:
         QList<lexeme>* lexemes;
@@ -410,10 +446,55 @@ void edit::addLexeme(int lexemeid, int languageid, int translationid){
     lexemes->push_back(newLexeme);
 }
 
+bool edit::removeLexeme(int lexemeid){
+    QList<lexeme>* lexemes;
+    for(int i=0; i<2; i++){
+        switch(i){
+            case 0:
+                lexemes = &m_lexemes;
+                break;
+            case 1:
+                lexemes = &(m_current_translation->lexemes);
+                break;
+        }
+        int j=0;
+        foreach(const lexeme& m_lexeme, *lexemes){
+            if(m_lexeme.id == lexemeid){
+                lexemes->removeAt(j);
+                return true;
+            }
+            j++;
+        }
+    }
+    return false;
+}
+
+edit::lexeme edit::getLexeme(int lexeme_id){
+    QList<lexeme>* lexemes;
+    for(int i=0; i<2; i++){
+        switch(i){
+            case 0:
+                lexemes = &m_lexemes;
+                break;
+            case 1:
+                lexemes = &(m_current_translation->lexemes);
+                break;
+        }
+        int j=0;
+        foreach(const lexeme& m_lexeme, *lexemes){
+            if(m_lexeme.id == lexeme_id)
+                return m_lexeme;
+            j++;
+        }
+    }
+    // Could not find lexeme_id, so return empty lexeme
+    return lexeme();
+}
+
 void edit::addScheduledLexemeHeuristically(void){
     if(!m_scheduled_adds.isEmpty()){
         scheduled_add scha = m_scheduled_adds.first();
-        qDebug() << "Processing scheduled lexeme " << scha.m_lexeme;
+        //qDebug() << "Processing scheduled lexeme " << scha.m_lexeme;
         m_scheduled_adds.removeFirst();
         addLexemeHeuristically(scha.m_caller, scha.m_languageid, scha.m_lexeme, scha.m_translationid);
     }
@@ -438,51 +519,60 @@ void edit::debugStatusCuedLexemes(){
                 break;
         }
         foreach(const lexeme& m_lexeme, *lexemes)
-            qDebug() << "  " << m_database->languagenamefromid(m_lexeme.languageid) << prettyPrintLexeme(m_lexeme.id);
+            qDebug() << "  " << m_lexeme.id << m_database->languagenamefromid(m_lexeme.languageid) << m_lexeme.forms.size() << prettyPrintLexeme(m_lexeme.id);
     }
 }
 
 void edit::moveLexemeOutOfTranslation(int language, QString text){
+    //qDebug() << __FILE__ << __FUNCTION__ << __LINE__ << language << text;
+    debugStatusCuedLexemes();
     int form_id = lookupForm(language, 0, text, {});
-    if(form_id == 0) return;
+    if(form_id == 0){
+        debugStatusCuedLexemes();
+        return;
+    }
     int lexeme_id = lookupLexeme(form_id);
-    if(lexeme_id == 0) return;
+    if(lexeme_id == 0){
+        debugStatusCuedLexemes();
+        return;
+    }
     QList<lexeme>* lexemes = &(m_current_translation->lexemes);
     int i=0;
-    lexeme found_lexeme;
     foreach(const lexeme& m_lexeme, *lexemes){
         if(m_lexeme.id == lexeme_id){
-            found_lexeme = m_lexeme;
+            lexeme found_lexeme = m_lexeme;
             m_current_translation->lexemes.removeAt(i);
             m_lexemes.append(found_lexeme);
+            debugStatusCuedLexemes();
             return;
         }
         i++;
     }
+    debugStatusCuedLexemes();
 }
 
-void edit::addLexemeHeuristically(QObject* caller, int languageid, QString lexeme, int translationid){
-    if(lexeme.isEmpty()){
+void edit::addLexemeHeuristically(QObject* caller, int languageid, QString lexemestring, int translationid){
+    if(lexemestring.isEmpty()){
         return;
     }
     if(m_add_busy == true){
         qDebug() << "Edit is busy... scheduling for later";
-        m_scheduled_adds.push_back({caller,languageid,lexeme,translationid});
+        m_scheduled_adds.push_back({caller,languageid,lexemestring,translationid});
         return;
     }
     else{
         m_add_busy = true;
     }
-    qDebug() << "Processing" << lexeme;
+    //qDebug() << "Processing" << lexeme;
     m_caller = caller;
     m_current_language_id = languageid;
     m_current_translation_id = translationid;
-    if(lexeme.contains(' ')){
-        if(lexeme.contains('.')){
+    if(lexemestring.contains(' ')){
+        if(lexemestring.contains('.')){
             //sentence
             emit addLexemeHeuristicallyResult(m_caller, "<i>Sentence not implemented yet, sorry!</i>");
         }
-        else if(lexeme.contains(", ")){
+        else if(lexemestring.contains(", ")){
             //multiple meanings
             emit addLexemeHeuristicallyResult(m_caller, "<i>Multiple meanings not implemented yet, sorry!</i>");
         }
@@ -490,15 +580,45 @@ void edit::addLexemeHeuristically(QObject* caller, int languageid, QString lexem
     else{
         //single word
         // Let's see first, if we have it in the database...
-        qDebug() << "Checking if we have it available...";
-        int form_id = lookupForm(languageid, 0, lexeme, {});
+        int form_id = lookupForm(languageid, 0, lexemestring, {});
         if(form_id != 0){
-            qDebug() << "Seems we have it, form_id =" << form_id;
             int lexeme_id = lookupLexeme(form_id);
             // We found it, great!
-            qDebug() << "lexeme_id =" << lexeme_id;
-            addLexeme(lexeme_id, m_current_language_id, m_current_translation_id);
+            /* There are three places where we might have found it:
+               1. In the database -> add it to the translation cue
+               2. In the translation -> don't do anything
+               3. In the non translation lexeme list -> move to the translation cue
+             */
+            switch(placeOfLexeme(lexeme_id)){
+                case 0:
+                    // Not found
+                    qDebug() << __FILE__ << __FUNCTION__ << __LINE__ << "Should never happen!";
+                    break;
+                case 1:
+                    // In lexeme list outside of translations
+                    if(lexeme_id < 0){
+                        // We don't have the lexeme in the database yet, so 
+                        // we have to copy over the lexeme
+                        lexeme current_lexeme = getLexeme(lexeme_id);
+                        removeLexeme(lexeme_id);
+                        m_current_translation->lexemes.push_back(current_lexeme);
+                    }
+                    else{
+                        // We can just copy the reference
+                        removeLexeme(lexeme_id);
+                        addLexeme(lexeme_id, m_current_language_id, m_current_translation_id);
+                    }
+                    break;
+                case 2:
+                    // In lexeme translation list
+                    break;
+                case 3:
+                    // In database
+                    addLexeme(lexeme_id, m_current_language_id, m_current_translation_id);
+                    break;
+            }
             emit addLexemeHeuristicallyResult(m_caller, prettyPrintLexeme(lexeme_id));
+            debugStatusCuedLexemes();
             m_add_busy = false;
             addScheduledLexemeHeuristically();
         }
@@ -506,8 +626,7 @@ void edit::addLexemeHeuristically(QObject* caller, int languageid, QString lexem
             connect(m_grammarprovider,&grammarprovider::grammarInfoAvailable,this,&edit::grammarInfoAvailableFromGrammarProvider);
             connect(m_grammarprovider,&grammarprovider::grammarInfoNotAvailable,this,&edit::grammarInfoNotAvailableFromGrammarProvider);
             connect(m_grammarprovider,&grammarprovider::networkError, this, &edit::networkErrorFromGrammarProvider);
-            qDebug() << "Looking up" << lexeme;
-            m_grammarprovider->getGrammarInfoForWord(m_caller, languageid, lexeme);
+            m_grammarprovider->getGrammarInfoForWord(m_caller, languageid, lexemestring);
         }
     }
 }
@@ -529,7 +648,7 @@ void edit::grammarInfoNotAvailableFromGrammarProvider(QObject* caller, bool sile
 }
 
 void edit::grammarInfoAvailableFromGrammarProvider(QObject* caller, int numberOfObjects, bool silent){
-    qDebug() << __FUNCTION__ << __LINE__ << "silent" << silent;
+    //qDebug() << __FUNCTION__ << __LINE__ << "silent" << silent;
     this->disconnect();
     disconnect(m_grammarprovider,&grammarprovider::grammarInfoAvailable,this,&edit::grammarInfoAvailableFromGrammarProvider);
     disconnect(m_grammarprovider,&grammarprovider::grammarInfoNotAvailable,this,&edit::grammarInfoNotAvailableFromGrammarProvider);
@@ -545,7 +664,7 @@ void edit::grammarInfoAvailableFromGrammarProvider(QObject* caller, int numberOf
     disconnect(m_grammarprovider,&grammarprovider::grammarInfoComplete,this,&edit::grammarInfoCompleteFromGrammarProvider);
 
     m_current_lexeme_id = lexemeId();
-    qDebug() << "Obtained " << numberOfObjects << " forms for lexeme " << m_current_lexeme_id;
+    //qDebug() << "Obtained " << numberOfObjects << " forms for lexeme " << m_current_lexeme_id;
     connect(m_grammarprovider,&grammarprovider::formObtained,this,&edit::formObtainedFromGrammarProvider);
     connect(m_grammarprovider,&grammarprovider::compoundFormObtained,this,&edit::compoundFormObtainedFromGrammarProvider);
     connect(m_grammarprovider,&grammarprovider::sentenceAvailable,this,&edit::sentenceAvailableFromGrammarProvider);
@@ -575,19 +694,19 @@ void edit::formObtainedFromGrammarProvider(QObject* caller, QString form, QList<
 }
 
 void edit::compoundFormObtainedFromGrammarProvider(QObject* caller, QString form, bool silent){
-    qDebug() << __FUNCTION__ << __LINE__ << "silent" << silent;
+    //qDebug() << __FUNCTION__ << __LINE__ << "silent" << silent;
     // Not implemented in grammar provider yet
 }
 
 void edit::sentenceAvailableFromGrammarProvider(QObject* caller, int parts, bool silent){
-    qDebug() << __FUNCTION__ << __LINE__ << "silent" << silent;
+    //qDebug() << __FUNCTION__ << __LINE__ << "silent" << silent;
     m_current_sentence_id = sentenceId();
     //qDebug() << "Obtained " << parts << "sentence parts for sentence" << m_current_sentence_id;
     m_grammarprovider->getNextSentencePart(caller);
 }
 
 void edit::sentenceLookupFormFromGramarProvider(QObject* caller, QString form, QList<QList<QString> > grammarexpressions, bool silent){
-    qDebug() << __FUNCTION__ << __LINE__ << "silent" << silent;
+    //qDebug() << __FUNCTION__ << __LINE__ << "silent" << silent;
     int form_id = lookupForm(m_current_language_id, m_current_lexeme_id, form, grammarexpressions);
     //qDebug() << "Sentence part " << form << "looked up as id" << form_id << "for sentence id " << m_current_sentence_id;
     if(!silent)
@@ -597,7 +716,7 @@ void edit::sentenceLookupFormFromGramarProvider(QObject* caller, QString form, Q
 }
 
 void edit::sentenceLookupFormLexemeFromGrammarProvider(QObject* caller, QString form, QList<QList<QString> > grammarexpressions, bool silent){
-    qDebug() << __FUNCTION__ << __LINE__ << "silent" << silent;
+    //qDebug() << __FUNCTION__ << __LINE__ << "silent" << silent;
     int form_id = lookupFormLexeme(m_current_language_id, m_current_lexeme_id, form, grammarexpressions);
     //qDebug() << "Sentence part " << form << "looked up with lexeme as id" << form_id << "for sentence id " << m_current_sentence_id;
     if(!silent)
@@ -607,7 +726,7 @@ void edit::sentenceLookupFormLexemeFromGrammarProvider(QObject* caller, QString 
 }
 
 void edit::sentenceAddAndUseFormFromGrammarProvider(QObject* caller, QString form, QList<QList<QString> > grammarexpressions, bool silent){
-    qDebug() << __FUNCTION__ << __LINE__ << "silent" << silent;
+    //qDebug() << __FUNCTION__ << __LINE__ << "silent" << silent;
     // FIXME Currently not used by any grammar, should be implemented
     //qDebug() << "sentenceAddAndUseFormFromGrammarProvider not implemented yet!";
 
@@ -615,21 +734,24 @@ void edit::sentenceAddAndUseFormFromGrammarProvider(QObject* caller, QString for
 }
 
 void edit::sentenceAddAndIgnoreFormFromGrammerProvider(QObject* caller, QString form, QList<QList<QString> > grammarexpressions, bool silent){
-    qDebug() << __FUNCTION__ << __LINE__ << "silent" << silent;
+    //qDebug() << __FUNCTION__ << __LINE__ << "silent" << silent;
     // FIXME Currently not used by any grammar, should be implemented
     //qDebug() << "sentenceAddAndIgnoreFormFromGrammerProvider not implemented yet!";
     m_grammarprovider->getNextSentencePart(caller);
 }
 
 void edit::sentenceCompleteFromGrammarProvider(QObject* caller, QList<QList<QString> > grammarexpressions, bool silent){
-    qDebug() << __FUNCTION__ << __LINE__ << "silent" << silent;
+    //qDebug() << __FUNCTION__ << __LINE__ << "silent" << silent;
     int grammar_id = createGrammarFormId(m_current_language_id, grammarexpressions);
     //qDebug() << "Sentence with id " << m_current_sentence_id << "complete";
     if(!silent){
         m_current_pretty_lexeme.chop(1);
         m_current_pretty_lexeme += ", ";
+        addSentence(m_current_lexeme_id, m_current_sentence_id, grammar_id, m_current_sentence_parts, m_current_language_id, m_current_translation_id);
     }
-    addSentence(m_current_lexeme_id, m_current_sentence_id, grammar_id, m_current_sentence_parts, m_current_language_id);
+    else{
+        addSentence(m_current_lexeme_id, m_current_sentence_id, grammar_id, m_current_sentence_parts, m_current_language_id);
+    }
     m_current_sentence_parts.clear();
     m_grammarprovider->getNextGrammarObject(caller);
 }
@@ -648,11 +770,12 @@ void edit::grammarInfoCompleteFromGrammarProvider(QObject* caller, bool silent){
     disconnect(m_grammarprovider,&grammarprovider::sentenceComplete,this,&edit::sentenceCompleteFromGrammarProvider);
     disconnect(m_grammarprovider,&grammarprovider::grammarInfoComplete,this,&edit::grammarInfoCompleteFromGrammarProvider);
 
-    qDebug() << __FUNCTION__ << __LINE__ << "silent" << silent << numberofcalls << "caller" << caller;
-    qDebug() << "Grammar info complete";
+    //qDebug() << __FUNCTION__ << __LINE__ << "silent" << silent << numberofcalls << "caller" << caller;
+    //qDebug() << "Grammar info complete";
     if(!silent){
         m_current_pretty_lexeme.chop(2);
         emit addLexemeHeuristicallyResult(m_caller, m_current_pretty_lexeme);
+        debugStatusCuedLexemes();
         m_current_pretty_lexeme.clear();
     }
     else {
@@ -674,12 +797,19 @@ void edit::resetEverything(void){
     m_grammarFormComponentId = -1;
 }
 
+bool edit::isReadyToSave(void){
+    if(m_translations.size() < 1) return false;
+    foreach(const translation& transl, m_translations)
+        if(transl.lexemes.size() >= 2) return true;
+    return false;
+}
+
 void edit::saveToDatabase(void){
     emit processingStart("Saving to database...");
     QList<lexeme>* lexemes;
     m_current_translation->newid = m_database->newTranslation();
     for(int i=0; i<2; i++){
-        qDebug() << "Lexeme" << i;
+        //qDebug() << "Lexeme" << i;
         switch(i){
             case 0:
                 lexemes = &m_lexemes;
@@ -691,7 +821,7 @@ void edit::saveToDatabase(void){
         QMutableListIterator<lexeme> lexemei(*lexemes);
         while(lexemei.hasNext()){
             lexeme& currentLexeme = lexemei.next();
-            qDebug() << "newLexeme" << currentLexeme.languageid;
+            //qDebug() << "newLexeme" << currentLexeme.languageid;
             if(currentLexeme.id < 0)
                 currentLexeme.newid = m_database->newLexeme(currentLexeme.languageid);
             else

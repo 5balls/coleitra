@@ -266,7 +266,7 @@ background: Rectangle {
 background: Rectangle {
     border.color: "black"
     border.width: 1
-    color: pressed? "#99FF99" : "#DDFFDD"
+    color: enabled? (pressed? "#99FF99" : "#DDFFDD") : "#DDDDDD"
     radius: 4
     implicitHeight: 40
 }

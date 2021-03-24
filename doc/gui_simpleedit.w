@@ -34,11 +34,14 @@ Column {
     width: parent.width
     property var language: 1
     property var translationid: 0
+    property var inputField: inputfield
+    property var searchResult: searchresult
     ColeitraGridLabel {
 	text: Database.languagenamefromid(language)
 	width: parent.width
     }
     ColeitraGridTextInput {
+        id: inputfield
 	width: parent.width
         property var oldtext: ""
 	onEditingFinished: function(){
@@ -60,6 +63,7 @@ Column {
             function onAddLexemeHeuristicallyResult(caller, result){
                 if(caller != simpleeditinput) return;
                 searchresult.text = result;
+                simpleeditinput.parent.readytosave = Edit.isReadyToSave();
             }
         }
     }
@@ -85,13 +89,17 @@ ColeitraPage {
     ScrollView {
         anchors.fill: parent
         Column {
+            id: inputFields
             width: parent.width
             property var translation_id: Edit.translationId
+            property var readytosave: false
             ColeitraWidgetSimpleEditInput {
+                id: inputLearningLanguage
                 language: Settings.learninglanguage
                 translationid: parent.translation_id
             }
             ColeitraWidgetSimpleEditInput {
+                id: inputNativeLanguage
                 language: Settings.nativelanguage
                 translationid: parent.translation_id
             }
@@ -107,17 +115,26 @@ ColeitraPage {
                 height: 80
                 onClicked: {
                     Edit.resetEverything();
+                    inputLearningLanguage.inputField.text = "";
+                    inputLearningLanguage.searchResult.text = "";
+                    inputNativeLanguage.inputField.text = "";
+                    inputNativeLanguage.searchResult.text = "";
+                    inputFields.readytosave = false;
                 }
             }
             ColeitraGridGreenButton {
                 text: "Save"
                 width: parent.width / 2
                 height: 80
+                enabled: inputFields.readytosave
                 onClicked: {
-                    Edit.debugStatusCuedLexemes();
                     Edit.saveToDatabase();
                     Edit.resetEverything();
-                    Edit.debugStatusCuedLexemes();
+                    inputLearningLanguage.inputField.text = "";
+                    inputLearningLanguage.searchResult.text = "";
+                    inputNativeLanguage.inputField.text = "";
+                    inputNativeLanguage.searchResult.text = "";
+                    inputFields.readytosave = false;
                 }
             }
         }
