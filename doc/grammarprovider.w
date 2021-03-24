@@ -670,7 +670,9 @@ private slots:
 signals:
     void processingStart(const QString& waitingstring);
     void processingStop(void);
+    void networkError(QObject* caller, bool silent);
     void grammarInfoAvailable(QObject* caller, int numberOfObjects, bool silent);
+    void grammarInfoNotAvailable(QObject* caller, bool silent);
     void formObtained(QObject* caller, QString form, QList<QList<QString> > grammarexpressions, bool silent);
     void compoundFormObtained(QObject* caller, QString form, bool silent);
     void sentenceAvailable(QObject* caller, int parts, bool silent);
@@ -855,7 +857,9 @@ void grammarprovider::getWiktionarySections(){
 #if QT_VERSION >= 0x051500
     m_tmp_error_connection = connect(reply, &QNetworkReply::errorOccurred, this,
                 [reply](QNetworkReply::NetworkError) {
+                m_busy = false;
                 emit processingStop();
+                emit networkError(m_caller, m_silent);
                 qDebug() << "Error " << reply->errorString(); 
             });
 #endif
@@ -869,38 +873,62 @@ void grammarprovider::getWiktionarySections(){
 @{
 void grammarprovider::getWiktionarySection(QNetworkReply* reply){
     //qDebug() << "getWiktionarySection enter";
+    QObject::disconnect(m_tmp_connection);
     static int retrycount = 0;
     if(!reply->isOpen()){
         retrycount++;
         if(retrycount < 3){
-            qDebug() << "Closed reply, retrying" << retrycount;
+            qDebug() << "Closed reply, error state " << reply->error() << ", retrying" << retrycount;
             getWiktionarySections();
+            return;
         }
         else{
-            qDebug() << "Tried 3 times, giving up...";
+            qDebug() << "Tried 3 times, giving up with error" << reply->error() << "...";
             retrycount = 0;
+            m_busy = false;
+            emit processingStop();
+            emit networkError(m_caller, m_silent);
+            return;
         }
-        return;
     }
     if(reply->error()!=QNetworkReply::NoError){
         retrycount++;
-        qDebug() << "Network error " << reply->error() << "retrying" << retrycount;
-        getWiktionarySections();
-        return;
+        if(retrycount < 3){
+            qDebug() << "Network error " << reply->error() << "retrying" << retrycount;
+            getWiktionarySections();
+            return;
+        }
+        else{
+            qDebug() << "Tried 3 times, giving up with network error" << reply->error() << "...";
+            retrycount = 0;
+            m_busy = false;
+            emit processingStop();
+            emit networkError(m_caller, m_silent);
+            return;
+        }
     }
     else{
         qDebug() << "No network error";
     }
-    QObject::disconnect(m_tmp_connection);
     QString s_reply;
     if(reply->isReadable()){
         s_reply = QString(reply->readAll());
     }
     else {
         retrycount++;
-        qDebug() << "Empty reply, retrying" << retrycount;
-        getWiktionarySections();
-        return;
+        if(retrycount < 3){
+            qDebug() << "Empty reply with error" << reply->error() << ", retrying" << retrycount;
+            getWiktionarySections();
+            return;
+        }
+        else{
+            qDebug() << "Tried 3 times, giving up with empty reply error" << reply->error() << "...";
+            retrycount = 0;
+            m_busy = false;
+            emit processingStop();
+            emit networkError(m_caller, m_silent);
+            return;
+        }
     }
     //qDebug() << s_reply;
     reply->deleteLater();
@@ -952,13 +980,18 @@ void grammarprovider::getWiktionarySection(QNetworkReply* reply){
         connect(reply, &QNetworkReply::errorOccurred, this,
                 [reply](QNetworkReply::NetworkError) {
                 emit processingStop();
+                emit networkError(m_caller, m_silent);
                 qDebug() << "Error " << reply->errorString(); 
             });
 #endif
 
     }
     else{
-        //qDebug() << "Could not find language section \"" + language + "\" for word \"" + m_word + "\"";
+        qDebug() << "Could not find language section \"" + language + "\" for word \"" + m_word + "\"";
+        m_busy = false;
+        emit processingStop();
+        emit grammarInfoNotAvailable(m_caller, m_silent);
+        return;
     }
     //qDebug() << "getWiktionarySection exit";
 }

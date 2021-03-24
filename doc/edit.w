@@ -110,7 +110,9 @@ private:
     QList<scheduled_add> m_scheduled_adds;
     bool m_add_busy;
     void addScheduledLexemeHeuristically(void);
+    void networkErrorFromGrammarProvider(QObject* caller, bool silent);
 private slots:
+    void grammarInfoNotAvailableFromGrammarProvider(QObject* caller, bool silent);
     void grammarInfoAvailableFromGrammarProvider(QObject* caller, int numberOfObjects, bool silent);
     void formObtainedFromGrammarProvider(QObject* caller, QString form, QList<QList<QString> > grammarexpressions, bool silent);
     void compoundFormObtainedFromGrammarProvider(QObject* caller, QString form, bool silent);
@@ -502,16 +504,36 @@ void edit::addLexemeHeuristically(QObject* caller, int languageid, QString lexem
         }
         else {
             connect(m_grammarprovider,&grammarprovider::grammarInfoAvailable,this,&edit::grammarInfoAvailableFromGrammarProvider);
+            connect(m_grammarprovider,&grammarprovider::grammarInfoNotAvailable,this,&edit::grammarInfoNotAvailableFromGrammarProvider);
+            connect(m_grammarprovider,&grammarprovider::networkError, this, &edit::networkErrorFromGrammarProvider);
             qDebug() << "Looking up" << lexeme;
             m_grammarprovider->getGrammarInfoForWord(m_caller, languageid, lexeme);
         }
     }
 }
 
+void edit::networkErrorFromGrammarProvider(QObject* caller, bool silent){
+    disconnect(m_grammarprovider,&grammarprovider::grammarInfoAvailable,this,&edit::grammarInfoAvailableFromGrammarProvider);
+    disconnect(m_grammarprovider,&grammarprovider::grammarInfoNotAvailable,this,&edit::grammarInfoNotAvailableFromGrammarProvider);
+    disconnect(m_grammarprovider,&grammarprovider::networkError, this, &edit::networkErrorFromGrammarProvider);
+    emit addLexemeHeuristicallyResult(m_caller, "<b>Warning:</b> Network error when trying to look up grammar information on en.wiktionary.org. Do we have internet access?");
+    m_add_busy = false;
+}
+
+void edit::grammarInfoNotAvailableFromGrammarProvider(QObject* caller, bool silent){
+    disconnect(m_grammarprovider,&grammarprovider::grammarInfoAvailable,this,&edit::grammarInfoAvailableFromGrammarProvider);
+    disconnect(m_grammarprovider,&grammarprovider::grammarInfoNotAvailable,this,&edit::grammarInfoNotAvailableFromGrammarProvider);
+    disconnect(m_grammarprovider,&grammarprovider::networkError, this, &edit::networkErrorFromGrammarProvider);
+    emit addLexemeHeuristicallyResult(m_caller, "<b>Warning:</b> Could not obtain grammar information for this word - could there be a spelling mistake or maybe the word is missing on en.wiktionary.org?");
+    m_add_busy = false;
+}
+
 void edit::grammarInfoAvailableFromGrammarProvider(QObject* caller, int numberOfObjects, bool silent){
     qDebug() << __FUNCTION__ << __LINE__ << "silent" << silent;
     this->disconnect();
     disconnect(m_grammarprovider,&grammarprovider::grammarInfoAvailable,this,&edit::grammarInfoAvailableFromGrammarProvider);
+    disconnect(m_grammarprovider,&grammarprovider::grammarInfoNotAvailable,this,&edit::grammarInfoNotAvailableFromGrammarProvider);
+    disconnect(m_grammarprovider,&grammarprovider::networkError, this, &edit::networkErrorFromGrammarProvider);
     disconnect(m_grammarprovider,&grammarprovider::formObtained,this,&edit::formObtainedFromGrammarProvider);
     disconnect(m_grammarprovider,&grammarprovider::compoundFormObtained,this,&edit::compoundFormObtainedFromGrammarProvider);
     disconnect(m_grammarprovider,&grammarprovider::sentenceAvailable,this,&edit::sentenceAvailableFromGrammarProvider);
