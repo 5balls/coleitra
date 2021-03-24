@@ -65,6 +65,7 @@ public:
     Q_INVOKABLE int newSentence(int lexeme_id, int grammarFormId);
     Q_INVOKABLE int newSentencePart(int sentenceid, int part, int capitalized, int form, int compoundform, int grammarform, int punctuationmark);
     Q_INVOKABLE QString prettyPrintGrammarForm(int grammarForm_id);
+    QString stringFromFormId(int form_id);
     Q_INVOKABLE QString prettyPrintForm(int form_id, QString form = "", int grammarformid = 0);
     Q_INVOKABLE int grammarFormFromFormId(int form_id);
     Q_INVOKABLE int lexemeFromFormId(int form_id);
@@ -769,6 +770,15 @@ QString database::prettyPrintGrammarForm(int grammarForm_id){
     return prettystring;
 }
 
+QString database::stringFromFormId(int form_id){
+    databasetable* formtable = getTableByName("form");
+    QSqlQuery result = formtable->select({"string"},{"id",form_id});
+    if(result.next()){
+        return result.value("string").toString();
+    }
+    return "";
+}
+
 QString database::prettyPrintForm(int form_id, QString form, int grammarformid){
     QString prettystring;
     if(form_id<1){
@@ -826,11 +836,23 @@ QList<int> database::searchForms(QString string, bool exact){
 }
 
 QString database::prettyPrintLexeme(int lexeme_id){
+    qDebug() << __FILE__ << __FUNCTION__ << __LINE__ << lexeme_id;
     QString prettystring;
     databasetable* formtable = getTableByName("form");
     QSqlQuery result = formtable->select({"string"},{"lexeme",lexeme_id});
     while(result.next()){
         prettystring += result.value("string").toString() + ", ";
+    }
+    databasetable* sentencetable = getTableByName("sentence");
+    databasetable* sentenceparttable = getTableByName("sentencepart");
+    QSqlQuery result2 = sentencetable->select({"id"},{"lexeme",lexeme_id});
+    while(result2.next()){
+        QSqlQuery result3 = sentenceparttable->select({"form"},{"sentence",result2.value("id").toInt()});
+        while(result3.next()){
+            prettystring += stringFromFormId(result3.value("form").toInt()) + " ";
+        }
+        prettystring.chop(1);
+        prettystring += ", ";
     }
     prettystring.chop(2);
     return prettystring;

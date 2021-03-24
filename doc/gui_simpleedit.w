@@ -116,8 +116,10 @@ ColeitraPage {
                 onClicked: {
                     Edit.resetEverything();
                     inputLearningLanguage.inputField.text = "";
+                    inputLearningLanguage.inputField.oldtext = "";
                     inputLearningLanguage.searchResult.text = "";
                     inputNativeLanguage.inputField.text = "";
+                    inputNativeLanguage.inputField.oldtext = "";
                     inputNativeLanguage.searchResult.text = "";
                     inputFields.readytosave = false;
                 }
@@ -131,8 +133,10 @@ ColeitraPage {
                     Edit.saveToDatabase();
                     Edit.resetEverything();
                     inputLearningLanguage.inputField.text = "";
+                    inputLearningLanguage.inputField.oldtext = "";
                     inputLearningLanguage.searchResult.text = "";
                     inputNativeLanguage.inputField.text = "";
+                    inputNativeLanguage.inputField.oldtext = "";
                     inputNativeLanguage.searchResult.text = "";
                     inputFields.readytosave = false;
                 }

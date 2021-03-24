@@ -127,6 +127,7 @@ public:
     Q_INVOKABLE int createGrammarFormId(int language, QList<QList<QString> > grammarexpressions);
     Q_INVOKABLE void addForm(int lexemeid, int formid, int grammarform, QString string, int languageid, int translationid=0);
     Q_INVOKABLE void addSentence(int lexemeid, int sentenceid, int grammarform, QList<QList<int> > parts, int languageid, int translationid=0);
+    Q_INVOKABLE QString lookupFormStringFromId(int formid);
     Q_INVOKABLE int lookupForm(int language, int lexemeid, QString string, QList<QList<QString> > grammarexpressions);
     Q_INVOKABLE int placeOfLexeme(int lexemeid);
     Q_INVOKABLE int lookupLexeme(int formid);
@@ -223,6 +224,26 @@ void edit::addSentence(int lexemeid, int sentenceid, int grammarform, QList<QLis
     //qDebug() << __FILE__ << __FUNCTION__ << __LINE__ << lexemeid << languageid << translationid;
     lexeme& currentLexeme = getCreateLexeme(lexemeid, languageid, translationid);
     currentLexeme.sentences.push_back(newSentence);
+}
+
+QString edit::lookupFormStringFromId(int formid){
+    // First search the cued forms:
+    QList<lexeme>* lexemes;
+    for(int i=0; i<2; i++){
+        switch(i){
+            case 0:
+                lexemes = &m_lexemes;
+                break;
+            case 1:
+                lexemes = &(m_current_translation->lexemes);
+                break;
+        }
+        foreach(const lexeme& m_lexeme, *lexemes)
+            foreach(const form& m_form, m_lexeme.forms)
+                if(m_form.id == formid)
+                    return m_form.string;
+    }
+    return m_database->stringFromFormId(formid);
 }
 
 int edit::lookupForm(int language, int lexemeid, QString string, QList<QList<QString> > grammarexpressions){
@@ -332,6 +353,21 @@ QString edit::prettyPrintLexeme(int lexeme_id){
                 if(lexeme_id == m_lexeme.id){
                     foreach(const form& m_form, m_lexeme.forms)
                         pretty_string += m_form.string + ", ";
+                    foreach(const sentence& m_sentence, m_lexeme.sentences){
+                        foreach(const sentencepart& m_sentencepart, m_sentence.parts){
+                            switch(m_sentencepart.type){
+                                case FORM:
+                                    pretty_string += lookupFormStringFromId(m_sentencepart.id) + " ";
+                                    break;
+                                default:
+                                    qDebug() << __FILE__ << __FUNCTION__ << __LINE__ << "Not implemented!";
+                                    break;
+                            }
+
+                        }
+                        pretty_string.chop(1);
+                        pretty_string += ", ";
+                    }
                     pretty_string.chop(2);
                     return pretty_string;
                 }
@@ -525,15 +561,12 @@ void edit::debugStatusCuedLexemes(){
 
 void edit::moveLexemeOutOfTranslation(int language, QString text){
     //qDebug() << __FILE__ << __FUNCTION__ << __LINE__ << language << text;
-    debugStatusCuedLexemes();
     int form_id = lookupForm(language, 0, text, {});
     if(form_id == 0){
-        debugStatusCuedLexemes();
         return;
     }
     int lexeme_id = lookupLexeme(form_id);
     if(lexeme_id == 0){
-        debugStatusCuedLexemes();
         return;
     }
     QList<lexeme>* lexemes = &(m_current_translation->lexemes);
@@ -543,12 +576,10 @@ void edit::moveLexemeOutOfTranslation(int language, QString text){
             lexeme found_lexeme = m_lexeme;
             m_current_translation->lexemes.removeAt(i);
             m_lexemes.append(found_lexeme);
-            debugStatusCuedLexemes();
             return;
         }
         i++;
     }
-    debugStatusCuedLexemes();
 }
 
 void edit::addLexemeHeuristically(QObject* caller, int languageid, QString lexemestring, int translationid){
@@ -618,7 +649,6 @@ void edit::addLexemeHeuristically(QObject* caller, int languageid, QString lexem
                     break;
             }
             emit addLexemeHeuristicallyResult(m_caller, prettyPrintLexeme(lexeme_id));
-            debugStatusCuedLexemes();
             m_add_busy = false;
             addScheduledLexemeHeuristically();
         }
@@ -775,7 +805,6 @@ void edit::grammarInfoCompleteFromGrammarProvider(QObject* caller, bool silent){
     if(!silent){
         m_current_pretty_lexeme.chop(2);
         emit addLexemeHeuristicallyResult(m_caller, m_current_pretty_lexeme);
-        debugStatusCuedLexemes();
         m_current_pretty_lexeme.clear();
     }
     else {
@@ -883,10 +912,7 @@ void edit::saveToDatabase(void){
                     }
                     //qDebug() << "saveSentencePart" << currentSentence.newid << spart << currentSentencePart.capitalized << formid << compoundformid << grammarformid << punctuationmarkid;
                     //qDebug() << "newSentencePart" << currentSentence.newid << spart << currentSentencePart.capitalized << formid << compoundformid << grammarformid << punctuationmarkid;
-                    if(currentSentencePart.id < 0)
-                        currentSentencePart.newid = m_database->newSentencePart(currentSentence.newid, spart, currentSentencePart.capitalized, formid, compoundformid, grammarformid, punctuationmarkid); 
-                    else
-                        currentSentencePart.newid = currentSentencePart.id;
+                    currentSentencePart.newid = m_database->newSentencePart(currentSentence.newid, spart, currentSentencePart.capitalized, formid, compoundformid, grammarformid, punctuationmarkid); 
                     spart++;
                 }
             }
