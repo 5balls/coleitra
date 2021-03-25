@@ -104,8 +104,9 @@ Drawer {
 
     Column {
         anchors.fill: parent
-        @<Side menu screen option @'Edit@' defined in @'edit.qml@' @>
-        @<Side menu screen option @'Simple edit@' defined in @'simpleedit.qml@' @>
+        @<Side menu screen option @'Simple enter@' defined in @'simpleedit.qml@' @>
+        @<Side menu screen option @'Expert enter@' defined in @'edit.qml@' @>
+        @<Side menu screen option @'Database edit@' defined in @'databaseedit.qml@' @>
         @<Side menu screen option @'Settings@' defined in @'settings.qml@' @>
         @<Side menu screen option @'About@' defined in @'about.qml@' @>
         ItemDelegate {

@@ -43,6 +43,8 @@
 
 @i edit.w
 
+@i databaseedit.w
+
 @i grammarprovider.w
 
 @i gui.w

@@ -26,6 +26,8 @@
 
 @i gui_simpleedit.w
 
+@i gui_databaseedit.w
+
 @i gui_about.w
 
 @i gui_settings.w

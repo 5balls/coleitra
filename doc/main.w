@@ -60,7 +60,7 @@
 #include "edit.h"
 #include "train.h"
 #include "grammarprovider.h"
-
+#include "databaseedit.h"
 
 #ifdef Q_OS_ANDROID
 #include <android/log.h>
@@ -121,11 +121,12 @@ int main(int argc, char *argv[])
     @<Register singleton @'Database@' class @'database@' version @'1@' @'0@' @>
     @<Register singleton @'Edit@' class @'edit@' version @'1@' @'0@' @>
     @<Register singleton @'GrammarProvider@' class @'grammarprovider@' version @'1@' @'0@' @>
+    @<Register singleton @'DatabaseEdit@' class @'databaseedit@' version @'1@' @'0@' @>
 
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QCoreApplication::setApplicationName("coleitra");
     QCoreApplication::setOrganizationName("coleitra");
-    QCoreApplication::setOrganizationDomain("https://icoleitra.org");
+    QCoreApplication::setOrganizationDomain("https://coleitra.org");
     //qputenv("QT_ANDROID_VOLUME_KEYS", "1");
 
     QApplication app(argc, argv);

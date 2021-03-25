@@ -54,6 +54,12 @@ Here are the files described, which are needed for compiling code for the Qt fra
         <file>ColeitraWidgetEditPartStack.qml</file>
         <file>ColeitraWidgetEditIdRadioButton.qml</file>
         <file>ColeitraWidgetSimpleEditInput.qml</file>
+        <file>ColeitraWidgetDatabaseFormEdit.qml</file>
+        <file>ColeitraWidgetDatabaseLexemeEdit.qml</file>
+        <file>ColeitraWidgetDatabaseTranslationEdit.qml</file>
+        <file>ColeitraWidgetDatabaseSentenceEdit.qml</file>
+        <file>ColeitraWidgetSearchPopupForm.qml</file>
+        <file>ColeitraWidgetSearchPopupLexeme.qml</file>
         <file>main.qml</file>
         <file>settings.svg</file>
         <file>settings_pressed.svg</file>
@@ -70,6 +76,7 @@ Here are the files described, which are needed for compiling code for the Qt fra
         <file>train.qml</file>
         <file>edit.qml</file>
         <file>simpleedit.qml</file>
+        <file>databaseedit.qml</file>
         <file>settings.qml</file>
     </qresource>
 </RCC>

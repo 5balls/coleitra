@@ -104,14 +104,19 @@ Popup {
         ButtonGroup {
             buttons: idList.children
         }
-        ColeitraWidgetEditPartList {
-            property int selectedIdFromIdList: 0
-            id: idList
-            startWithOneElement: false
-            partType: "ColeitraWidgetEditIdRadioButton"
+        ScrollView {
+            height: idList.children.length<=3? 40*idList.children.length : 140
             width: parent.width
-            onSelectedIdFromIdListChanged: function(){
-                selectedId.value = selectedIdFromIdList;
+            clip: true
+            ColeitraWidgetEditPartList {
+                property int selectedIdFromIdList: 0
+                id: idList
+                startWithOneElement: false
+                partType: "ColeitraWidgetEditIdRadioButton"
+                width: parent.width
+                onSelectedIdFromIdListChanged: function(){
+                    selectedId.value = selectedIdFromIdList;
+                }
             }
         }
         SpinBox {
@@ -1152,11 +1157,11 @@ ColeitraPage {
                                 loops: Animation.Infinite
                                 PropertyAnimation {
                                     duration: 1000
-                                    to: parent.x + parent.width - parent.width / 3.0
+                                    to: parent? parent.x + parent.width - parent.width / 3.0 : 0
                                 }
                                 PropertyAnimation {
                                     duration: 1000
-                                    to: parent.x
+                                    to: parent? parent.x : 0
                                 }
                             }
                         }

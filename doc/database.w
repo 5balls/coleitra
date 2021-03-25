@@ -65,7 +65,7 @@ public:
     Q_INVOKABLE int newSentence(int lexeme_id, int grammarFormId);
     Q_INVOKABLE int newSentencePart(int sentenceid, int part, int capitalized, int form, int compoundform, int grammarform, int punctuationmark);
     Q_INVOKABLE QString prettyPrintGrammarForm(int grammarForm_id);
-    QString stringFromFormId(int form_id);
+    Q_INVOKABLE QString stringFromFormId(int form_id);
     Q_INVOKABLE QString prettyPrintForm(int form_id, QString form = "", int grammarformid = 0);
     Q_INVOKABLE int grammarFormFromFormId(int form_id);
     Q_INVOKABLE int lexemeFromFormId(int form_id);

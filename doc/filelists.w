@@ -26,7 +26,8 @@ databasefield.h
 main.h
 train.h
 edit.h
-grammarprovider.h @}
+grammarprovider.h
+databaseedit.h @}
 
 \subsection{C++ files}
 @d C++ files
@@ -39,6 +40,7 @@ databasefield.cpp
 train.cpp
 edit.cpp
 grammarprovider.cpp 
+databaseedit.cpp
 levmar-2.6/lm.c
 levmar-2.6/Axb.c
 levmar-2.6/misc.c
