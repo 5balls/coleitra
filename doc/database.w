@@ -836,7 +836,7 @@ QList<int> database::searchForms(QString string, bool exact){
 }
 
 QString database::prettyPrintLexeme(int lexeme_id){
-    qDebug() << __FILE__ << __FUNCTION__ << __LINE__ << lexeme_id;
+    //qDebug() << __FILE__ << __FUNCTION__ << __LINE__ << lexeme_id;
     QString prettystring;
     databasetable* formtable = getTableByName("form");
     QSqlQuery result = formtable->select({"string"},{"lexeme",lexeme_id});

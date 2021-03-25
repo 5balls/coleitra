@@ -29,43 +29,51 @@ import QtQuick 2.14
 import DatabaseLib 1.0
 import EditLib 1.0
 
-Column {
-    id: simpleeditinput
-    width: parent.width
+FocusScope {
+    x: simpleeditinput.x
+    y: simpleeditinput.y
+    height: simpleeditinput.height
+    width: simpleeditinput.width
     property var language: 1
     property var translationid: 0
     property var inputField: inputfield
     property var searchResult: searchresult
-    ColeitraGridLabel {
-	text: Database.languagenamefromid(language)
-	width: parent.width
-    }
-    ColeitraGridTextInput {
-        id: inputfield
-	width: parent.width
-        property var oldtext: ""
-	onEditingFinished: function(){
-            if(!(text === oldtext)){
-                if(!(oldtext === "")){
-                    Edit.moveLexemeOutOfTranslation(language, oldtext);
+    Column {
+        id: simpleeditinput
+        width: parent.parent.width
+        ColeitraGridLabel {
+            text: Database.languagenamefromid(language)
+            width: parent.width
+        }
+        ColeitraGridTextInput {
+            focus: true
+            id: inputfield
+            width: parent.width
+            property var oldtext: ""
+            onEditingFinished: function(){
+                if(!(text === oldtext)){
+                    if(!(oldtext === "")){
+                        Edit.moveLexemeOutOfTranslation(language, oldtext);
+                    }
+                    Edit.addLexemeHeuristically(simpleeditinput,language, text, translationid);
                 }
-                Edit.addLexemeHeuristically(simpleeditinput,language, text, translationid);
-            }
-            oldtext = text;
-	}
-    }
-    ColeitraGridLabel {
-	id: searchresult
-	text: ""
-	width: parent.width
-        Connections {
-            target: Edit
-            function onAddLexemeHeuristicallyResult(caller, result){
-                if(caller != simpleeditinput) return;
-                searchresult.text = result;
-                simpleeditinput.parent.readytosave = Edit.isReadyToSave();
+                oldtext = text;
             }
         }
+        ColeitraGridLabel {
+            id: searchresult
+            text: ""
+            width: parent.width
+            Connections {
+                target: Edit
+                function onAddLexemeHeuristicallyResult(caller, result){
+                    if(caller != simpleeditinput) return;
+                    searchresult.text = result;
+                    simpleeditinput.parent.parent.readytosave = Edit.isReadyToSave();
+                }
+            }
+        }
+
     }
 }
 
@@ -86,8 +94,10 @@ import GrammarProviderLib 1.0
 
 ColeitraPage {
     title: "Simple translation edit"
+    focus: true
     ScrollView {
         anchors.fill: parent
+        focus: true
         Column {
             id: inputFields
             width: parent.width
@@ -95,56 +105,79 @@ ColeitraPage {
             property var readytosave: false
             ColeitraWidgetSimpleEditInput {
                 id: inputLearningLanguage
+                KeyNavigation.tab: inputNativeLanguage
+                focus: true
                 language: Settings.learninglanguage
                 translationid: parent.translation_id
             }
             ColeitraWidgetSimpleEditInput {
                 id: inputNativeLanguage
+                KeyNavigation.tab: saveButton
+                focus: false
                 language: Settings.nativelanguage
                 translationid: parent.translation_id
             }
         }
     }
-    footer: Column {
-       width: parent.width
-        Row {
+    footer: FocusScope {
+        x: footercolumn.x
+        y: footercolumn.y
+        height: footercolumn.height
+        width: parent.width
+        Column {
+            id: footercolumn
             width: parent.width
-            ColeitraGridRedButton {
-                text: "Reset"
-                width: parent.width / 2
-                height: 80
-                onClicked: {
-                    Edit.resetEverything();
-                    inputLearningLanguage.inputField.text = "";
-                    inputLearningLanguage.inputField.oldtext = "";
-                    inputLearningLanguage.searchResult.text = "";
-                    inputNativeLanguage.inputField.text = "";
-                    inputNativeLanguage.inputField.oldtext = "";
-                    inputNativeLanguage.searchResult.text = "";
-                    inputFields.readytosave = false;
+            Row {
+                width: parent.width
+                ColeitraGridRedButton {
+                    id: resetButton
+                    text: "Reset"
+                    width: parent.width / 2
+                    height: 80
+                    onClicked: {
+                        inputFields.readytosave = false;
+                        Edit.resetEverything();
+                        inputLearningLanguage.inputField.text = "";
+                        inputLearningLanguage.inputField.oldtext = "";
+                        inputLearningLanguage.searchResult.text = "";
+                        inputNativeLanguage.inputField.text = "";
+                        inputNativeLanguage.inputField.oldtext = "";
+                        inputNativeLanguage.searchResult.text = "";
+                    }
+                }
+                ColeitraGridGreenButton {
+                    id: saveButton
+                    KeyNavigation.tab: inputLearningLanguage
+                    text: "Save"
+                    width: parent.width / 2
+                    height: 80
+                    enabled: inputFields.readytosave
+                    Keys.onReturnPressed: save()
+                    Keys.onEnterPressed: save()
+                    onClicked: save()
+                    function save(){
+                        inputFields.readytosave = false;
+                        Edit.saveToDatabase();
+                        Edit.resetEverything();
+                        inputLearningLanguage.inputField.text = "";
+                        inputLearningLanguage.inputField.oldtext = "";
+                        inputLearningLanguage.searchResult.text = "";
+                        inputNativeLanguage.inputField.text = "";
+                        inputNativeLanguage.inputField.oldtext = "";
+                        inputNativeLanguage.searchResult.text = "";
+                        inputLearningLanguage.forceActiveFocus();
+                    }
+                    onEnabledChanged: {
+                        if(enabled) {
+                            forceActiveFocus();
+                        }
+                    }
                 }
             }
-            ColeitraGridGreenButton {
-                text: "Save"
-                width: parent.width / 2
-                height: 80
-                enabled: inputFields.readytosave
-                onClicked: {
-                    Edit.saveToDatabase();
-                    Edit.resetEverything();
-                    inputLearningLanguage.inputField.text = "";
-                    inputLearningLanguage.inputField.oldtext = "";
-                    inputLearningLanguage.searchResult.text = "";
-                    inputNativeLanguage.inputField.text = "";
-                    inputNativeLanguage.inputField.oldtext = "";
-                    inputNativeLanguage.searchResult.text = "";
-                    inputFields.readytosave = false;
-                }
+            Item {
+                height: 20
+                width: parent.width
             }
-        }
-        Item {
-            height: 20
-            width: parent.width
         }
     }
 }
