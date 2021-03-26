@@ -204,20 +204,24 @@ import SettingsLib 1.0
 
 Column {
     width: parent? parent.width : 100
-    /*ColeitraGridComboBox {
-        model: moveNativeAndTrainingLanguageToTop(Database.languagenames());
-        id: editAreaSelection
-        width: parent.width / 2
-        function moveNativeAndTrainingLanguageToTop(languagelist) {
-            var nativelanguage = Database.languagenamefromid(Settings.nativelanguage);
-            languagelist.splice(languagelist.indexOf(nativelanguage),1);
-            languagelist.unshift(nativelanguage);
-            var learninglanguage = Database.languagenamefromid(Settings.learninglanguage);
-            languagelist.splice(languagelist.indexOf(learninglanguage),1);
-            languagelist.unshift(learninglanguage);
-            return languagelist;
-        }
-    }*/
+    property var saveFunction: function () {
+        var newlexeme = -1;
+        var newgrammarform = -1;
+        var newstring = "";
+        if(lexemeId.value != Database.lexemeFromFormId(formId.value)) 
+            newlexeme = lexemeId.value;
+        if(grammarId.value != Database.grammarFormFromFormId(formId.value))
+            newgrammarform = grammarId.value;
+        if(stringValue.text != Database.stringFromFormId(formId.value))
+            newstring = stringValue.text;
+        var retval = Database.updateForm(formId.value, newlexeme, newgrammarform, newstring);
+    }
+    property var setId: function(id){
+        formId.value = id;
+    }
+    property var getId: function(){
+        return formId.value;
+    }
     Row {
         width: parent.width
         ColeitraGridLabel {
@@ -468,7 +472,10 @@ ColeitraPage {
                     height: 80
                     onClicked: save()
                     function save(){
-                        
+                        editarea.currentItem.saveFunction();
+                        var id = editarea.currentItem.getId();
+                        editAreaSelection.resetEditArea();
+                        editarea.currentItem.setId(id);
                     }
                 }
             }

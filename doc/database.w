@@ -70,6 +70,7 @@ public:
     Q_INVOKABLE int grammarFormFromFormId(int form_id);
     Q_INVOKABLE int lexemeFromFormId(int form_id);
     Q_INVOKABLE int languageIdFromLexemeId(int lexeme_id);
+    Q_INVOKABLE int updateForm(int formid, int newlexeme, int newgrammarform, QString newstring);
     Q_INVOKABLE QList<int> searchForms(QString string, bool exact=false);
     Q_INVOKABLE QString prettyPrintLexeme(int lexeme_id);
     Q_INVOKABLE QList<int> searchLexemes(QString string, bool exact=false);
@@ -822,6 +823,17 @@ int database::languageIdFromLexemeId(int lexeme_id){
         return 0;
 }
 
+int database::updateForm(int formid, int newlexeme, int newgrammarform, QString newstring){
+    databasetable* formtable = getTableByName("form");
+    QMap<QString, QVariant> fields;
+    if(newlexeme >= 0) fields["lexeme"] = newlexeme;
+    if(newgrammarform >= 0) fields["grammarform"] = newgrammarform;
+    if(!newstring.isEmpty()) fields["string"] = newstring;
+    if(fields.size()>0)
+        return formtable->updateRecord({"id",formid},fields);
+    else
+        return 0;
+}
 
 QList<int> database::searchForms(QString string, bool exact){
     databasetable* formtable = getTableByName("form");
@@ -1242,6 +1254,10 @@ int databasetable::updateRecord(const QPair<QString, QVariant>& id, const QMap<Q
         QSqlError error = sqlQuery.lastError();
         qDebug() << error.databaseText();
         qDebug() << error.driverText();
+        qDebug() << "Query was generated from string" << sqlString;
+        foreach(accepted_field, accepted_fields){
+            qDebug() << "Binding" << accepted_field.first << accepted_field.second;
+        }
         throw sql_error::update_record;
     }
     return id.second.toInt();
@@ -1326,7 +1342,6 @@ QSqlQuery databasetable::select(const QList<QString>& selection, const QList< QP
         throw sql_error::select;
     }
     return sqlQuery;
-
 }
 
 @}
