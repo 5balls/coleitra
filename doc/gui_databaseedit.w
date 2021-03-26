@@ -19,6 +19,115 @@
 This window allows the changing and deleting of single database items.
 
 \subsection{Implementation}
+
+@o ../src/ColeitraWidgetSearchPopupGrammar.qml
+@{
+import QtQuick 2.14
+import QtQuick.Controls 2.14
+import DatabaseLib 1.0
+import SettingsLib 1.0
+
+Popup {
+    property string popupSearchString: "Search grammarforms:"
+    property int selectedId: selectedId.value
+    property var okFunction: function() {};
+    property var searchFunction: function() {
+        var numberOfGrammarExpressions = grammarExpressions.children.length;
+        var grammarexpressions = [];
+        for(var i=0; i<numberOfGrammarExpressions-1; i++){
+            var key = grammarExpressions.children[i].gklabel.text;
+            var value = grammarExpressions.children[i].gvlabel.text;
+            grammarexpressions.push([key,value]);
+        }
+        var grammarIds = Database.searchGrammarFormsFromStrings(Database.idfromlanguagename(languageSelection.currentText), grammarexpressions);
+        for(var i = popupIdList.children.length; i > 0; i--) {
+            popupIdList.children[i-1].destroy()
+        }
+        var numberOfDestroyedChildren = popupIdList.children.length;
+        for(var grammarId of grammarIds){
+            popupIdList.addPart();
+            popupIdList.lastCreatedObject.text = Database.prettyPrintGrammarForm(grammarId);
+            popupIdList.lastCreatedObject.value = grammarId;
+        }
+        if(popupIdList.children.length > numberOfDestroyedChildren){
+            popupIdList.children[numberOfDestroyedChildren].checked = true;
+        }
+        else {
+            console.log("No children in popupIdList!");
+        }
+    }
+
+    property var popupIdList: idList
+    Column {
+        width: parent.width
+        ColeitraGridLabel {
+            text: popupSearchString
+        }
+        ColeitraGridComboBox {
+            model: moveNativeAndTrainingLanguageToTop(Database.languagenames());
+            id: languageSelection
+            width: parent.width
+            function moveNativeAndTrainingLanguageToTop(languagelist) {
+                var nativelanguage = Database.languagenamefromid(Settings.nativelanguage);
+                languagelist.splice(languagelist.indexOf(nativelanguage),1);
+                languagelist.unshift(nativelanguage);
+                var learninglanguage = Database.languagenamefromid(Settings.learninglanguage);
+                languagelist.splice(languagelist.indexOf(learninglanguage),1);
+                languagelist.unshift(learninglanguage);
+                return languagelist;
+            }
+        }
+        ColeitraWidgetEditGrammarFormComponentList {
+            width: parent.width
+            id: grammarExpressions
+        }
+        ButtonGroup {
+            buttons: idList.children
+        }
+        ScrollView {
+            height: idList.children.length<=3? 40*idList.children.length : 140
+            width: parent.width
+            clip: true
+            ColeitraWidgetEditPartList {
+                property int selectedIdFromIdList: 0
+                id: idList
+                startWithOneElement: false
+                partType: "ColeitraWidgetEditIdRadioButton"
+                width: parent.width
+                onSelectedIdFromIdListChanged: function(){
+                    selectedId.value = selectedIdFromIdList;
+                }
+            }
+        }
+        SpinBox {
+            id: selectedId
+            width: parent.width
+            editable: true
+            from: -9999
+            to: 9999
+        }
+        Row {
+            ColeitraGridButton {
+                id: searchButton
+                text: "Search"
+                onClicked: searchFunction()
+            }
+            Rectangle {
+                height: 1
+                width: parent.parent.width - searchButton.width - okButton.width
+            }
+            ColeitraGridButton {
+                id: okButton
+                text: "Ok"
+                onClicked: okFunction()
+            }
+        }
+    }
+    @<Background grey rounded control@>
+}
+@}
+
+
 @O ../src/ColeitraWidgetSearchPopupLexeme.qml
 @{
 import DatabaseLib 1.0
@@ -218,7 +327,15 @@ Column {
             ColeitraGridButton {
                 id: grammarSearch
                 text: "Search"
-                onClicked: searchPopup.open();
+                onClicked: grammarPopup.open();
+            }
+            ColeitraWidgetSearchPopupGrammar {
+                id: grammarPopup
+                width: parent.width
+                okFunction: function() {
+                    grammarId.value = grammarPopup.selectedId;
+                    grammarPopup.close();
+                }
             }
         }
     }

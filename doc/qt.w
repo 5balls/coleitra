@@ -60,6 +60,7 @@ Here are the files described, which are needed for compiling code for the Qt fra
         <file>ColeitraWidgetDatabaseSentenceEdit.qml</file>
         <file>ColeitraWidgetSearchPopupForm.qml</file>
         <file>ColeitraWidgetSearchPopupLexeme.qml</file>
+        <file>ColeitraWidgetSearchPopupGrammar.qml</file>
         <file>main.qml</file>
         <file>settings.svg</file>
         <file>settings_pressed.svg</file>

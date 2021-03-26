@@ -74,6 +74,7 @@ public:
     Q_INVOKABLE QString prettyPrintLexeme(int lexeme_id);
     Q_INVOKABLE QList<int> searchLexemes(QString string, bool exact=false);
     Q_INVOKABLE int grammarFormIdFromStrings(int language_id, QList<QList<QString> > grammarform);
+    Q_INVOKABLE QList<int> searchGrammarFormsFromStrings(int language_id, QList<QList<QString> > grammarform);
 private:
     QSqlDatabase vocableDatabase;
     QList < databasetable* > tables;
@@ -858,6 +859,7 @@ QString database::prettyPrintLexeme(int lexeme_id){
     return prettystring;
 }
 
+
 QList<int> database::searchLexemes(QString string, bool exact){
     QList<int> lexeme_ids;
     QList<int> form_ids = searchForms(string,exact);
@@ -926,6 +928,50 @@ int database::grammarFormIdFromStrings(int language_id, QList<QList<QString> > g
         }
     }
     return grammarform_id;
+}
+
+QList<int> database::searchGrammarFormsFromStrings(int language_id, QList<QList<QString> > grammarform){
+    QList<int> grammarform_candidates;
+    databasetable* grammarexpressiontable = getTableByName("grammarexpression");
+    databasetable* grammarkeytable = getTableByName("grammarkey");
+    databasetable* grammarformcomponenttable = getTableByName("grammarformcomponent");
+    databasetable* grammarformtable = getTableByName("grammarform");
+    QList<int> i_grammarform;
+    // Get ids for grammar expressions:
+    QList<QString> grammarexpression;
+    foreach(grammarexpression, grammarform){
+        QSqlQuery result = grammarexpressiontable->select({"id","key"},
+                {"value",grammarexpression.last()});
+        while(result.next()){
+            QSqlQuery result2 = grammarkeytable->select({"id"},
+                    {{"id",result.value("key").toInt()},
+                    {"string",grammarexpression.first()}});
+            if(result2.next()){
+                i_grammarform.push_back(result.value("id").toInt());
+            }
+        }
+    }
+    // Check if grammarform exists already:
+    QSqlQuery result = grammarformcomponenttable->select({"id","grammarform"},{"grammarexpression",i_grammarform.first()});
+    int grammarform_id = 0;
+    while(result.next()){
+        bool grammarform_valid = true;
+        foreach(int grammarexpression, i_grammarform){
+            QSqlQuery result2 = grammarformcomponenttable->select({"id","grammarform"},
+                    {{"grammarform", result.value("grammarform").toInt()},
+                    {"grammarexpression",grammarexpression}});
+            if(!result2.next()) grammarform_valid = false;
+        }
+        if(grammarform_valid){
+            grammarform_id = result.value("grammarform").toInt();
+            // Check that this grammarform is for finnish:
+            QSqlQuery result2 = grammarformtable->select({"id"},{{"id",grammarform_id},{"language",language_id}});
+            if(result2.next())
+                grammarform_candidates.push_back(grammarform_id);
+            grammarform_id = 0;
+        }
+    }
+    return grammarform_candidates;
 }
  
 QString database::languagenamefromid(int id){
