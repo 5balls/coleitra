@@ -910,8 +910,17 @@ int database::grammarFormIdFromStrings(int language_id, QList<QList<QString> > g
             grammarform_id = result.value("grammarform").toInt();
             // Check that this grammarform is for finnish:
             QSqlQuery result2 = grammarformtable->select({"id"},{{"id",grammarform_id},{"language",language_id}});
-            if(result2.next())
-                break;
+            if(result2.next()){
+                /* Check, if the number of grammar expressions matches
+                   the number of grammar expressions passed to this
+                   function: */
+                QSqlQuery result3 = grammarformcomponenttable->select({"id","grammarform"},{"grammarform",result.value("grammarform").toInt()});
+                int queryresultsnumber = 0;
+                while(result3.next()) queryresultsnumber++;
+                if(queryresultsnumber == grammarform.size()){
+                    break;
+                }
+            }
             grammarform_id = 0;
         }
     }
