@@ -19,6 +19,96 @@
 This window allows the changing and deleting of single database items.
 
 \subsection{Implementation}
+@O ../src/ColeitraWidgetRoundedRectangle.qml
+@{
+import QtQuick 2.14
+
+Rectangle {
+    border.color: "black"
+    border.width: 1
+    color: "#FFFFFF"
+    radius: 4
+    implicitHeight: 40
+}
+@}
+
+@O ../src/ColeitraWidgetRoundedGreenRectangleButton.qml
+@{
+ColeitraWidgetRoundedRectangle {
+    color: enabled? (pressed? "#99FF99" : "#DDFFDD") : "#DDDDDD"
+}
+@}
+
+@O ../src/ColeitraWidgetRoundedRedRectangleButton.qml
+@{
+ColeitraWidgetRoundedRectangle {
+    color: enabled? (pressed? "#FF9999" : "#FFDDDD") : "#DDDDDD"
+}
+@}
+
+@O ../src/ColeitraWidgetRoundedYellowRectangleButton.qml
+@{
+ColeitraWidgetRoundedRectangle {
+    color: enabled? (pressed? "#FFFF99" : "#FFFFDD") : "#DDDDDD"
+}
+@}
+
+@O ../src/ColeitraWidgetRoundedBlueRectangleButton.qml
+@{
+ColeitraWidgetRoundedRectangle {
+    color: enabled? (pressed? "#99FFFF" : "#DDFFFF") : "#DDDDDD"
+}
+@}
+
+@O ../src/ColeitraWidgetRoundedGreenRectangle.qml
+@{
+ColeitraWidgetRoundedRectangle {
+    color: enabled? "#DDFFDD" : "#DDDDDD"
+}
+@}
+
+@O ../src/ColeitraWidgetRoundedRedRectangle.qml
+@{
+ColeitraWidgetRoundedRectangle {
+    color: enabled? "#FFDDDD" : "#DDDDDD"
+}
+@}
+
+@O ../src/ColeitraWidgetRoundedYellowRectangle.qml
+@{
+ColeitraWidgetRoundedRectangle {
+    color: enabled? "#FFFFDD" : "#DDDDDD"
+}
+@}
+
+@O ../src/ColeitraWidgetRoundedBlueRectangle.qml
+@{
+ColeitraWidgetRoundedRectangle {
+    color: enabled? "#DDFFFF" : "#DDDDDD"
+}
+@}
+
+
+@O ../src/ColeitraWidgetLanguageComboBox.qml
+@{
+import DatabaseLib 1.0
+import SettingsLib 1.0
+
+ColeitraGridComboBox {
+    model: moveNativeAndTrainingLanguageToTop(Database.languagenames());
+    id: languageSelection
+    width: parent? parent.width : 100
+    function moveNativeAndTrainingLanguageToTop(languagelist) {
+        var nativelanguage = Database.languagenamefromid(Settings.nativelanguage);
+        languagelist.splice(languagelist.indexOf(nativelanguage),1);
+        languagelist.unshift(nativelanguage);
+        var learninglanguage = Database.languagenamefromid(Settings.learninglanguage);
+        languagelist.splice(languagelist.indexOf(learninglanguage),1);
+        languagelist.unshift(learninglanguage);
+        return languagelist;
+    }
+}
+@}
 
 @o ../src/ColeitraWidgetSearchPopupGrammar.qml
 @{
@@ -63,19 +153,8 @@ Popup {
         ColeitraGridLabel {
             text: popupSearchString
         }
-        ColeitraGridComboBox {
-            model: moveNativeAndTrainingLanguageToTop(Database.languagenames());
+        ColeitraWidgetLanguageComboBox {
             id: languageSelection
-            width: parent.width
-            function moveNativeAndTrainingLanguageToTop(languagelist) {
-                var nativelanguage = Database.languagenamefromid(Settings.nativelanguage);
-                languagelist.splice(languagelist.indexOf(nativelanguage),1);
-                languagelist.unshift(nativelanguage);
-                var learninglanguage = Database.languagenamefromid(Settings.learninglanguage);
-                languagelist.splice(languagelist.indexOf(learninglanguage),1);
-                languagelist.unshift(learninglanguage);
-                return languagelist;
-            }
         }
         ColeitraWidgetEditGrammarFormComponentList {
             width: parent.width
@@ -251,9 +330,10 @@ Column {
     Rectangle {
         width: parent.width
         height: stringEdit.height
-        color: stringValue.text == Database.stringFromFormId(formId.value)? "#FFFFFF" : "#FFFFDD"
+        color: stringEdit.modifiedIndex? "#FFFFDD" : "#FFFFFF"
         Row {
             id: stringEdit
+            property bool modifiedIndex: stringValue.text != Database.stringFromFormId(formId.value)
             width: parent.width
             ColeitraGridLabel {
                 id: stringLabel
@@ -267,6 +347,9 @@ Column {
                 id: stringValue
                 width: parent.width - stringLabel.width - 10
                 text: Database.stringFromFormId(formId.value)
+                background: ColeitraWidgetRoundedRectangle { 
+                    color: stringEdit.modifiedIndex?  "#FFFFDD" : "#DDFFFF"
+                }
             }
         }
     }
@@ -343,23 +426,72 @@ Column {
             }
         }
     }
-
-    
-
 }
 @}
 
 @O ../src/ColeitraWidgetDatabaseLexemeEdit.qml
 @{
 import QtQuick 2.14
+import QtQuick.Controls 2.14
 import DatabaseLib 1.0
 import EditLib 1.0
 
-Row {
+Column {
     width: parent? parent.width : 100
-    ColeitraGridLabel {
+    property var saveFunction: function () {
+        var retval = Database.updateLexeme(lexemeId.value, languageId.value);
+    }
+    property var setId: function(id){
+        lexemeId.value = id;
+    }
+    property var getId: function(){
+        return lexemeId.value;
+    }
+    Row {
         width: parent.width
-        text: "Lexeme edit not implemented yet..."
+        ColeitraGridLabel {
+            id: prettyForm
+            text: Database.prettyPrintLexeme(lexemeId.value)
+            width: parent.width - lexemeId.width - lexemeSearch.width
+        }
+        SpinBox {
+            id: lexemeId
+            editable: true
+            from: -9999
+            to: 9999
+        }
+        ColeitraGridButton {
+            id: lexemeSearch
+            text: "Search"
+            onClicked: lexemePopup.open();
+        }
+        ColeitraWidgetSearchPopupLexeme {
+            id: lexemePopup
+            okFunction: function() {
+                lexemeId.value = lexemePopup.selectedId;
+                lexemePopup.close();
+            }
+        }
+    }
+    Row {
+        width: parent.width
+        ColeitraWidgetLanguageComboBox {
+            id: languageSelection
+            width: parent.width - languageId.width
+            currentIndex: find(Database.languagenamefromid(Database.languageIdFromLexemeId(lexemeId.value)))
+            property bool modifiedIndex: currentIndex != find(Database.languagenamefromid(Database.languageIdFromLexemeId(lexemeId.value)))
+            background: ColeitraWidgetRoundedRectangle { 
+                color: parent.modifiedIndex?  "#FFFFDD" : "#DDFFFF"
+            }
+        }
+        SpinBox {
+            id: languageId
+            value: Database.idfromlanguagename(languageSelection.currentText)
+            editable: false
+            enabled: false
+            from: -9999
+            to: 9999
+        }
     }
 }
 @}

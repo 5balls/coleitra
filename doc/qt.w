@@ -61,6 +61,16 @@ Here are the files described, which are needed for compiling code for the Qt fra
         <file>ColeitraWidgetSearchPopupForm.qml</file>
         <file>ColeitraWidgetSearchPopupLexeme.qml</file>
         <file>ColeitraWidgetSearchPopupGrammar.qml</file>
+        <file>ColeitraWidgetLanguageComboBox.qml</file>
+        <file>ColeitraWidgetRoundedRectangle.qml</file>
+        <file>ColeitraWidgetRoundedGreenRectangle.qml</file>
+        <file>ColeitraWidgetRoundedRedRectangle.qml</file>
+        <file>ColeitraWidgetRoundedYellowRectangle.qml</file>
+        <file>ColeitraWidgetRoundedBlueRectangle.qml</file>
+        <file>ColeitraWidgetRoundedGreenRectangleButton.qml</file>
+        <file>ColeitraWidgetRoundedRedRectangleButton.qml</file>
+        <file>ColeitraWidgetRoundedYellowRectangleButton.qml</file>
+        <file>ColeitraWidgetRoundedBlueRectangleButton.qml</file>
         <file>main.qml</file>
         <file>settings.svg</file>
         <file>settings_pressed.svg</file>

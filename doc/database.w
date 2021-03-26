@@ -71,6 +71,7 @@ public:
     Q_INVOKABLE int lexemeFromFormId(int form_id);
     Q_INVOKABLE int languageIdFromLexemeId(int lexeme_id);
     Q_INVOKABLE int updateForm(int formid, int newlexeme, int newgrammarform, QString newstring);
+    Q_INVOKABLE int updateLexeme(int lexemeid, int newlanguage);
     Q_INVOKABLE QList<int> searchForms(QString string, bool exact=false);
     Q_INVOKABLE QString prettyPrintLexeme(int lexeme_id);
     Q_INVOKABLE QList<int> searchLexemes(QString string, bool exact=false);
@@ -835,6 +836,11 @@ int database::updateForm(int formid, int newlexeme, int newgrammarform, QString 
         return 0;
 }
 
+int database::updateLexeme(int lexemeid, int newlanguage){
+    databasetable* lexemetable = getTableByName("lexeme");
+    return lexemetable->updateRecord({"id",lexemeid},{{"language",newlanguage}});
+}
+
 QList<int> database::searchForms(QString string, bool exact){
     databasetable* formtable = getTableByName("form");
     QList<int> form_ids;
@@ -996,6 +1002,7 @@ QList<int> database::searchGrammarFormsFromStrings(int language_id, QList<QList<
 }
  
 QString database::languagenamefromid(int id){
+    if(id==0) return "";
     databasetable* languagenametable = getTableByName("languagename");
     QList<QString> selection;
     selection.push_back("name");
@@ -1009,6 +1016,7 @@ QString database::languagenamefromid(int id){
 }
 
 int database::idfromlanguagename(QString languagename){
+    if(languagename.isEmpty()) return 0;
     databasetable* languagenametable = getTableByName("languagename");
     QList<QString> selection;
     selection.push_back("language");
