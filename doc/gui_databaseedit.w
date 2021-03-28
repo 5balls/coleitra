@@ -512,7 +512,6 @@ Row {
     SpinBox {
         id: lexemeId
         value: selectedId
-        editable: false
         from: -9999
         to: 9999
     }
@@ -526,11 +525,25 @@ Row {
 @O ../src/ColeitraWidgetDatabaseTranslationPartSentenceEdit.qml
 @{
 import QtQuick 2.14
+import QtQuick.Controls 2.14
+import DatabaseLib 1.0
 
 Row {
+    property var selectedId: 0
+    width: parent? parent.width : 100
     ColeitraGridLabel {
-        width: parent? parent.width : 100
-        text: "Translation part sentence not implemented yet..."
+        width: parent.width - sentenceId.width - sentenceSearch.width
+        text: "<b>Sentence:</b> " + Database.prettyPrintSentence(sentenceId.value)
+    }
+    SpinBox {
+        id: sentenceId
+        value: selectedId
+        from: -9999
+        to: 9999
+    }
+    ColeitraGridButton {
+        id: sentenceSearch
+        text: "Search"
     }
 
 }
@@ -539,19 +552,34 @@ Row {
 @O ../src/ColeitraWidgetDatabaseTranslationPartFormEdit.qml
 @{
 import QtQuick 2.14
+import QtQuick.Controls 2.14
+import DatabaseLib 1.0
 
 Row {
+    property var selectedId: 0
+    width: parent? parent.width : 100
     ColeitraGridLabel {
-        width: parent? parent.width : 100
-        text: "Translation part form not implemented yet..."
+        width: parent.width - formId.width - formSearch.width
+        text: "<b>Form:</b> " + Database.prettyPrintForm(formId.value)
     }
-
+    SpinBox {
+        id: formId
+        value: selectedId
+        from: -9999
+        to: 9999
+    }
+    ColeitraGridButton {
+        id: formSearch
+        text: "Search"
+    }
 }
 @}
 
 @O ../src/ColeitraWidgetDatabaseTranslationPartCompoundFormEdit.qml
 @{
 import QtQuick 2.14
+import QtQuick.Controls 2.14
+import DatabaseLib 1.0
 
 Row {
     ColeitraGridLabel {
@@ -565,13 +593,26 @@ Row {
 @O ../src/ColeitraWidgetDatabaseTranslationPartGrammarFormEdit.qml
 @{
 import QtQuick 2.14
+import QtQuick.Controls 2.14
+import DatabaseLib 1.0
 
 Row {
+    property var selectedId: 0
+    width: parent? parent.width : 100
     ColeitraGridLabel {
-        width: parent? parent.width : 100
-        text: "Translation part grammarform not implemented yet..."
+        width: parent.width - grammarId.width - grammarSearch.width
+        text: "<b>Grammar form:</b> " + Database.prettyPrintGrammarForm(grammarId.value)
     }
-
+    SpinBox {
+        id: grammarId
+        value: selectedId
+        from: -9999
+        to: 9999
+    }
+    ColeitraGridButton {
+        id: grammarSearch
+        text: "Search"
+    }
 }
 @}
 
@@ -592,7 +633,6 @@ Column {
         }
         SpinBox {
             id: translationId
-            editable: false
             from: -9999
             to: 9999
             onValueChanged: {

@@ -780,9 +780,8 @@ QString database::prettyPrintTranslation(int translation_id){
         int grammarform_id = result.value("grammarform").toInt();
         if(lexeme_id!=0)
             pretty_string += prettyPrintLexeme(lexeme_id) + "<br />";
-        // FIXME
         if(sentence_id!=0)
-            pretty_string += "Sentence pretty print not implemented yet... <br />";
+            pretty_string += prettyPrintSentence(sentence_id) + "<br />";
         if(form_id!=0)
             pretty_string += prettyPrintForm(form_id) + "<br />";
         if(compoundform_id!=0)
