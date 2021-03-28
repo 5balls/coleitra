@@ -57,6 +57,11 @@ Here are the files described, which are needed for compiling code for the Qt fra
         <file>ColeitraWidgetDatabaseFormEdit.qml</file>
         <file>ColeitraWidgetDatabaseLexemeEdit.qml</file>
         <file>ColeitraWidgetDatabaseTranslationEdit.qml</file>
+        <file>ColeitraWidgetDatabaseTranslationPartLexemeEdit.qml</file>
+        <file>ColeitraWidgetDatabaseTranslationPartSentenceEdit.qml</file>
+        <file>ColeitraWidgetDatabaseTranslationPartFormEdit.qml</file>
+        <file>ColeitraWidgetDatabaseTranslationPartCompoundFormEdit.qml</file>
+        <file>ColeitraWidgetDatabaseTranslationPartGrammarFormEdit.qml</file>
         <file>ColeitraWidgetDatabaseSentenceEdit.qml</file>
         <file>ColeitraWidgetSearchPopupForm.qml</file>
         <file>ColeitraWidgetSearchPopupLexeme.qml</file>

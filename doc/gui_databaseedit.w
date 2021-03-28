@@ -496,14 +496,143 @@ Column {
 }
 @}
 
+@O ../src/ColeitraWidgetDatabaseTranslationPartLexemeEdit.qml
+@{
+import QtQuick 2.14
+import QtQuick.Controls 2.14
+import DatabaseLib 1.0
+
+Row {
+    property var selectedId: 0
+    width: parent? parent.width : 100
+    ColeitraGridLabel {
+        width: parent.width - lexemeId.width - lexemeSearch.width 
+        text: "<b>Lexeme:</b> " + Database.prettyPrintLexeme(lexemeId.value)
+    }
+    SpinBox {
+        id: lexemeId
+        value: selectedId
+        editable: false
+        from: -9999
+        to: 9999
+    }
+    ColeitraGridButton {
+        id: lexemeSearch
+        text: "Search"
+    }
+}
+@}
+
+@O ../src/ColeitraWidgetDatabaseTranslationPartSentenceEdit.qml
+@{
+import QtQuick 2.14
+
+Row {
+    ColeitraGridLabel {
+        width: parent? parent.width : 100
+        text: "Translation part sentence not implemented yet..."
+    }
+
+}
+@}
+
+@O ../src/ColeitraWidgetDatabaseTranslationPartFormEdit.qml
+@{
+import QtQuick 2.14
+
+Row {
+    ColeitraGridLabel {
+        width: parent? parent.width : 100
+        text: "Translation part form not implemented yet..."
+    }
+
+}
+@}
+
+@O ../src/ColeitraWidgetDatabaseTranslationPartCompoundFormEdit.qml
+@{
+import QtQuick 2.14
+
+Row {
+    ColeitraGridLabel {
+        width: parent? parent.width : 100
+        text: "Translation part compoundform not implemented yet..."
+    }
+
+}
+@}
+
+@O ../src/ColeitraWidgetDatabaseTranslationPartGrammarFormEdit.qml
+@{
+import QtQuick 2.14
+
+Row {
+    ColeitraGridLabel {
+        width: parent? parent.width : 100
+        text: "Translation part grammarform not implemented yet..."
+    }
+
+}
+@}
+
 @O ../src/ColeitraWidgetDatabaseTranslationEdit.qml
 @{
 import QtQuick 2.14
+import QtQuick.Controls 2.14
 import DatabaseLib 1.0
 import EditLib 1.0
 
-Row {
+Column {
     width: parent? parent.width : 100
+    Row {
+        width: parent.width
+        ColeitraGridLabel {
+            width: parent.width - translationId.width - translationSearch.width
+            text: "<b>Translation</b>"//Database.prettyPrintTranslation(translationId.value)
+        }
+        SpinBox {
+            id: translationId
+            editable: false
+            from: -9999
+            to: 9999
+            onValueChanged: {
+                for(var i = lexemeList.children.length; i > 0; i--){
+                    lexemeList.children[i-1].destroy();
+                }
+                var lexemeIds = Database.translationLexemePartsFromTranslationId(value);
+                for(var lexemeId of lexemeIds){
+                    lexemeList.addPart();
+                    lexemeList.lastCreatedObject.selectedId = lexemeId;
+                }
+            }
+        }
+        ColeitraGridButton {
+            id: translationSearch
+            text: "Search"
+        }
+    }
+    ColeitraWidgetEditPartList {
+        id: lexemeList
+        partType: "ColeitraWidgetDatabaseTranslationPartLexemeEdit"
+        width: parent.width
+        startWithOneElement: false
+    }
+    ColeitraWidgetEditPartList {
+        partType: "ColeitraWidgetDatabaseTranslationPartSentenceEdit"
+        width: parent.width
+    }
+    ColeitraWidgetEditPartList {
+        partType: "ColeitraWidgetDatabaseTranslationPartFormEdit"
+        width: parent.width
+    }
+    ColeitraWidgetEditPartList {
+        partType: "ColeitraWidgetDatabaseTranslationPartCompoundFormEdit"
+        width: parent.width
+    }
+    ColeitraWidgetEditPartList {
+        partType: "ColeitraWidgetDatabaseTranslationPartGrammarFormEdit"
+        width: parent.width
+    }
     ColeitraGridLabel {
         width: parent.width
         text: "Translation edit not implemented yet..."

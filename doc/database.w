@@ -60,10 +60,12 @@ public:
     Q_INVOKABLE int alphabeticidfromlanguageid(int languageid);
     Q_INVOKABLE int newTranslation(void);
     Q_INVOKABLE int newTranslationPart(int translation, int lexeme, int sentence, int form, int compoundform, int grammarform);
+    Q_INVOKABLE QList<int> translationLexemePartsFromTranslationId(int translation);
     Q_INVOKABLE int newLexeme(int language_id);
     Q_INVOKABLE int newForm(int lexeme_id, int grammarFormId, QString string);
     Q_INVOKABLE int newSentence(int lexeme_id, int grammarFormId);
     Q_INVOKABLE int newSentencePart(int sentenceid, int part, int capitalized, int form, int compoundform, int grammarform, int punctuationmark);
+    Q_INVOKABLE QString prettyPrintTranslation(int translation_id);
     Q_INVOKABLE QString prettyPrintGrammarForm(int grammarForm_id);
     Q_INVOKABLE QString stringFromFormId(int form_id);
     Q_INVOKABLE QString prettyPrintForm(int form_id, QString form = "", int grammarformid = 0);
@@ -73,6 +75,7 @@ public:
     Q_INVOKABLE int updateForm(int formid, int newlexeme, int newgrammarform, QString newstring);
     Q_INVOKABLE int updateLexeme(int lexemeid, int newlanguage);
     Q_INVOKABLE QList<int> searchForms(QString string, bool exact=false);
+    Q_INVOKABLE QString prettyPrintSentence(int sentence_id);
     Q_INVOKABLE QString prettyPrintLexeme(int lexeme_id);
     Q_INVOKABLE QList<int> searchLexemes(QString string, bool exact=false);
     Q_INVOKABLE int grammarFormIdFromStrings(int language_id, QList<QList<QString> > grammarform);
@@ -716,6 +719,16 @@ int database::newTranslationPart(int translation, int lexeme, int sentence, int 
     return translationparttable->insertRecord(add_translationpart);
 }
 
+QList<int> database::translationLexemePartsFromTranslationId(int translation){
+    QList<int> lexeme_ids;
+    if(translation==0) return lexeme_ids;
+    databasetable* translationparttable = getTableByName("translationpart");
+    QSqlQuery result = translationparttable->select({"lexeme"},{"translation",translation});
+    while(result.next())
+        lexeme_ids += result.value("lexeme").toInt();
+    return lexeme_ids;
+}
+
 int database::newLexeme(int language_id){
     databasetable* lexemetable = getTableByName("lexeme");
     QMap<QString,QVariant> add_lexeme;
@@ -751,6 +764,34 @@ int database::newSentencePart(int sentence, int part, int capitalized, int form,
     add_sentencepart["grammarform"] = grammarform;
     add_sentencepart["punctuationmark"] = punctuationmark;
     return sentenceparttable->insertRecord(add_sentencepart);
+}
+
+QString database::prettyPrintTranslation(int translation_id){
+    //qDebug() << __FILE__ << __FUNCTION__ << __LINE__ << translation_id;
+    if(translation_id == 0) return "";
+    databasetable* translationparttable = getTableByName("translationpart");
+    QSqlQuery result = translationparttable->select({"lexeme","sentence","form","compoundform","grammarform"},{"translation",translation_id});
+    QString pretty_string;
+    while(result.next()){
+        int lexeme_id = result.value("lexeme").toInt();
+        int sentence_id = result.value("sentence").toInt();
+        int form_id = result.value("form").toInt();
+        int compoundform_id = result.value("compoundform").toInt();
+        int grammarform_id = result.value("grammarform").toInt();
+        if(lexeme_id!=0)
+            pretty_string += prettyPrintLexeme(lexeme_id) + "<br />";
+        // FIXME
+        if(sentence_id!=0)
+            pretty_string += "Sentence pretty print not implemented yet... <br />";
+        if(form_id!=0)
+            pretty_string += prettyPrintForm(form_id) + "<br />";
+        if(compoundform_id!=0)
+            pretty_string += "Compound form pretty print not implemented yet... <br />";
+        if(grammarform_id!=0)
+            pretty_string += prettyPrintGrammarForm(grammarform_id) + "<br />";
+    }
+    pretty_string.chop(6);
+    return pretty_string;
 }
 
 QString database::prettyPrintGrammarForm(int grammarForm_id){
@@ -854,7 +895,39 @@ QList<int> database::searchForms(QString string, bool exact){
     return form_ids;
 }
 
+QString database::prettyPrintSentence(int sentence_id){
+    if(sentence_id==0) return "";
+    QString pretty_string;
+    databasetable* sentenceparttable = getTableByName("sentencepart");
+    QSqlQuery result = sentenceparttable->select({"capitalized","form","compoundform","grammarform","punctuationmark"},{"sentence",sentence_id});
+    while(result.next()){
+        bool capitalized = result.value("capitalized").toInt();
+        int form = result.value("form").toInt();
+        int compoundform = result.value("compoundform").toInt();
+        int grammarform = result.value("grammarform").toInt();
+        QString punctuationmark = result.value("punctuationmark").toString();
+        if(form!=0){
+            QString formString = stringFromFormId(form);
+            if(capitalized) formString.replace(0,1,formString[0].toUpper());
+            pretty_string += formString;
+        }
+        // FIXME implement compound form pretty print
+        if(compoundform!=0)
+            pretty_string += "&lt;prettyPrint of compoundforms not implemented yet&gt;>";
+        if(grammarform!=0)
+            pretty_string += "&lt;" + prettyPrintGrammarForm(grammarform) + "&gt;";
+        if(punctuationmark != "0"){
+            pretty_string.chop(1);
+            pretty_string += punctuationmark;
+        }
+        pretty_string += " ";
+    }
+    pretty_string.chop(1);
+    return pretty_string;
+}
+
 QString database::prettyPrintLexeme(int lexeme_id){
+    if(lexeme_id==0) return "";
     //qDebug() << __FILE__ << __FUNCTION__ << __LINE__ << lexeme_id;
     QString prettystring;
     databasetable* formtable = getTableByName("form");
@@ -866,11 +939,7 @@ QString database::prettyPrintLexeme(int lexeme_id){
     databasetable* sentenceparttable = getTableByName("sentencepart");
     QSqlQuery result2 = sentencetable->select({"id"},{"lexeme",lexeme_id});
     while(result2.next()){
-        QSqlQuery result3 = sentenceparttable->select({"form"},{"sentence",result2.value("id").toInt()});
-        while(result3.next()){
-            prettystring += stringFromFormId(result3.value("form").toInt()) + " ";
-        }
-        prettystring.chop(1);
+        prettystring += prettyPrintSentence(result2.value("id").toInt());
         prettystring += ", ";
     }
     prettystring.chop(2);

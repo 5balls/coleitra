@@ -714,7 +714,7 @@ Column {
         var component = Qt.createComponent(partType + ".qml");
         if (component.status == Component.Ready) {
             var newObject = component.createObject(this);
-	    newObject.width = Qt.binding(function() {return width});
+            newObject.width = Qt.binding(function() {return width});
             lastCreatedObject = newObject;
             afterCreation();
         }
