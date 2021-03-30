@@ -883,8 +883,6 @@ void grammarprovider::getGrammarInfoForWord(QObject* caller, int languageid, QSt
 @O ../src/grammarprovider.cpp -d
 @{
 void grammarprovider::getWiktionarySections(){
-    static int numberofcalls=0;
-    qDebug() << "---- getWiktionarySections number of calls" << numberofcalls++;
     //qDebug() << "getWiktionarySections enter";
     emit processingStart("Querying en.wiktionary for word \"" + m_word + "\"...");
 
@@ -1010,7 +1008,6 @@ void grammarprovider::getWiktionarySection(QNetworkReply* reply){
                        that either this is not a compound word or we
                        have obtained all compound forms */
                     QEventLoop waitloop;
-                    qDebug() << __FILE__ << __FUNCTION__ << __LINE__ << &waitloop;
                     m_caller = &waitloop;
                     /* We have to check for the caller pointer because
                        this might get recursive */
@@ -1018,8 +1015,8 @@ void grammarprovider::getWiktionarySection(QNetworkReply* reply){
                     QMetaObject::Connection gina_con;
                     gic_con = connect(this, &grammarprovider::grammarInfoComplete,
                             [&](QObject* caller, bool silent){
-                                if(caller == &waitloop){
-                                    qDebug() << "Got grammarInfoComplete signal in lambda function for etymology section" << m_word << m_caller;
+                                qDebug() << "Got grammarInfoComplete signal in lambda function for etymology section";
+                                if(caller == m_caller){
                                     disconnect(gic_con);
                                     disconnect(gina_con);
                                     waitloop.quit();
@@ -1027,8 +1024,8 @@ void grammarprovider::getWiktionarySection(QNetworkReply* reply){
                             });
                     gina_con = connect(this, &grammarprovider::grammarInfoNotAvailable,
                             [&](QObject* caller, bool silent){
-                                if(caller == &waitloop){
-                                    qDebug() << "Got grammarInfoNotComplete signal in lambda function for etymology section" << m_word << m_caller;
+                                qDebug() << "Got grammarInfoNotComplete signal in lambda function for etymology section";
+                                if(caller == m_caller){
                                     disconnect(gic_con);
                                     disconnect(gina_con);
                                     waitloop.quit();
@@ -1044,9 +1041,9 @@ void grammarprovider::getWiktionarySection(QNetworkReply* reply){
                             this, &grammarprovider::getWiktionaryTemplate);
                     QThread::msleep(200);
                     QNetworkReply *reply = m_manager->get(request);
-                    qDebug() << "Blocking waitloop for" << m_word << "...";
+                    qDebug() << "Blocking waitloop...";
                     waitloop.exec();
-                    qDebug() << "... blocking waitloop for" << m_word << "finished.";
+                    qDebug() << "... blocking waitloop finished.";
                 }
                 foreach(const QString& parsesection, m_parsesections){
                     if(s_section == parsesection){
@@ -1598,57 +1595,9 @@ void grammarprovider::fi_requirements(QObject* caller, int fi_id){
 @{
 void grammarprovider::parse_compoundform(QNetworkReply* reply){
     qDebug() << "Got compound form";
-    int argnumber=0;
     foreach(const QString& arg, m_currentarguments.unnamed){
-        argnumber++;
-        if(argnumber>2){
-            bool found_form = false;
-            QList<int> compoundpart_forms = m_database->searchForms(arg,true);
-            foreach(int compoundpart_form, compoundpart_forms){
-                int grammarform = m_database->grammarFormFromFormId(compoundpart_form);
-                int languageid = m_database->languageIdFromGrammarFormId(grammarform);
-                if(languageid == m_language){
-                    found_form = true;
-                    qDebug() << "Found form" << arg;
-                    break;
-                }
-            }
-            if(!found_form){
-                qDebug() << "Could not find form" << arg << ", looking it up...";
-                context save_state(this);
-                QEventLoop waitloop;
-                qDebug() << __FILE__ << __FUNCTION__ << __LINE__ << &waitloop;
-                m_caller = &waitloop;
-                m_word = arg;
-                m_silent = true;
-                QMetaObject::Connection gic_con;
-                QMetaObject::Connection gina_con;
-                gic_con = connect(this, &grammarprovider::grammarInfoComplete,
-                        [&](QObject* caller, bool silent){
-                            if(caller == &waitloop){
-                                qDebug() << "Got grammarInfoComplete signal in lambda function for compoundform search" << m_word << m_caller;
-                                disconnect(gic_con);
-                                disconnect(gina_con);
-                                waitloop.quit();
-                            }
-                        });
-                gina_con = connect(this, &grammarprovider::grammarInfoNotAvailable,
-                        [&](QObject* caller, bool silent){
-                            if(caller == &waitloop){
-                                qDebug() << "Got grammarInfoNotComplete signal in lambda function for compoundform search" << m_word << m_caller;
-                                disconnect(gic_con);
-                                disconnect(gina_con);
-                                waitloop.quit();
-                            }
-                        });
-                getWiktionarySections();
-                qDebug() << "Blocking waitloop for compoundform" << m_word << "...";
-                waitloop.exec();
-                qDebug() << "... blocking waitloop for compoundform" << m_word << "finished.";
-            }
-        }
+        qDebug() << "Unnamed argument" << arg;
     }
-    emit grammarInfoComplete(m_caller, m_silent);
 }
 @}
 

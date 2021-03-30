@@ -72,6 +72,7 @@ public:
     Q_INVOKABLE int grammarFormFromFormId(int form_id);
     Q_INVOKABLE int lexemeFromFormId(int form_id);
     Q_INVOKABLE int languageIdFromLexemeId(int lexeme_id);
+    Q_INVOKABLE int languageIdFromGrammarFormId(int grammarform_id);
     Q_INVOKABLE int updateForm(int formid, int newlexeme, int newgrammarform, QString newstring);
     Q_INVOKABLE int updateLexeme(int lexemeid, int newlanguage);
     Q_INVOKABLE QList<int> searchForms(QString string, bool exact=false);
@@ -858,6 +859,16 @@ int database::lexemeFromFormId(int form_id){
 int database::languageIdFromLexemeId(int lexeme_id){
     databasetable* lexemetable = getTableByName("lexeme");
     QSqlQuery result = lexemetable->select({"language"},{"id", lexeme_id});
+    if(result.next())
+        return result.value("language").toInt();
+    else
+        return 0;
+}
+
+int database::languageIdFromGrammarFormId(int grammarform_id){
+    if(grammarform_id == 0) return 0;
+    databasetable* grammarformtable = getTableByName("grammarform");
+    QSqlQuery result = grammarformtable->select({"language"},{"id", grammarform_id});
     if(result.next())
         return result.value("language").toInt();
     else
