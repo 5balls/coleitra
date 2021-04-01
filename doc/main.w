@@ -61,6 +61,7 @@
 #include "train.h"
 #include "grammarprovider.h"
 #include "databaseedit.h"
+#include "levenshteindistance.h"
 
 #ifdef Q_OS_ANDROID
 #include <android/log.h>
@@ -122,6 +123,9 @@ int main(int argc, char *argv[])
     @<Register singleton @'Edit@' class @'edit@' version @'1@' @'0@' @>
     @<Register singleton @'GrammarProvider@' class @'grammarprovider@' version @'1@' @'0@' @>
     @<Register singleton @'DatabaseEdit@' class @'databaseedit@' version @'1@' @'0@' @>
+    @<Register singleton @'LevenshteinDistance@' class @'levenshteindistance@' version @'1@' @'0@' @>
+
+    levenshteindistance test;
 
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QCoreApplication::setApplicationName("coleitra");

@@ -49,6 +49,8 @@
 
 @i gui.w
 
+@i levenshteindistance.w
+
 @i qt.w
 
 \begin{appendix}
