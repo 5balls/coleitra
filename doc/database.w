@@ -548,6 +548,8 @@ We need to add also some german forms to bootstrap it.
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
                 fc("categoryselection",QVariant::Int,{c_fk(categoryselectiontable,"id")}),
                 fc("compoundform",QVariant::Int,{c_fk(compoundformtable,"id")}),
+                f("capitalized",QVariant::Bool),
+                f("string",QVariant::String),
                 f("part",QVariant::Int),
                 fc("form",QVariant::Int,{c_fk(formtable,"id")})});
 
