@@ -287,13 +287,16 @@ Column {
         var newlexeme = -1;
         var newgrammarform = -1;
         var newstring = "";
+        var newlicense = -1;
         if(lexemeId.value != Database.lexemeFromFormId(formId.value)) 
             newlexeme = lexemeId.value;
         if(grammarId.value != Database.grammarFormFromFormId(formId.value))
             newgrammarform = grammarId.value;
         if(stringValue.text != Database.stringFromFormId(formId.value))
             newstring = stringValue.text;
-        var retval = Database.updateForm(formId.value, newlexeme, newgrammarform, newstring);
+        if(licenseId.value != Database.licenseReferenceIdFromFormId(formId.value))
+            newlicense = licenseId.value;
+        var retval = Database.updateForm(formId.value, newlexeme, newgrammarform, newstring, newlicense);
     }
     property var setId: function(id){
         formId.value = id;
@@ -426,6 +429,44 @@ Column {
             }
         }
     }
+    ColeitraWidgetLicenseSelectId {
+        id: licenseId
+        idValue: Database.licenseReferenceIdFromFormId(formId.value)
+    }
+}
+@}
+
+@O ../src/ColeitraWidgetLicenseSelectId.qml
+@{
+import QtQuick 2.14
+import QtQuick.Controls 2.14
+import DatabaseLib 1.0
+
+Rectangle {
+    width: parent.width
+    height: licenseReference.height
+    property var idValue: 0
+    property var value: licenseReferenceId.value
+    color: licenseReferenceId.value == idValue? "#FFFFFF" : "#FFFFDD"
+    Row {
+        id: licenseReference
+        width: parent.width
+        ColeitraGridLabel {
+            id: licenseReferenceLabel
+            text: "<b>License Reference</b>"
+        }
+        ColeitraGridLabel {
+            width: parent.width - licenseReferenceId.width - licenseReferenceLabel.width
+            text: Database.prettyPrintLicenseReference(licenseReferenceId.value)
+        }
+        SpinBox {
+            id: licenseReferenceId
+            value: idValue
+            editable: true
+            from: -9999
+            to: 9999
+        }
+    }
 }
 @}
 
@@ -439,7 +480,7 @@ import EditLib 1.0
 Column {
     width: parent? parent.width : 100
     property var saveFunction: function () {
-        var retval = Database.updateLexeme(lexemeId.value, languageId.value);
+        var retval = Database.updateLexeme(lexemeId.value, languageId.value, licenseId.value);
     }
     property var setId: function(id){
         lexemeId.value = id;
@@ -492,6 +533,10 @@ Column {
             from: -9999
             to: 9999
         }
+    }
+    ColeitraWidgetLicenseSelectId {
+        id: licenseId
+        idValue: Database.licenseReferenceIdFromLexemeId(lexemeId.value)
     }
 }
 @}
@@ -676,6 +721,10 @@ Column {
     ColeitraGridLabel {
         width: parent.width
         text: "Translation edit not implemented yet..."
+    }
+    ColeitraWidgetLicenseSelectId {
+        id: licenseId
+        idValue: Database.licenseReferenceIdFromTranslationId(translationId.value)
     }
 }
 @}
