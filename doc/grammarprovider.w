@@ -709,6 +709,7 @@ private:
         int l_language;
         bool l_silent;
         bool l_busy;
+        bool l_found_compoundform;
         QString l_word;
         QMetaObject::Connection l_tmp_connection;
         QMetaObject::Connection l_tmp_error_connection;
@@ -721,6 +722,7 @@ private:
             l_silent(parent->m_silent),
             l_busy(parent->m_busy),
             l_word(parent->m_word),
+            l_found_compoundform(parent->m_found_compoundform),
             l_tmp_connection(parent->m_tmp_connection),
             l_tmp_error_connection(parent->m_tmp_error_connection),
             l_networkreply(parent->m_networkreply),
@@ -732,6 +734,7 @@ private:
             l_parent->m_silent = l_silent;
             l_parent->m_busy = l_busy;
             l_parent->m_word = l_word;
+            l_parent->m_found_compoundform = l_found_compoundform;
             l_parent->m_tmp_connection = l_tmp_connection;
             l_parent->m_tmp_error_connection = l_tmp_error_connection;
             l_parent->m_networkreply = l_networkreply;
@@ -868,6 +871,7 @@ void grammarprovider::getGrammarInfoForWord(QObject* caller, int languageid, QSt
     m_busy = true;
     // TODO: Add timeout in case lookup is not successfull
     // Check requirements:
+    m_found_compoundform = false;
     if(m_requirements_map.contains(languageid))
         (this->*(m_requirements_map[languageid]))(caller,languageid);
     qDebug() << "...requirements done";
@@ -875,6 +879,7 @@ void grammarprovider::getGrammarInfoForWord(QObject* caller, int languageid, QSt
     m_language = languageid;
     m_word = word;
     m_silent = false;
+    m_found_compoundform = false;
     getWiktionarySections();
 }
 @}
@@ -998,6 +1003,7 @@ void grammarprovider::getWiktionarySection(QNetworkReply* reply){
         }
         else{
             if(found_language){
+                int l_found_compoundform = m_found_compoundform;
                 if(s_section == "Etymology"){
                     qDebug() << "Found etymology section";
                     // Check, if this is a compund word
@@ -1047,7 +1053,9 @@ void grammarprovider::getWiktionarySection(QNetworkReply* reply){
                     qDebug() << "Blocking waitloop for" << m_word << "...";
                     waitloop.exec();
                     qDebug() << "... blocking waitloop for" << m_word << "finished.";
+                    l_found_compoundform = m_found_compoundform;
                 }
+                m_found_compoundform = l_found_compoundform;
                 foreach(const QString& parsesection, m_parsesections){
                     if(s_section == parsesection){
                         best_bet_for_section = j_section["index"].toString().toInt();
@@ -1180,6 +1188,7 @@ void grammarprovider::getWiktionaryTemplate(QNetworkReply* reply){
                     m_currentarguments = parseTemplateArguments(wt_finished);
                     emit processingStop();
                     emit processingStart("Parsing wiktionary compound form data...");
+                    m_found_compoundform = true;
                     parse_compoundform(nullptr);
                     return;
                 }
@@ -1419,6 +1428,7 @@ void grammarprovider::getNextGrammarObject(QObject* caller){
                     m_grammarforms.removeFirst();
                 else 
                     qDebug() << "ERROR m_grammarforms is empty!" << __LINE__;
+                qDebug() << "----- formObtained" << m_caller << string << ge << m_silent << m_found_compoundform;
                 emit formObtained(m_caller, string, ge, m_silent);
                 //qDebug() << "grammarprovider::getNextGrammarObject exit" << __LINE__;
                 return;
@@ -1447,6 +1457,7 @@ void grammarprovider::getNextGrammarObject(QObject* caller){
                                     m_grammarforms.removeFirst();
                                 else 
                                     qDebug() << "ERROR m_grammarforms is empty!" << __LINE__;
+                                qDebug() << "----- formObtained" << m_caller << formpart << ge << m_silent << m_found_compoundform;
                                 emit formObtained(m_caller, formpart, ge, m_silent);
                                 // return needed here to be reentrant:
                                 return;
@@ -1478,6 +1489,7 @@ void grammarprovider::getNextGrammarObject(QObject* caller){
                         if(currentProcess.instruction == ADDANDUSEFORM){
                             //qDebug() << "ADDANDUSEFORM for part" << sentenceparts.at(sentencepartid) << sentencepartid << currentProcess.grammarexpressions;
                             currentProcess.instruction = LOOKUPFORM_LEXEME;
+                            qDebug() << "----- formObtained" << m_caller << sentenceparts.at(sentencepartid) << currentProcess.grammarexpressions << m_silent << m_found_compoundform;
                             emit formObtained(m_caller, sentenceparts.at(sentencepartid), currentProcess.grammarexpressions, m_silent);
                             //qDebug() << "grammarprovider::getNextGrammarObject exit" << __LINE__;
                             return;
@@ -1621,6 +1633,7 @@ void grammarprovider::parse_compoundform(QNetworkReply* reply){
                 m_caller = &waitloop;
                 m_word = arg;
                 m_silent = true;
+                m_found_compoundform = false;
                 QMetaObject::Connection gic_con;
                 QMetaObject::Connection gina_con;
                 gic_con = connect(this, &grammarprovider::grammarInfoComplete,
