@@ -11,4 +11,5 @@
 *.ind
 *.json
 *.cpt
+*.vim
 tags
