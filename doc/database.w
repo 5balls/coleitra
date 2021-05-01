@@ -59,12 +59,12 @@ public:
     Q_INVOKABLE int alphabeticidfromlanguagename(QString languagename);
     Q_INVOKABLE int alphabeticidfromlanguageid(int languageid);
     Q_INVOKABLE int newTranslation(void);
-    Q_INVOKABLE int newTranslationPart(int translation, int lexeme, int sentence, int form, int compoundform, int grammarform);
+    Q_INVOKABLE int newTranslationPart(int translation, int lexeme, int sentence, int form, int grammarform);
     Q_INVOKABLE QList<int> translationLexemePartsFromTranslationId(int translation);
     Q_INVOKABLE int newLexeme(int language_id, int license_id = 1);
     Q_INVOKABLE int newForm(int lexeme_id, int grammarFormId, QString string, int license_id = 1);
     Q_INVOKABLE int newSentence(int lexeme_id, int grammarFormId, int license_id = 1);
-    Q_INVOKABLE int newSentencePart(int sentenceid, int part, int capitalized, int form, int compoundform, int grammarform, int punctuationmark);
+    Q_INVOKABLE int newSentencePart(int sentenceid, int part, int capitalized, int form, int grammarform, int punctuationmark);
     Q_INVOKABLE QString prettyPrintTranslation(int translation_id);
     Q_INVOKABLE QString prettyPrintGrammarForm(int grammarForm_id);
     Q_INVOKABLE QString stringFromFormId(int form_id);
@@ -86,6 +86,8 @@ public:
     Q_INVOKABLE QString prettyPrintSentence(int sentence_id);
     Q_INVOKABLE QString prettyPrintLexeme(int lexeme_id);
     Q_INVOKABLE QList<int> searchLexemes(QString string, bool exact=false);
+    Q_INVOKABLE QList<QPair<QString,int> > listFormsOfLexeme(int lexeme_id);
+    Q_INVOKABLE int languageOfLexeme(int lexeme_id);
     Q_INVOKABLE int grammarFormIdFromStrings(int language_id, QList<QList<QString> > grammarform);
     Q_INVOKABLE QList<int> searchGrammarFormsFromStrings(int language_id, QList<QList<QString> > grammarform);
 private:
@@ -955,17 +957,10 @@ We need to add also some german forms to bootstrap it.
 
 @o ../src/database.cpp -d
 @{
-        databasetable* compoundformtable = d("compoundform",
-                {fc("id",QVariant::Int,{c_pk(),c_nn()}),
-                fc("lexeme",QVariant::Int,{c_fk(lexemetable,"id")}),
-                fc("grammarform",QVariant::Int,{c_fk(grammarformtable,"id")}),
-                fc("categoryselection",QVariant::Int,{c_fk(categoryselectiontable,"id")}),
-                fc("licensereference",QVariant::Int,{c_fk(licensereferencetable,"id")})});
         databasetable* compoundformparttable = d("compoundformpart",
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
                 fc("categoryselection",QVariant::Int,{c_fk(categoryselectiontable,"id")}),
                 fc("licensereference",QVariant::Int,{c_fk(licensereferencetable,"id")}),
-                fc("compoundform",QVariant::Int,{c_fk(compoundformtable,"id")}),
                 f("capitalized",QVariant::Bool),
                 f("string",QVariant::String),
                 f("part",QVariant::Int),
@@ -990,7 +985,6 @@ We need to add also some german forms to bootstrap it.
                 f("part",QVariant::Int),
                 f("capitalized",QVariant::Bool),
                 fc("form",QVariant::Int,{c_fk(formtable,"id")}),
-                fc("compoundform",QVariant::Int,{c_fk(compoundformtable,"id")}),
                 fc("grammarform",QVariant::Int,{c_fk(grammarformtable,"id")}),
                 fc("punctuationmark",QVariant::Int,{c_fk(punctuationmarktable,"id")})});
 
@@ -1008,7 +1002,6 @@ We need to add also some german forms to bootstrap it.
                 fc("lexeme",QVariant::Int,{c_fk(lexemetable,"id")}),
                 fc("sentence",QVariant::Int,{c_fk(sentencetable,"id")}),
                 fc("form",QVariant::Int,{c_fk(formtable,"id")}),
-                fc("compoundform",QVariant::Int,{c_fk(compoundformtable,"id")}),
                 fc("grammarform",QVariant::Int,{c_fk(grammarformtable,"id")}),
                 });
 
@@ -1136,14 +1129,13 @@ int database::newTranslation(void){
     return translationtable->insertRecord(add_translation);
 }
 
-int database::newTranslationPart(int translation, int lexeme, int sentence, int form, int compoundform, int grammarform){
+int database::newTranslationPart(int translation, int lexeme, int sentence, int form, int grammarform){
     databasetable* translationparttable = getTableByName("translationpart");
     QMap<QString,QVariant> add_translationpart;
     add_translationpart["translation"] = translation;
     add_translationpart["lexeme"] = lexeme;
     add_translationpart["sentence"] = sentence;
     add_translationpart["form"] = form;
-    add_translationpart["compoundform"] = compoundform;
     add_translationpart["grammarform"] = grammarform;
     return translationparttable->insertRecord(add_translationpart);
 }
@@ -1185,14 +1177,13 @@ int database::newSentence(int lexeme_id, int grammarFormId, int license_id){
     return sentencetable->insertRecord(add_sentence);
 }
 
-int database::newSentencePart(int sentence, int part, int capitalized, int form, int compoundform, int grammarform, int punctuationmark){
+int database::newSentencePart(int sentence, int part, int capitalized, int form, int grammarform, int punctuationmark){
     databasetable* sentenceparttable = getTableByName("sentencepart");
     QMap<QString,QVariant> add_sentencepart;
     add_sentencepart["sentence"] = sentence;
     add_sentencepart["part"] = part;
     add_sentencepart["capitalized"] = capitalized;
     add_sentencepart["form"] = form;
-    add_sentencepart["compoundform"] = compoundform;
     add_sentencepart["grammarform"] = grammarform;
     add_sentencepart["punctuationmark"] = punctuationmark;
     return sentenceparttable->insertRecord(add_sentencepart);
@@ -1202,13 +1193,12 @@ QString database::prettyPrintTranslation(int translation_id){
     //qDebug() << __FILE__ << __FUNCTION__ << __LINE__ << translation_id;
     if(translation_id == 0) return "";
     databasetable* translationparttable = getTableByName("translationpart");
-    QSqlQuery result = translationparttable->select({"lexeme","sentence","form","compoundform","grammarform"},{"translation",translation_id});
+    QSqlQuery result = translationparttable->select({"lexeme","sentence","form","grammarform"},{"translation",translation_id});
     QString pretty_string;
     while(result.next()){
         int lexeme_id = result.value("lexeme").toInt();
         int sentence_id = result.value("sentence").toInt();
         int form_id = result.value("form").toInt();
-        int compoundform_id = result.value("compoundform").toInt();
         int grammarform_id = result.value("grammarform").toInt();
         if(lexeme_id!=0)
             pretty_string += prettyPrintLexeme(lexeme_id) + "<br />";
@@ -1216,8 +1206,6 @@ QString database::prettyPrintTranslation(int translation_id){
             pretty_string += prettyPrintSentence(sentence_id) + "<br />";
         if(form_id!=0)
             pretty_string += prettyPrintForm(form_id) + "<br />";
-        if(compoundform_id!=0)
-            pretty_string += "Compound form pretty print not implemented yet... <br />";
         if(grammarform_id!=0)
             pretty_string += prettyPrintGrammarForm(grammarform_id) + "<br />";
     }
@@ -1414,11 +1402,10 @@ QString database::prettyPrintSentence(int sentence_id){
     if(sentence_id==0) return "";
     QString pretty_string;
     databasetable* sentenceparttable = getTableByName("sentencepart");
-    QSqlQuery result = sentenceparttable->select({"capitalized","form","compoundform","grammarform","punctuationmark"},{"sentence",sentence_id});
+    QSqlQuery result = sentenceparttable->select({"capitalized","form","grammarform","punctuationmark"},{"sentence",sentence_id});
     while(result.next()){
         bool capitalized = result.value("capitalized").toInt();
         int form = result.value("form").toInt();
-        int compoundform = result.value("compoundform").toInt();
         int grammarform = result.value("grammarform").toInt();
         QString punctuationmark = result.value("punctuationmark").toString();
         if(form!=0){
@@ -1427,8 +1414,6 @@ QString database::prettyPrintSentence(int sentence_id){
             pretty_string += formString;
         }
         // FIXME implement compound form pretty print
-        if(compoundform!=0)
-            pretty_string += "&lt;prettyPrint of compoundforms not implemented yet&gt;>";
         if(grammarform!=0)
             pretty_string += "&lt;" + prettyPrintGrammarForm(grammarform) + "&gt;";
         if(punctuationmark != "0"){
@@ -1475,6 +1460,24 @@ QList<int> database::searchLexemes(QString string, bool exact){
         }
     }
     return lexeme_ids;
+}
+
+QList<QPair<QString,int> > database::listFormsOfLexeme(int lexeme_id){
+    databasetable* formtable = getTableByName("form");
+    QSqlQuery result = formtable->select({"string","id"},{"lexeme",lexeme_id});
+    QList<QPair<QString,int> > forms;
+    while(result.next())
+        forms.push_back({result.value("string").toString(),result.value("id").toInt()});
+    return forms;
+}
+
+int database::languageOfLexeme(int lexeme_id){
+    int language_id = 0;
+    databasetable* lexemetable = getTableByName("lexeme");
+    QSqlQuery result = lexemetable->select({"language"},{"id",lexeme_id});
+    if(result.next())
+        language_id = result.value("language").toInt();
+    return language_id;
 }
 
 int database::grammarFormIdFromStrings(int language_id, QList<QList<QString> > grammarform){

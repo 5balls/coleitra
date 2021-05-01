@@ -952,7 +952,7 @@ Column {
                     searchPopup.okEnabled = true;
 		}
             }
-            function onFormObtained(caller, formstring, grammarexpressions, silent){
+            function onFormObtained(caller, formstring, grammarexpressions, silent, compoundforms){
                 if(searchPopup != caller) return;
                 if(silent){
                     var formid = Edit.formId;
