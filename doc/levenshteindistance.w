@@ -108,6 +108,10 @@ QList<levenshteindistance::compoundpart> levenshteindistance::stringdivision(QLi
     //qDebug() << "ndiv" << ndiv << "stringsize" << stringsize << "current_ndiv" << current_ndiv << "remaining_ndiv" << remaining_ndiv;
     static int levenshteindistance_min = std::numeric_limits<int>::max();
     static QList<levenshteindistance::compoundpart> currently_best_result;
+    if(current_ndiv==1){
+        levenshteindistance_min = std::numeric_limits<int>::max();
+        currently_best_result.clear();
+    }
     if(remaining_ndiv <= 0){
         /* We have decided how to divide the string for this test, so
            let's calculate the minimal sum of the levenshtein distances
