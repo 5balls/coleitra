@@ -674,7 +674,7 @@ void edit::addLexemeHeuristically(QObject* caller, int languageid, QString lexem
 }
 
 void edit::networkErrorFromGrammarProvider(QObject* caller, bool silent){
-    if(caller != m_caller) return;
+    //if(caller != m_caller) return;
     disconnect(m_grammarprovider,&grammarprovider::grammarInfoAvailable,this,&edit::grammarInfoAvailableFromGrammarProvider);
     disconnect(m_grammarprovider,&grammarprovider::grammarInfoNotAvailable,this,&edit::grammarInfoNotAvailableFromGrammarProvider);
     disconnect(m_grammarprovider,&grammarprovider::networkError, this, &edit::networkErrorFromGrammarProvider);
