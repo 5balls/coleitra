@@ -23,5 +23,6 @@
 \usepackage{longtable}
 \usepackage{cprotect}
 \usepackage{verbatim}
+\usepackage{pgf-umlsd}
 \usepackage[colorlinks=true]{hyperref}
 \makeindex

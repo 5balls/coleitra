@@ -546,6 +546,52 @@ def get_examples(categorytitle):
 get_examples("Template:" + str(sys.argv[1]))
 @}
 
+\section{Network queries}
+The API of wiktionary is used to avoid unneccessary network traffic. We never ask for the whole page but only for the parts which we need for the information we desire.
+
+First \verb#getWiktionarySections()# gets a json Object containing all the sections of the wiktionary page. This sections are searched for the current language, e.g. ``Finnish'' for example. Then this language section is searched for an etymology section. If this etymology section exists, we request this section with \verb#getWiktionarySection()# and check to see if it contains a compound template. If we find a compound template, depending on the status of the database we recursively request the words making up the compound (if the word is in the database already we link to it instead).
+
+After the etymology section is parsed we look for flection sections, i.e. ``Conjugation'' or ``Declination''. Again we get the contents of this sections by calling \verb#getWiktionarySection()# and if we can identify a template we call additionaly \verb#getWiktionaryTemplate# to expand the template with the arguments we find (this will practically render the html form of this particular part of the webpage). We call the appropriate parsing function for this template and process the grammar information we obtain this way.
+
+In the following sequence diagram error handling is not shown to keep it managable. Whenever there is a fatal error the appropriate signals are sent to the caller. Signals are also sent, whenever we can obtain a valid grammar object.
+
+\begin{figure}
+\centering
+\begin{sequencediagram}
+\newthread{sections}{getWiktionarySections()}
+\newthread{section}{getWiktionarySection()}
+\newthread{template}{getWiktionaryTemplate()}
+\newthread{network}{Network Thread}
+\newthread{parsetemplate}{Parse Template}
+\mess{sections}{requestNetworkReply}{network}
+\begin{call}{section}{possible retry}{section}{}
+\end{call}
+\mess{network}{success}{section}
+\begin{sdblock}{Etymology}{Found section}
+\begin{call}{section}{requestNetworkReply}{network}{blocking wait}
+\begin{call}{template}{possible retry}{template}{}
+\end{call}
+\mess{network}{success}{template}
+\begin{sdblock}{Compound}{Found compound}
+\begin{call}{template}{}{sections}{\shortstack{This is a recursive call, so it starts again from the\\
+beginning until unlocking the blocking wait}}
+\postlevel
+\end{call}
+\end{sdblock}
+\end{call}
+\end{sdblock}
+\begin{sdblock}{Flection}{Found section}
+\mess{section}{requestNetworkReply}{network}
+\begin{call}{template}{possible retry}{template}{}
+\end{call}
+\mess{network}{success}{template}
+\mess{template}{requestNetworkReply}{network}
+\mess{network}{success}{parsetemplate}
+\end{sdblock}
+\end{sequencediagram}
+\caption{Network queries in grammar provider}
+\end{figure}
+
 \section{Interface}
 @O ../src/grammarprovider.h -d
 @{
