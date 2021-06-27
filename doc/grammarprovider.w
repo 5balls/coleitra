@@ -613,6 +613,7 @@ beginning until unlocking the blocking wait}}
 #include <QMetaMethod>
 #include "settings.h"
 #include "database.h"
+#include "levenshteindistance.h"
 @<Start of class @'grammarprovider@'@>
     Q_PROPERTY(int language MEMBER m_language)
     Q_PROPERTY(QString word MEMBER m_word)
@@ -699,10 +700,16 @@ public:
         int m_languageid;
         QString m_word;
     };
+    struct compoundPart {
+        int id;
+        bool capitalized;
+        QString string;
+    };
 public slots:
     Q_INVOKABLE void getGrammarInfoForWord(QObject* caller, int languageid, QString word);
     Q_INVOKABLE void getNextGrammarObject(QObject* caller);
     Q_INVOKABLE void getNextSentencePart(QObject* caller);
+    Q_INVOKABLE QList<grammarprovider::compoundPart> getGrammarCompoundFormParts(QString compoundword, QList<QString> compoundstrings, int id_language);
 private slots:
     void getWiktionarySections();
     void getWiktionarySection(QNetworkReply* reply);
@@ -711,6 +718,7 @@ private slots:
     templatearguments parseTemplateArguments(QString templateString);
     void parseMediawikiTableToPlainText(QString wikitext, QList<grammarprovider::tablecell>& table);
     void fi_requirements(QObject* caller, int fi_id);
+    QList<QPair<QString,int> > fi_compound_parser(QObject* caller, int fi_id, int lexeme_id, QList<int> compound_lexemes);
     void parse_compoundform(QNetworkReply* reply);
     void parse_fi_verbs(QNetworkReply* reply);
     void parse_fi_nominals(QNetworkReply* reply);
@@ -759,11 +767,13 @@ private:
     QList<QString> m_parsesections;
     settings* m_settings;
     database* m_database;
+    levenshteindistance* m_levenshteindistance;
     QObject* m_caller;
     templatearguments m_currentarguments;
     QList<grammarform> m_grammarforms;
     QList<scheduled_lookup> m_scheduled_lookups;
     QMap<int, void (grammarprovider::*)(QObject*,int)> m_requirements_map;
+    QMap<int, QList<QPair<QString,int> > (grammarprovider::*)(QObject* caller, int fi_id, int lexeme_id, QList<int> compound_lexemes)> m_compound_parser_map;
     QMap<QString, void (grammarprovider::*)(QNetworkReply*)> m_parser_map; 
     struct context {
         grammarprovider* l_parent;
@@ -827,10 +837,12 @@ grammarprovider::grammarprovider(QObject *parent) : QObject(parent), m_busy(fals
     QQmlEngine* engine = qobject_cast<QQmlEngine*>(parent);
     m_settings = engine->singletonInstance<settings*>(qmlTypeId("SettingsLib", 1, 0, "Settings"));
     m_database = engine->singletonInstance<database*>(qmlTypeId("DatabaseLib", 1, 0, "Database"));
+    m_levenshteindistance = engine->singletonInstance<levenshteindistance*>(qmlTypeId("LevenshteinDistanceLib", 1, 0, "LevenshteinDistance"));
     m_parsesections.push_back("Conjugation");
     m_parsesections.push_back("Declension");
     int fi_id = m_database->idfromlanguagename("Finnish");
     m_requirements_map[fi_id] = &grammarprovider::fi_requirements;
+    m_compound_parser_map[fi_id] = &grammarprovider::fi_compound_parser;
     int de_id = m_database->idfromlanguagename("German");
     m_requirements_map[de_id] = &grammarprovider::de_requirements;
     m_parser_map["compound"] = &grammarprovider::parse_compoundform;
@@ -1732,6 +1744,48 @@ void grammarprovider::fi_requirements(QObject* caller, int fi_id){
         getWiktionarySections();
         waitloop.exec();
     }
+}
+
+
+QList<QPair<QString,int> > grammarprovider::fi_compound_parser(QObject* caller, int fi_id, int lexeme_id, QList<int> compound_lexemes){
+
+}
+@}
+
+@O ../src/grammarprovider.cpp -d
+@{
+QList<grammarprovider::compoundPart> grammarprovider::getGrammarCompoundFormParts(QString compoundword, QList<QString> compoundstrings, int id_language){
+    // Forms are saved strictly sequential, so all
+    // needed forms should be in the database already
+    bool found_all_lexemes = true;
+    QList<QList<QPair<QString,int> > > compoundformpart_candidates;
+    foreach(QString compoundform, compoundstrings){
+        QList<int> possible_lexemes = m_database->searchLexemes(compoundform, true);
+        int found_lexeme = 0;
+        foreach(int possible_lexeme, possible_lexemes){
+            if(m_database->languageOfLexeme(possible_lexeme) == id_language){
+                found_lexeme = possible_lexeme;
+                break;
+            }
+        }
+        if(found_lexeme > 0){
+            QList<QPair<QString,int> > forms = m_database->listFormsOfLexeme(found_lexeme);
+            compoundformpart_candidates.push_back(forms);
+        }
+        else{
+            found_all_lexemes = false;
+            break;
+        }
+    }
+    qDebug() << "Found all lexemes:" << found_all_lexemes;
+    QList<levenshteindistance::compoundpart> compoundparts = m_levenshteindistance->stringdivision(compoundformpart_candidates,compoundword);
+    levenshteindistance::compoundpart m_compoundpart;
+    QList<compoundPart> compoundpartsgrammar;
+    foreach(m_compoundpart, compoundparts){
+        compoundpartsgrammar.push_back({m_compoundpart.id,m_compoundpart.capitalized,m_compoundpart.string});
+        qDebug() << "Compound part" << m_compoundpart.division << m_compoundpart.id << m_compoundpart.capitalized << m_compoundpart.string;
+    }
+    return compoundpartsgrammar;
 }
 @}
 

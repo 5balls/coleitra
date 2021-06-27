@@ -65,6 +65,7 @@ public:
     Q_INVOKABLE int newForm(int lexeme_id, int grammarFormId, QString string, int license_id = 1);
     Q_INVOKABLE int newSentence(int lexeme_id, int grammarFormId, int license_id = 1);
     Q_INVOKABLE int newSentencePart(int sentenceid, int part, int capitalized, int form, int grammarform, int punctuationmark);
+    Q_INVOKABLE int newCompoundFormPart(int compoundform, int part, int form, bool capitalized, QString string);
     Q_INVOKABLE QString prettyPrintTranslation(int translation_id);
     Q_INVOKABLE QString prettyPrintGrammarForm(int grammarForm_id);
     Q_INVOKABLE QString stringFromFormId(int form_id);
@@ -964,6 +965,7 @@ We need to add also some german forms to bootstrap it.
                 f("capitalized",QVariant::Bool),
                 f("string",QVariant::String),
                 f("part",QVariant::Int),
+                fc("compoundform",QVariant::Int,{c_fk(formtable,"id")}),
                 fc("form",QVariant::Int,{c_fk(formtable,"id")})});
 
         databasetable* sentencetable = d("sentence",
@@ -1187,6 +1189,17 @@ int database::newSentencePart(int sentence, int part, int capitalized, int form,
     add_sentencepart["grammarform"] = grammarform;
     add_sentencepart["punctuationmark"] = punctuationmark;
     return sentenceparttable->insertRecord(add_sentencepart);
+}
+
+int database::newCompoundFormPart(int compoundform, int part, int form, bool capitalized, QString string){
+    databasetable* compoundformparttable = getTableByName("compoundformpart");
+    QMap<QString,QVariant> add_compoundformpart;
+    add_compoundformpart["part"] = part;
+    add_compoundformpart["compoundform"] = compoundform;
+    add_compoundformpart["form"] = form;
+    add_compoundformpart["capitalized"] = capitalized;
+    add_compoundformpart["string"] = string;
+    return compoundformparttable->insertRecord(add_compoundformpart);
 }
 
 QString database::prettyPrintTranslation(int translation_id){

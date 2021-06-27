@@ -1,5 +1,5 @@
 ..
-   Copyright 2020 Florian Pesth
+   Copyright 2020, 2021 Florian Pesth
 
 ..
    This file is part of coleitra.
@@ -163,14 +163,14 @@ Run the following code in your shell (the command line tools git and tr are expe
    cmake ../../src
    make
 
-If you have compiled Qt5 at a nonstandard location or in addition to your system libraries (which is not a problem) you have to pass the correct path to the file `Qt5Config.cmake`, for example (don't forget `..` at the end):
+If you have compiled Qt5 at a nonstandard location or in addition to your system libraries (which is not a problem) you have to pass the correct path cmake, using `CMAKE_PREFIX_PATH`, for example:
 
 .. code-block:: bash
 
    cd build/x64
    rm -r *
-   cmake -DQt5_DIR=~/src/foreign/qt5-shadow-build/qtbase/lib/cmake/Qt5/ \
-   ../../src
+   export CMAKE_PREFIX_PATH=/home/flo/src/foreign/qt5-install-20201127
+   cmake ../../src
    make
 
 Compile android version of coleitra

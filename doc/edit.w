@@ -893,44 +893,12 @@ void edit::saveToDatabase(void){
                     currentForm.newid = currentForm.id;
                 if(!currentForm.compoundforms.isEmpty()){
                     qDebug() << "Saving compound parts for this form:";
-                    // Forms are saved strictly sequential, so all
-                    // needed forms should be in the database already
-                    bool found_all_lexemes = true;
-                    QList<QList<QPair<QString,int> > > compoundformpart_candidates;
-                    foreach(QString compoundform, currentForm.compoundforms){
-                        qDebug() << "Searching for lexeme of form" << compoundform;
-                        QList<int> possible_lexemes = m_database->searchLexemes(compoundform, true);
-                        int found_lexeme = 0;
-                        foreach(int possible_lexeme, possible_lexemes){
-                            qDebug() << "  Lexeme candidate" << possible_lexeme;
-                            if(m_database->languageOfLexeme(possible_lexeme) == currentLexeme.languageid){
-                                qDebug() << "  Lexeme" << possible_lexeme << "is good";
-                                found_lexeme = possible_lexeme;
-                                break;
-                            }
-                            qDebug() << "  Lexeme" << possible_lexeme << "is bad";
-                        }
-                        if(found_lexeme > 0){
-                            qDebug() << "We found the lexeme";
-                            QList<QPair<QString,int> > forms = m_database->listFormsOfLexeme(found_lexeme);
-                            QPair<QString,int> form;
-                            foreach(form,forms){
-                                qDebug() << "  Form" << form.first << form.second;
-                            }
-                            compoundformpart_candidates.push_back(forms);
-                        }
-                        else{
-                            qDebug() << "We did not find the lexeme";
-                            found_all_lexemes = false;
-                            break;
-                        }
-                    }
-                    qDebug() << "Found all lexemes:" << found_all_lexemes;
-                    qDebug() << "Searching for best match for" << currentForm.string;
-                    QList<levenshteindistance::compoundpart> compoundparts = m_levenshteindistance->stringdivision(compoundformpart_candidates,currentForm.string);
-                    levenshteindistance::compoundpart m_compoundpart;
-                    foreach(m_compoundpart, compoundparts){
-                        qDebug() << "Compound part" << m_compoundpart.division << m_compoundpart.id << m_compoundpart.capitalized << m_compoundpart.string;
+                    QList<grammarprovider::compoundPart> compoundformparts = m_grammarprovider->getGrammarCompoundFormParts(currentForm.string, currentForm.compoundforms, currentLexeme.languageid);
+                    grammarprovider::compoundPart compoundformpart;
+                    int part=1;
+                    foreach(compoundformpart, compoundformparts){
+                        m_database->newCompoundFormPart(currentForm.newid, part, compoundformpart.id, compoundformpart.capitalized, compoundformpart.string);
+                        part++;
                     }
                 }
             }
