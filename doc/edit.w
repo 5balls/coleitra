@@ -95,15 +95,15 @@ private:
         int part;
         int form;
     };
+    database* m_database;
+    grammarprovider* m_grammarprovider;
+    levenshteindistance* m_levenshteindistance;
     QObject* m_caller;
     translation m_translation;
     QList<translation> m_translations;
     translation* m_current_translation;
     QList<lexeme> m_lexemes;
-    database* m_database;
     QString m_dbversion;
-    grammarprovider* m_grammarprovider;
-    levenshteindistance* m_levenshteindistance;
     int m_current_lexeme_id;
     int m_current_language_id;
     int m_current_translation_id;
@@ -111,17 +111,74 @@ private:
     QList<QList<int> > m_current_sentence_parts;
     QList<compoundformpart> m_current_compoundform_parts;
     QString m_current_pretty_lexeme;
+    QString m_current_pretty_string;
+    bool m_delayresult;
     struct lexeme& getCreateLexeme(int lexemeid, int languageid, int translationid=0);
     struct scheduled_add {
         QObject* m_caller;
         int m_languageid;
         QString m_lexeme;
         int m_translationid;
+        bool m_resultdelayed;
     };
     QList<scheduled_add> m_scheduled_adds;
     bool m_add_busy;
     void addScheduledLexemeHeuristically(void);
     void networkErrorFromGrammarProvider(QObject* caller, bool silent);
+    struct context {
+        edit* l_parent;
+        QObject* l_caller;
+        translation l_translation;
+        QList<translation> l_translations;
+        translation* l_current_translation;
+        QList<lexeme> l_lexemes;
+        QString l_dbversion;
+        int l_current_lexeme_id;
+        int l_current_language_id;
+        int l_current_translation_id;
+        int l_current_sentence_id;
+        QList<QList<int> > l_current_sentence_parts;
+        QList<compoundformpart> l_current_compoundform_parts;
+        QString l_current_pretty_lexeme;
+        QList<scheduled_add> l_scheduled_adds;
+        bool l_add_busy;
+        context(edit* parent) :
+            l_parent(parent),
+            l_caller(parent->m_caller),
+            l_translation(parent->m_translation),
+            l_translations(parent->m_translations),
+            l_current_translation(parent->m_current_translation),
+            l_lexemes(parent->m_lexemes),
+            l_dbversion(parent->m_dbversion),
+            l_current_lexeme_id(parent->m_current_lexeme_id),
+            l_current_language_id(parent->m_current_language_id),
+            l_current_translation_id(parent->m_current_translation_id),
+            l_current_sentence_id(parent->m_current_sentence_id),
+            l_current_sentence_parts(parent->m_current_sentence_parts),
+            l_current_compoundform_parts(parent->m_current_compoundform_parts),
+            l_current_pretty_lexeme(parent->m_current_pretty_lexeme),
+            l_scheduled_adds(parent->m_scheduled_adds),
+            l_add_busy(parent->m_add_busy) {
+            }
+        ~context() {
+            l_parent->m_caller = l_caller;
+            l_parent->m_translation = l_translation;
+            l_parent->m_translations = l_translations;
+            l_parent->m_current_translation = l_current_translation;
+            l_parent->m_lexemes = l_lexemes;
+            l_parent->m_dbversion = l_dbversion;
+            l_parent->m_current_lexeme_id = l_current_lexeme_id;
+            l_parent->m_current_language_id = l_current_language_id;
+            l_parent->m_current_translation_id = l_current_translation_id;
+            l_parent->m_current_sentence_id = l_current_sentence_id;
+            l_parent->m_current_sentence_parts = l_current_sentence_parts;
+            l_parent->m_current_compoundform_parts = l_current_compoundform_parts;
+            l_parent->m_current_pretty_lexeme = l_current_pretty_lexeme;
+            l_parent->m_scheduled_adds = l_scheduled_adds;
+            l_parent->m_add_busy = l_add_busy;
+        }
+    };
+
 private slots:
     void grammarInfoNotAvailableFromGrammarProvider(QObject* caller, bool silent);
     void grammarInfoAvailableFromGrammarProvider(QObject* caller, int numberOfObjects, bool silent);
@@ -151,7 +208,7 @@ public:
     Q_INVOKABLE bool isReadyToSave(void);
     Q_INVOKABLE void saveToDatabase(void);
     Q_INVOKABLE void moveLexemeOutOfTranslation(int language, QString text);
-    Q_INVOKABLE void addLexemeHeuristically(QObject* caller, int languageid, QString lexeme, int translationid);
+    Q_INVOKABLE void addLexemeHeuristically(QObject* caller, int languageid, QString lexeme, int translationid, bool delayresult = false);
     Q_INVOKABLE void debugStatusCuedLexemes();
     void addLexeme(int lexemeid, int languageid, int translationid=0);
     bool removeLexeme(int lexemeid);
@@ -161,6 +218,7 @@ signals:
     void processingStart(const QString &waitingString);
     void processingStop(void);
     void addLexemeHeuristicallyResult(QObject* caller, const QString &result);
+    void currentPrettyStringUpdated(QObject* caller);
 @<End of class and header @>
 @}
 
@@ -170,7 +228,7 @@ signals:
 @{
 #include "edit.h"
 
-edit::edit(QObject *parent) : QObject(parent), m_add_busy(false), m_current_sentence_parts({}), m_translationId(-1)
+edit::edit(QObject *parent) : QObject(parent), m_add_busy(false), m_current_sentence_parts({}), m_translationId(-1), m_delayresult(false)
 {
     QQmlEngine* engine = qobject_cast<QQmlEngine*>(parent);
     m_database = engine->singletonInstance<database*>(qmlTypeId("DatabaseLib", 1, 0, "Database"));
@@ -544,7 +602,7 @@ void edit::addScheduledLexemeHeuristically(void){
         scheduled_add scha = m_scheduled_adds.first();
         //qDebug() << "Processing scheduled lexeme " << scha.m_lexeme;
         m_scheduled_adds.removeFirst();
-        addLexemeHeuristically(scha.m_caller, scha.m_languageid, scha.m_lexeme, scha.m_translationid);
+        addLexemeHeuristically(scha.m_caller, scha.m_languageid, scha.m_lexeme, scha.m_translationid, scha.m_resultdelayed);
     }
     else{
         // m_add_busy == true should not happen here:
@@ -594,13 +652,14 @@ void edit::moveLexemeOutOfTranslation(int language, QString text){
     }
 }
 
-void edit::addLexemeHeuristically(QObject* caller, int languageid, QString lexemestring, int translationid){
+void edit::addLexemeHeuristically(QObject* caller, int languageid, QString lexemestring, int translationid, bool delayresult){
+    m_delayresult = delayresult;
     if(lexemestring.isEmpty()){
         return;
     }
     if(m_add_busy == true){
         qDebug() << "Edit is busy... scheduling for later";
-        m_scheduled_adds.push_back({caller,languageid,lexemestring,translationid});
+        m_scheduled_adds.push_back({caller,languageid,lexemestring,translationid,delayresult});
         return;
     }
     else{
@@ -613,11 +672,36 @@ void edit::addLexemeHeuristically(QObject* caller, int languageid, QString lexem
     if(lexemestring.contains(' ')){
         if(lexemestring.contains('.')){
             //sentence
-            emit addLexemeHeuristicallyResult(m_caller, "<i>Sentence not implemented yet, sorry!</i>");
+            if(!m_current_pretty_string.isEmpty())
+                m_current_pretty_string += "<br />";
+            m_current_pretty_string += "<i>Sentence not implemented yet, sorry!</i>";
+            if(!delayresult){
+                emit addLexemeHeuristicallyResult(m_caller, m_current_pretty_string);
+                m_current_pretty_string = "";
+            }
         }
         else if(lexemestring.contains(", ")){
             //multiple meanings
-            emit addLexemeHeuristicallyResult(m_caller, "<i>Multiple meanings not implemented yet, sorry!</i>");
+            QString lexemestring_from_multiple;
+            foreach(lexemestring_from_multiple, lexemestring.split(", ")){
+                context save_state(this);
+                QEventLoop waitloop;
+                QMetaObject::Connection cpsu_con;
+                cpsu_con = connect(this, &edit::currentPrettyStringUpdated,
+                        [&](QObject* caller){
+                            if(caller = &waitloop){
+                                disconnect(cpsu_con);
+                                waitloop.quit();
+                            }
+                        });
+                m_add_busy = false;
+                addLexemeHeuristically(&waitloop, languageid, lexemestring_from_multiple, translationid, true);
+                waitloop.exec();
+            }
+            if(!delayresult){
+                emit addLexemeHeuristicallyResult(m_caller, m_current_pretty_string);
+                m_current_pretty_string = "";
+            }
         }
     }
     else{
@@ -660,7 +744,13 @@ void edit::addLexemeHeuristically(QObject* caller, int languageid, QString lexem
                     addLexeme(lexeme_id, m_current_language_id, m_current_translation_id);
                     break;
             }
-            emit addLexemeHeuristicallyResult(m_caller, prettyPrintLexeme(lexeme_id));
+            if(!m_current_pretty_string.isEmpty())
+                m_current_pretty_string += "<br />";
+            m_current_pretty_string += prettyPrintLexeme(lexeme_id);
+            if(!delayresult){
+                emit addLexemeHeuristicallyResult(m_caller, m_current_pretty_string);
+                m_current_pretty_string = "";
+            }
             m_add_busy = false;
             addScheduledLexemeHeuristically();
         }
@@ -827,7 +917,15 @@ void edit::grammarInfoCompleteFromGrammarProvider(QObject* caller, bool silent){
     //qDebug() << "Grammar info complete";
     if(!silent){
         m_current_pretty_lexeme.chop(2);
-        emit addLexemeHeuristicallyResult(m_caller, m_current_pretty_lexeme);
+        if(!m_current_pretty_string.isEmpty())
+            m_current_pretty_string += "<br />";
+        m_current_pretty_string += m_current_pretty_lexeme;
+        if(!m_delayresult){
+            emit addLexemeHeuristicallyResult(m_caller, m_current_pretty_lexeme);
+            m_current_pretty_string.clear();
+        }
+        else
+            emit currentPrettyStringUpdated(m_caller);
         m_current_pretty_lexeme.clear();
     }
     else {
@@ -851,8 +949,14 @@ void edit::resetEverything(void){
 
 bool edit::isReadyToSave(void){
     if(m_translations.size() < 1) return false;
+    /* There may be multiple entries for one language in the translation,
+       so we look for at least two consecutive entries with different
+       languages */
     foreach(const translation& transl, m_translations)
-        if(transl.lexemes.size() >= 2) return true;
+        if(transl.lexemes.size() >=2)
+            for(int i=0; i<transl.lexemes.size()-1; i++)
+                if(transl.lexemes.at(i).languageid != transl.lexemes.at(i+1).languageid)
+                    return true;
     return false;
 }
 
