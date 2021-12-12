@@ -17,7 +17,7 @@
 
 \section{cmake}
 \codecmake
-@o ../src/CMakeLists.txt
+@d Standard definitions for CMakeLists.txt
 @{
 cmake_minimum_required(VERSION 3.7.0)
 
@@ -39,7 +39,7 @@ set(CMAKE_AUTORCC ON)
 
 This bash scripts gather some information about the git repository and then we make them available to the program via preprocessor definitions:
 
-@o ../src/CMakeLists.txt
+@d Scripts for git in CMakeLists.txt
 @{
 execute_process(
     COMMAND bash "-c" "git --git-dir ${CMAKE_CURRENT_LIST_DIR}/../.git --work-tree ${CMAKE_CURRENT_LIST_DIR}/.. describe --always --tags | tr -d '\n'"
@@ -71,7 +71,7 @@ add_definitions(
 
 We need to define all needed Qt5 components here:
 
-@o ../src/CMakeLists.txt
+@d Packages and libraries for Qt5 and levmar in CMakeLists.txt
 @{
 find_package(Qt5 COMPONENTS Quick QuickControls2 QuickWidgets Sql Svg Qml Widgets Network REQUIRED)
 set(QT_LIBS Qt5::Quick Qt5::QuickControls2 Qt5::QuickWidgets Qt5::Sql Qt5::Svg Qt5::Qml Qt5::Widgets Qt5::Network)
@@ -96,10 +96,18 @@ include_directories(${Qt5Widgets_INCLUDE_DIRS} ${QtQml_INCLUDE_DIRS} ${OPENSSL_I
 add_definitions(${Qt5Widgets_DEFINITIONS} ${QtQml_DEFINITIONS} ${QtNetwork} ${${Qt5Quick_DEFINITIONS}})
 @}
 
+@d Requirements for CMakeLists.txt
+@{
+@<Standard definitions for CMakeLists.txt@>
+@<Scripts for git in CMakeLists.txt@>
+@<Packages and libraries for Qt5 and levmar in CMakeLists.txt@>
+@}
+
 A slightly different command is needed if we compile for android as the program entry point is a java function and not our C++ main function:
 
 @o ../src/CMakeLists.txt
 @{
+@<Requirements for CMakeLists.txt@>
 if(ANDROID)
     add_library(coleitra SHARED
     @<C++ files@>

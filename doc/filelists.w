@@ -31,10 +31,9 @@ databaseedit.h
 levenshteindistance.h @}
 
 \subsection{C++ files}
-@d C++ files
+@d C++ files without main
 @{settings.cpp
 about.cpp
-main.cpp
 database.cpp
 databasetable.cpp
 databasefield.cpp
@@ -52,6 +51,11 @@ levmar-2.6/lmblec.c
 levmar-2.6/lmbleic.c
 @}
 
+
+@d C++ files
+@{@<C++ files without main@>
+main.cpp
+@}
 \subsection{Ressource files}
 @d Ressource files
 @{qml.qrc @}

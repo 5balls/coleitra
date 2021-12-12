@@ -15,5 +15,32 @@
 % You should have received a copy of the GNU Affero General Public License
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-\section{Unit tests}
+\chapter{Unit tests}
 
+The unit tests are for development purposes and don't need to be compiled by any user of the software. These tests may also be not as portable as coleitra itself, this tests may only compile on linux.
+
+\section{settings class}
+
+@o ../src/unittests/settings/main.cpp -d
+@{
+#include <QCoreApplication>
+#include "settings.h"
+
+int main(int argc, char *argv[])
+{
+
+
+}
+@}
+
+@o ../src/unittests/settings/CMakeLists.txt
+@{
+@<Requirements for CMakeLists.txt@>
+    add_executable(settings
+    @<C++ files without main@>
+    )
+
+include(Mocxx)
+
+target_link_libraries(settings PUBLIC ${QT_LIBS} ${LIBS} Mocxx)
+@}
