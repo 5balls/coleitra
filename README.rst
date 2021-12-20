@@ -85,6 +85,24 @@ Choose the open source license and accept the LGPLv3 offer. It may take quite so
 
 It might help to pass also the `-ltcg` flag to configure to enable link time optimization and make the resulting binary smaller but I could not make it work yet.
 
+Qt5 Debian package installation
+_______________________________
+
+
+Tested on debian version 11.2 (bullseye); might not be complete:
+
+For compiling:
+
+.. code-block:: bash
+   
+   apt-get install qtbase5-dev qtdeclarative5-dev libqt5svg5-dev
+
+
+.. code-block:: bash
+   
+   apt-get install qml-module-qtquick2 qml-module-qtquick-controls qml-module-qtquick-controls2
+
+
 Android SDK and NDK
 ___________________
 
