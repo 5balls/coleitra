@@ -29,7 +29,7 @@ coleitra
 
 .. contents::
 
-coleitra is an open source (AGPL-3.0-only) vocable and grammar trainer using spaced repetition algorithms. It's intended usage is on a mobile phone with android operating system but it can be compiled for the desktop as well. This is the source code repository of the program, for more information about the program itself check the `coleitra webpage <https://coleitra.org>`_.
+coleitra is an open source (AGPL-3.0-only) vocable and grammar trainer using spaced repetition algorithms. It's intended usage is on a mobile phone with an android operating system but it can be compiled for the desktop as well. This is the source code repository of the program, for more information about the program itself check the `coleitra webpage <https://coleitra.org>`_.
 
 In principle the used toolkit Qt also compiles for iOS but I can't support this operating system right now.
 
