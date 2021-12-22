@@ -32,23 +32,26 @@ levenshteindistance.h @}
 
 \subsection{C++ files}
 @d C++ files without main
-@{settings.cpp
-about.cpp
-database.cpp
-databasetable.cpp
-databasefield.cpp
-train.cpp
-edit.cpp
-grammarprovider.cpp 
-databaseedit.cpp
-levenshteindistance.cpp
-levmar-2.6/lm.c
-levmar-2.6/Axb.c
-levmar-2.6/misc.c
-levmar-2.6/lmlec.c
-levmar-2.6/lmbc.c
-levmar-2.6/lmblec.c
-levmar-2.6/lmbleic.c
+@{@<C++ files without main in path @'@'@>@}
+
+@d C++ files without main in path @'path@'
+@{@1settings.cpp
+@1about.cpp
+@1database.cpp
+@1databasetable.cpp
+@1databasefield.cpp
+@1train.cpp
+@1edit.cpp
+@1grammarprovider.cpp 
+@1databaseedit.cpp
+@1levenshteindistance.cpp
+@1levmar-2.6/lm.c
+@1levmar-2.6/Axb.c
+@1levmar-2.6/misc.c
+@1levmar-2.6/lmlec.c
+@1levmar-2.6/lmbc.c
+@1levmar-2.6/lmblec.c
+@1levmar-2.6/lmbleic.c
 @}
 
 

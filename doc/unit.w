@@ -23,21 +23,34 @@ The unit tests are for development purposes and don't need to be compiled by any
 
 @o ../src/unittests/settings/main.cpp -d
 @{
+#include <mocxx/Mocxx.hpp>
 #include <QCoreApplication>
+#include "qdebug.h"
 #include "settings.h"
+
+using namespace mocxx;
 
 int main(int argc, char *argv[])
 {
 
+Mocxx moc;
+
+settings settings_test;
+
+moc.ReplaceMember([](const settings* foo) -> int { return 42; }, &settings::nativelanguage);
+
+qDebug() << settings_test.nativelanguage();
+qDebug() << settings_test.nativelanguage();
 
 }
 @}
 
 @o ../src/unittests/settings/CMakeLists.txt
 @{
-@<Requirements for CMakeLists.txt@>
+@<Requirements in path @'/../..@' for CMakeLists.txt@>
     add_executable(settings
-    @<C++ files without main@>
+    main.cpp
+    @<C++ files without main in path @'../../@'@>
     )
 
 include(Mocxx)

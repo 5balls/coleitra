@@ -51,7 +51,7 @@ train::train(QObject *parent) : QObject(parent)
 /* model to be fitted to measurements: x_i = p[0]*exp(-p[1]*i) + p[2], i=0...n-1 */
 void polynomial(double *p, double *x, int m, int n, void *data)
 {
-register int i;
+  int i;
 
   for(i=0; i<n; ++i){
     x[i]=p[0]*pow((double)i,p[1]) + p[2];
@@ -61,7 +61,7 @@ register int i;
 /* Jacobian of expfunc() */
 void jacobianpolynomial(double *p, double *jac, int m, int n, void *data)
 {   
-register int i, j;
+  int i, j;
   
   /* fill Jacobian row by row */
   for(i=j=0; i<n; ++i){
