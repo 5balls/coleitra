@@ -19,7 +19,8 @@
 
 The unit tests are for development purposes and don't need to be compiled by any user of the software. These tests may also be not as portable as coleitra itself, this tests may only compile on linux.
 
-\section{cmake file}
+\section{Infrastructure}
+\cprotect\subsection{\verb#CMakeLists.txt#}
 @o ../src/unittests/CMakeLists.txt
 @{
 @<Requirements in path @'/..@' for CMakeLists.txt@>
@@ -34,7 +35,7 @@ include_directories("../catch2")
 target_link_libraries(unittests PUBLIC ${QT_LIBS} ${LIBS} Mocxx)
 @}
 
-
+\cprotect\subsection{\verb#main.cpp#}
 @o ../src/unittests/main.cpp -d
 @{
 #define CATCH_CONFIG_MAIN

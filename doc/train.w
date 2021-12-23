@@ -40,7 +40,7 @@ private:
 
 \section{Implementation}
 
-@o ../src/train.cpp -d
+@O ../src/train.cpp -d
 @{
 #include "train.h"
 

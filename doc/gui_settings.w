@@ -16,7 +16,7 @@
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 \section{Settings}
-@o ../src/settings.qml
+@O ../src/settings.qml
 @{
 import QtQml 2.14
 import QtQuick 2.14

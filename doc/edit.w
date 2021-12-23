@@ -30,7 +30,7 @@ private:
     int m_@1Id = -1;
 @}
 
-@o ../src/edit.h -d
+@O ../src/edit.h -d
 @{
 @<Start of @'EDIT@' header@>
 #include <QQmlEngine>
@@ -224,7 +224,7 @@ signals:
 
 \section{Implementation}
 
-@o ../src/edit.cpp -d
+@O ../src/edit.cpp -d
 @{
 #include "edit.h"
 

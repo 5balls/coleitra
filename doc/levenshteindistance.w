@@ -45,7 +45,7 @@ signals:
 
 \section{Implementation}
 
-@o ../src/levenshteindistance.cpp -d
+@O ../src/levenshteindistance.cpp -d
 @{
 #include "levenshteindistance.h"
 

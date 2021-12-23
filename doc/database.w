@@ -35,7 +35,7 @@ enum class sql_error {
 \section{Interface}
 The database class defines an interface for creating the different database connections used at other places in the code.
 
-@o ../src/database.h -d
+@O ../src/database.h -d
 @{
 @<Start of @'DATABASE@' header@>
 #include <QSqlDatabase>
@@ -100,7 +100,7 @@ signals:
 @<End of class and header @>
 @}
 
-@o ../src/database.cpp -d
+@O ../src/database.cpp -d
 @{
 #include "database.h"
 @}
@@ -109,7 +109,7 @@ signals:
 
 We set the \lstinline{QObject} parent by the constructor.
 
-@o ../src/database.cpp -d
+@O ../src/database.cpp -d
 @{
 database::database(QObject *parent) : QObject(parent)
 {
@@ -242,7 +242,7 @@ case of regression errors in the migration this might be useful).
 License information should be kept with each datum so we allow for
 possible data interchange / import / export later.
 
-@o ../src/database.cpp -d
+@O ../src/database.cpp -d
 @{
 
 	databasetable* licensetable = d("license",
@@ -671,7 +671,7 @@ languagelearners of any language.
 Locale should be an ISO code that QtLocale understands to be able to
 use the speech synthesizer with this code.
 
-@o ../src/database.cpp -d
+@O ../src/database.cpp -d
 @{
         databasetable* languagetable = d("language",
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
@@ -764,7 +764,7 @@ grammar form. A one word lexeme in one language can correspond to a
 multiple word lexeme in a different language.
 
 
-@o ../src/database.cpp -d
+@O ../src/database.cpp -d
 @{
         databasetable* lexemetable = d("lexeme",
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
@@ -899,7 +899,7 @@ help verbs.
 
 We need to add also some german forms to bootstrap it.
 
-@o ../src/database.cpp -d
+@O ../src/database.cpp -d
 @{
         if(database_is_empty){
             struct newform{
@@ -956,7 +956,7 @@ We need to add also some german forms to bootstrap it.
         }
 @}
 
-@o ../src/database.cpp -d
+@O ../src/database.cpp -d
 @{
         databasetable* compoundformparttable = d("compoundformpart",
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
@@ -1738,7 +1738,7 @@ private:
 @}
 
 \subsection{Implementation}
-@o ../src/databasetable.cpp -d
+@O ../src/databasetable.cpp -d
 @{
 #include "databasetable.h"
 databasetable::databasetable(QString name, QList<databasefield*> fields) : m_name(name),

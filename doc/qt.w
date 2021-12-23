@@ -20,7 +20,7 @@ Here are the files described, which are needed for compiling code for the Qt fra
 
 \subsection{Ressources}
 \codeqrc
-@o ../src/qml.qrc
+@O ../src/qml.qrc
 @{
 <RCC>
     <qresource prefix="/">

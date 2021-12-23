@@ -110,7 +110,7 @@ ColeitraGridComboBox {
 }
 @}
 
-@o ../src/ColeitraWidgetSearchPopupGrammar.qml
+@O ../src/ColeitraWidgetSearchPopupGrammar.qml
 @{
 import QtQuick 2.14
 import QtQuick.Controls 2.14
@@ -743,7 +743,6 @@ Row {
     }
 }
 @}
-
 
 @O ../src/databaseedit.qml
 @{

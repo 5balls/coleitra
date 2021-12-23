@@ -413,7 +413,7 @@ Column {
 }
 @}
 
-@o ../src/ColeitraWidgetEditSentencePart.qml
+@O ../src/ColeitraWidgetEditSentencePart.qml
 @{
 import QtQuick 2.14
 import QtQuick.Controls 2.14
@@ -533,7 +533,7 @@ Column {
 }
 @}
 
-@o ../src/ColeitraWidgetEditLexemePart.qml
+@O ../src/ColeitraWidgetEditLexemePart.qml
 @{
 import QtQuick 2.14
 import QtQuick.Controls 2.14
@@ -728,7 +728,7 @@ Column {
 }
 @}
 
-@o ../src/ColeitraWidgetEditPartStack.qml
+@O ../src/ColeitraWidgetEditPartStack.qml
 @{
 import QtQuick 2.14
 import QtQuick.Controls 2.14
@@ -860,7 +860,7 @@ Popup {
 }
 @}
 
-@o ../src/ColeitraWidgetEditLexeme.qml
+@O ../src/ColeitraWidgetEditLexeme.qml
 @{
 import QtQuick 2.14
 import QtQuick.Controls 2.14
@@ -1090,7 +1090,7 @@ Column {
 }
 @}
 
-@o ../src/edit.qml
+@O ../src/edit.qml
 @{
 import QtQuick 2.14
 import QtQuick.Layouts 1.14
