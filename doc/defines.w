@@ -63,3 +63,5 @@ literate={ä}{{\"a}}1 {ö}{{\"o}}1 {ü}{{\"u}}1 {é}{{\'e}}1 {—}{{-}}1,
 \newcommand\codeqml{\lstset{language=QML,breaklines=true}}
 \newcommand\codeqrc{\lstset{language=XML,breaklines=true}}
 \newcommand\codecmake{\lstset{language=CMake,breaklines=true}}
+\setcounter{secnumdepth}{5}
+\setcounter{tocdepth}{5}

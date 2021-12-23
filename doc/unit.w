@@ -19,10 +19,27 @@
 
 The unit tests are for development purposes and don't need to be compiled by any user of the software. These tests may also be not as portable as coleitra itself, this tests may only compile on linux.
 
-\section{settings class}
-
-@o ../src/unittests/settings/main.cpp -d
+\section{cmake file}
+@o ../src/unittests/CMakeLists.txt
 @{
+@<Requirements in path @'/..@' for CMakeLists.txt@>
+    add_executable(unittests
+    main.cpp
+    @<C++ files without main in path @'../@'@>
+    )
+
+include(Mocxx)
+include_directories("../catch2")
+
+target_link_libraries(unittests PUBLIC ${QT_LIBS} ${LIBS} Mocxx)
+@}
+
+
+@o ../src/unittests/main.cpp -d
+@{
+#define CATCH_CONFIG_MAIN
+#include "catch.hpp"
+
 #include <mocxx/Mocxx.hpp>
 #include <QCoreApplication>
 #include "qdebug.h"
@@ -30,30 +47,17 @@ The unit tests are for development purposes and don't need to be compiled by any
 
 using namespace mocxx;
 
-int main(int argc, char *argv[])
+TEST_CASE("Unittest example","[settings]")
 {
 
-Mocxx moc;
+  Mocxx moc;
+  settings settings_test;
 
-settings settings_test;
+  REQUIRE(settings_test.nativelanguage() == 12);
 
-moc.ReplaceMember([](const settings* foo) -> int { return 42; }, &settings::nativelanguage);
+  moc.ReplaceMember([](const settings* foo) -> int { return 42; }, &settings::nativelanguage);
 
-qDebug() << settings_test.nativelanguage();
-qDebug() << settings_test.nativelanguage();
-
+  REQUIRE(settings_test.nativelanguage() == 42);
 }
 @}
 
-@o ../src/unittests/settings/CMakeLists.txt
-@{
-@<Requirements in path @'/../..@' for CMakeLists.txt@>
-    add_executable(settings
-    main.cpp
-    @<C++ files without main in path @'../../@'@>
-    )
-
-include(Mocxx)
-
-target_link_libraries(settings PUBLIC ${QT_LIBS} ${LIBS} Mocxx)
-@}

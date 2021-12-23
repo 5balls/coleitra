@@ -260,12 +260,12 @@ private slots:
     void networkReplyErrorOccurred(QNetworkReply::NetworkError code);
     templatearguments parseTemplateArguments(QString templateString);
     void parseMediawikiTableToPlainText(QString wikitext, QList<grammarprovider::tablecell>& table);
-    void fi_requirements(QObject* caller, int fi_id);
-    QList<QPair<QString,int> > fi_compound_parser(QObject* caller, int fi_id, int lexeme_id, QList<int> compound_lexemes);
     void parse_compoundform(QNetworkReply* reply);
+    QList<QPair<QString,int> > fi_compound_parser(QObject* caller, int fi_id, int lexeme_id, QList<int> compound_lexemes);
+    void fi_requirements(QObject* caller, int fi_id);
     void parse_fi_verbs(QNetworkReply* reply);
     void parse_fi_nominals(QNetworkReply* reply);
-    void de_requirements(QObject* caller, int fi_id);
+    void de_requirements(QObject* caller, int de_id);
     void parse_de_noun_n(QNetworkReply* reply);
     void parse_de_noun_m(QNetworkReply* reply);
     void parse_de_noun_f(QNetworkReply* reply);
@@ -316,7 +316,7 @@ private:
     QList<grammarform> m_grammarforms;
     QList<scheduled_lookup> m_scheduled_lookups;
     QMap<int, void (grammarprovider::*)(QObject*,int)> m_requirements_map;
-    QMap<int, QList<QPair<QString,int> > (grammarprovider::*)(QObject* caller, int fi_id, int lexeme_id, QList<int> compound_lexemes)> m_compound_parser_map;
+    QMap<int, QList<QPair<QString,int> > (grammarprovider::*)(QObject* caller, int id, int lexeme_id, QList<int> compound_lexemes)> m_compound_parser_map;
     QMap<QString, void (grammarprovider::*)(QNetworkReply*)> m_parser_map; 
     struct context {
         grammarprovider* l_parent;
@@ -369,7 +369,7 @@ private:
 #include "grammarprovider.h"
 @}
 
-\cprotect\subsection{\verb#grammarprovider#}
+\cprotect[om]\subsection[grammarprovider]{\verb#grammarprovider#}
 @O ../src/grammarprovider.cpp -d
 @{
 grammarprovider::grammarprovider(QObject *parent) : QObject(parent), m_busy(false)
@@ -546,20 +546,28 @@ void grammarprovider::getWiktionarySections(){
 
     //qDebug() << "getWiktionarySections exit";
 }
-
 @}
-\cprotect\subsection{\verb#getWiktionarySection#}
+
+\cprotect\subsection{\verb#connectReplyFinishedToSlot#}
 @O ../src/grammarprovider.cpp -d
 @{
 void grammarprovider::connectReplyFinishedToSlot(void(grammarprovider::* slot)(QNetworkReply*) ){
     m_last_connected_slot = slot;
     m_tmp_connection = connect(m_manager, &QNetworkAccessManager::finished, this, m_last_connected_slot);
 }
+@}
 
+\cprotect\subsection{\verb#reconnectLastReplyFinishedToSlot#}
+@O ../src/grammarprovider.cpp -d
+@{
 void grammarprovider::reconnectLastReplyFinishedToSlot(){
     m_tmp_connection = connect(m_manager, &QNetworkAccessManager::finished, this, m_last_connected_slot);
 }
+@}
 
+\cprotect\subsection{\verb#checkReplyAndRetryIfNecessary#}
+@O ../src/grammarprovider.cpp -d
+@{
 grammarprovider::networkRequestStatus grammarprovider::checkReplyAndRetryIfNecessary(QNetworkReply* reply, QString& s_reply){
     static int retrycount = 0;
     const int max_retries = 5;
@@ -612,7 +620,11 @@ giveup:
     m_manager->setTransferTimeout(1000);
     return PERMANENT_NETWORK_ERROR;
 }
+@}
 
+\cprotect\subsection{\verb#getWiktionarySection#}
+@O ../src/grammarprovider.cpp -d
+@{
 void grammarprovider::getWiktionarySection(QNetworkReply* reply){
     //qDebug() << "getWiktionarySection enter";
 
@@ -1263,38 +1275,7 @@ void grammarprovider::getPlainTextTableFromReply(QNetworkReply* reply, QList<gra
 }
 @}
 
-\cprotect\subsection{\verb#fi_requirements#}
-@O ../src/grammarprovider.cpp -d
-@{
-void grammarprovider::fi_requirements(QObject* caller, int fi_id){
-    QList<int> olla_forms = m_database->searchForms("olla",true);
-    int expected_grammarform = m_database->grammarFormIdFromStrings(fi_id,{{"Infinitive","First"},{"Voice","Active"},{"Part of speech","Verb"}});
-    bool found_form = false;
-    foreach(int olla_form, olla_forms){
-        int grammarform = m_database->grammarFormFromFormId(olla_form);
-        if(grammarform == expected_grammarform){
-            found_form = true;
-            break;
-        }
-    }
-    if(!found_form){
-        m_caller = caller;
-        m_language = fi_id;
-        m_word = "olla";
-        m_silent = true;
-        QEventLoop waitloop;
-        connect( this, &grammarprovider::grammarInfoComplete, &waitloop, &QEventLoop::quit );
-        getWiktionarySections();
-        waitloop.exec();
-    }
-}
-
-
-QList<QPair<QString,int> > grammarprovider::fi_compound_parser(QObject* caller, int fi_id, int lexeme_id, QList<int> compound_lexemes){
-
-}
-@}
-
+\cprotect\subsection{\verb#getGrammarCompoundFormParts#}
 @O ../src/grammarprovider.cpp -d
 @{
 QList<grammarprovider::compoundPart> grammarprovider::getGrammarCompoundFormParts(QString compoundword, QList<QString> compoundstrings, int id_language){
@@ -1332,6 +1313,7 @@ QList<grammarprovider::compoundPart> grammarprovider::getGrammarCompoundFormPart
 }
 @}
 
+\cprotect\subsection{\verb#parse_compoundform#}
 @O ../src/grammarprovider.cpp -d
 @{
 void grammarprovider::parse_compoundform(QNetworkReply* reply){
@@ -1394,7 +1376,44 @@ void grammarprovider::parse_compoundform(QNetworkReply* reply){
 }
 @}
 
-\cprotect\subsection{\verb#parse_fi_verbs#}
+\section{Language specific implementations}
+\subsection{Finnish}
+
+\cprotect\subsubsection{\verb#fi_requirements#}
+@O ../src/grammarprovider.cpp -d
+@{
+void grammarprovider::fi_requirements(QObject* caller, int fi_id){
+    QList<int> olla_forms = m_database->searchForms("olla",true);
+    int expected_grammarform = m_database->grammarFormIdFromStrings(fi_id,{{"Infinitive","First"},{"Voice","Active"},{"Part of speech","Verb"}});
+    bool found_form = false;
+    foreach(int olla_form, olla_forms){
+        int grammarform = m_database->grammarFormFromFormId(olla_form);
+        if(grammarform == expected_grammarform){
+            found_form = true;
+            break;
+        }
+    }
+    if(!found_form){
+        m_caller = caller;
+        m_language = fi_id;
+        m_word = "olla";
+        m_silent = true;
+        QEventLoop waitloop;
+        connect( this, &grammarprovider::grammarInfoComplete, &waitloop, &QEventLoop::quit );
+        getWiktionarySections();
+        waitloop.exec();
+    }
+}
+@}
+
+\cprotect\subsubsection{\verb#fi_compound_parser#}
+@O ../src/grammarprovider.cpp -d
+@{
+QList<QPair<QString,int> > grammarprovider::fi_compound_parser(QObject* caller, int fi_id, int lexeme_id, QList<int> compound_lexemes){
+}
+@}
+
+\cprotect\subsubsection{\verb#parse_fi_verbs#}
 @O ../src/grammarprovider.cpp -d
 @{
 void grammarprovider::parse_fi_verbs(QNetworkReply* reply){
@@ -1573,7 +1592,7 @@ void grammarprovider::parse_fi_verbs(QNetworkReply* reply){
 }
 @}
 
-\cprotect\subsection{\verb#parse_fi_nominals#}
+\cprotect\subsubsection{\verb#parse_fi_nominals#}
 @O ../src/grammarprovider.cpp -d
 @{
 void grammarprovider::parse_fi_nominals(QNetworkReply* reply){
@@ -1626,7 +1645,9 @@ void grammarprovider::parse_fi_nominals(QNetworkReply* reply){
 }
 @}
 
-\cprotect\subsection{\verb#de_requirements#}
+\subsection{German}
+
+\cprotect\subsubsection{\verb#de_requirements#}
 @O ../src/grammarprovider.cpp -d
 @{
 void grammarprovider::de_requirements(QObject* caller, int de_id){
@@ -1653,7 +1674,7 @@ void grammarprovider::de_requirements(QObject* caller, int de_id){
 }
 @}
 
-\cprotect\subsection{\verb#parse_de_noun_n#}
+\cprotect\subsubsection{\verb#parse_de_noun_n#}
 @O ../src/grammarprovider.cpp -d
 @{
 void grammarprovider::parse_de_noun_n(QNetworkReply* reply){
@@ -1674,7 +1695,7 @@ void grammarprovider::parse_de_noun_n(QNetworkReply* reply){
 }
 @}
 
-\cprotect\subsection{\verb#parse_de_noun_m#}
+\cprotect\subsubsection{\verb#parse_de_noun_m#}
 @O ../src/grammarprovider.cpp -d
 @{
 void grammarprovider::parse_de_noun_m(QNetworkReply* reply){
@@ -1696,7 +1717,7 @@ void grammarprovider::parse_de_noun_m(QNetworkReply* reply){
 }
 @}
 
-\cprotect\subsection{\verb#parse_de_noun_f#}
+\cprotect\subsubsection{\verb#parse_de_noun_f#}
 @O ../src/grammarprovider.cpp -d
 @{
 void grammarprovider::parse_de_noun_f(QNetworkReply* reply){
@@ -1718,7 +1739,7 @@ void grammarprovider::parse_de_noun_f(QNetworkReply* reply){
 }
 @}
 
-\cprotect\subsection{\verb#parse_de_verb#}
+\cprotect\subsubsection{\verb#parse_de_verb#}
 @O ../src/grammarprovider.cpp -d
 @{
 void grammarprovider::parse_de_verb(QNetworkReply* reply){
