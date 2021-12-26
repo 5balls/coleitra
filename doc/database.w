@@ -1694,6 +1694,8 @@ QString databasefield::sqLiteType(void){
             return "INTEGER";
         case QVariant::String:
             return "TEXT";
+        default:
+            return "";
     }
     return "";
 }
@@ -1748,6 +1750,7 @@ databasetable::databasetable(QString name, QList<databasefield*> fields) : m_nam
     s_databasefield_constraint_primary_key("databasefield_constraint_primary_key"),
     s_databasefield_constraint_foreign_key("databasefield_constraint_foreign_key")
     {
+    //qDebug() << __FILE__ << __FUNCTION__ << __LINE__;
     m_vocableDatabase = QSqlDatabase::database("vocableDatabase");
     if(!m_vocableDatabase.isValid()){
         qDebug() << "No valid database connection!";

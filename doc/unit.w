@@ -38,15 +38,29 @@ target_link_libraries(unittests PUBLIC ${QT_LIBS} ${LIBS} Mocxx)
 \cprotect\subsection{\verb#main.cpp#}
 @o ../src/unittests/main.cpp -d
 @{
-#define CATCH_CONFIG_MAIN
+#define CATCH_CONFIG_RUNNER
 #include "catch.hpp"
 
 #include <mocxx/Mocxx.hpp>
 #include <QCoreApplication>
 #include "qdebug.h"
-#include "settings.h"
 
 using namespace mocxx;
+
+int main(int argc, char* argv[])
+{
+  QCoreApplication app(argc,argv);
+  const int result = Catch::Session().run(argc, argv);
+  return result;
+}
+@}
+
+\section{Test cases}
+
+\subsection{Unittest example}
+@o ../src/unittests/main.cpp -d
+@{
+#include "settings.h"
 
 TEST_CASE("Unittest example","[settings]")
 {
@@ -62,3 +76,36 @@ TEST_CASE("Unittest example","[settings]")
 }
 @}
 
+\subsection{Grammarprovider network functions}
+@o ../src/unittests/main.cpp -d
+@{
+#include <QUrl>
+#include <QNetworkAccessManager>
+#include <QCoreApplication>
+#include "grammarprovider.h"
+
+TEST_CASE("Grammarprovider network functions","[grammarprovider]")
+{
+  Mocxx moc;
+  
+  INFO("Register singletons");
+  @<Register singleton @'Settings@' class @'settings@' version @'1@' @'0@' @>
+  @<Register singleton @'Database@' class @'database@' version @'1@' @'0@' @>
+  @<Register singleton @'LevenshteinDistance@' class @'levenshteindistance@' version @'1@' @'0@' @>
+
+  INFO("grammarprovider constructor");
+  QQmlEngine qe_test;
+  grammarprovider gp_test(&qe_test);
+
+  INFO("sections");
+  SECTION("Repeat last network request")
+  {
+    REQUIRE(gp_test.m_last_request_url == QUrl());
+    moc.ReplaceMember([](QNetworkAccessManager* foo, const QNetworkRequest& bar) -> QNetworkReply* { qDebug() << "Hello replacement function"; return nullptr; }, &QNetworkAccessManager::get);
+    gp_test.requestNetworkReply("coleitra.org");
+    REQUIRE(gp_test.m_last_request_url == QUrl("coleitra.org"));
+    moc.Restore(&QNetworkAccessManager::get);
+    gp_test.requestNetworkReply("coleitra.org");
+  }
+}
+@}

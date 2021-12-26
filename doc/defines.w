@@ -63,5 +63,16 @@ literate={ä}{{\"a}}1 {ö}{{\"o}}1 {ü}{{\"u}}1 {é}{{\'e}}1 {—}{{-}}1,
 \newcommand\codeqml{\lstset{language=QML,breaklines=true}}
 \newcommand\codeqrc{\lstset{language=XML,breaklines=true}}
 \newcommand\codecmake{\lstset{language=CMake,breaklines=true}}
+
+\newcounter{todoremovecounter}
+\newcommand{\todoremove}[1]{\stepcounter{todoremovecounter}\todo[color=red!40]{Remove \thetodoremovecounter: #1}}
+\newcounter{todorefactorcounter}
+\newcommand{\todorefactor}[1]{\stepcounter{todorefactorcounter}\todo[color=yellow!40]{Refactor \thetodorefactorcounter: #1}}
+\newcounter{tododocumentcounter}
+\newcommand{\tododocument}[1]{\stepcounter{tododocumentcounter}\todo[color=green!40]{Document \thetododocumentcounter: #1}}
+
+% This is to fix positioning of todo comments on the left margin:
+\setlength{\marginparwidth}{2.7cm}
+
 \setcounter{secnumdepth}{5}
 \setcounter{tocdepth}{5}

@@ -150,11 +150,12 @@ QList<levenshteindistance::compoundpart> levenshteindistance::stringdivision(QLi
                 divisionsatpart = divisions.at(part);
             else
                 divisionsatpart = stringsize - 1;
-            if(part<current_ndiv)
-                if(min_levstd_form==0)
-                    current_testdivision.push_back({divisionsatpart, min_id, divisionstring.at(0).isUpper(), ""});
-                else
-                    current_testdivision.push_back({divisionsatpart, min_id, divisionstring.at(0).isUpper(), divisionstring});
+            if(part<current_ndiv){
+              if(min_levstd_form==0)
+                current_testdivision.push_back({divisionsatpart, min_id, divisionstring.at(0).isUpper(), ""});
+              else
+                current_testdivision.push_back({divisionsatpart, min_id, divisionstring.at(0).isUpper(), divisionstring});
+            }
             levstd_sum += min_levstd_form;
             part++;
         }

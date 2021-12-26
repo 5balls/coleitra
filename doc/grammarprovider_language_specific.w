@@ -32,6 +32,7 @@ void grammarprovider::fi_requirements(QObject* caller, int fi_id){
 @O ../src/grammarprovider.cpp -d
 @{
 QList<QPair<QString,int> > grammarprovider::fi_compound_parser(QObject* caller, int fi_id, int lexeme_id, QList<int> compound_lexemes){
+  return QList<QPair<QString,int> >();
 }
 @}
 

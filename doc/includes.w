@@ -18,11 +18,12 @@
 \documentclass[a4paper]{book}
 \usepackage{listings}
 \usepackage{imakeidx}
-\usepackage[margin=2cm]{geometry}
+\usepackage[margin=3cm]{geometry}
 \usepackage[nottoc]{tocbibind}
 \usepackage{longtable}
 \usepackage{cprotect}
 \usepackage{verbatim}
 \usepackage{pgf-umlsd}
+\usepackage[textsize=tiny, textwidth=2.7cm, colorinlistoftodos]{todonotes}
 \usepackage[colorlinks=true]{hyperref}
 \makeindex

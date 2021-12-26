@@ -28,7 +28,8 @@ train.h
 edit.h
 grammarprovider.h
 databaseedit.h
-levenshteindistance.h @}
+levenshteindistance.h
+networkscheduler.h @}
 
 \subsection{C++ files}
 @d C++ files without main
@@ -45,6 +46,7 @@ levenshteindistance.h @}
 @1grammarprovider.cpp 
 @1databaseedit.cpp
 @1levenshteindistance.cpp
+@1networkscheduler.cpp
 @1levmar-2.6/lm.c
 @1levmar-2.6/Axb.c
 @1levmar-2.6/misc.c

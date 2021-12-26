@@ -47,6 +47,8 @@
 
 @i grammarprovider.w
 
+@i networkscheduler.w
+
 @i gui.w
 
 @i levenshteindistance.w
@@ -65,6 +67,8 @@
 
 \section{User identifiers}
 @u
+
+\todototoc\listoftodos
 
 \cleardoublepage\printindex
 \end{appendix}

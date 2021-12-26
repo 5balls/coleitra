@@ -524,12 +524,16 @@ int edit::lookupFormLexeme(int language, int lexemeid, QString string, QList<QLi
                 lexemes = &(m_current_translation->lexemes);
                 break;
         }
-        foreach(const lexeme& m_lexeme, *lexemes)
-            if(m_lexeme.id == lexemeid)
-                foreach(const form& m_form, m_lexeme.forms)
-                    if(m_form.string == string)
+        foreach(const lexeme& m_lexeme, *lexemes){
+            if(m_lexeme.id == lexemeid){
+                foreach(const form& m_form, m_lexeme.forms){
+                    if(m_form.string == string){
                         if((m_form.grammarform == grammarid) || (grammarid == 0))
                             return m_form.id;
+                    }
+                }
+            }
+        }
     }
     QList<int> formids = m_database->searchForms(string,true);
     foreach(int formid, formids){
@@ -689,7 +693,7 @@ void edit::addLexemeHeuristically(QObject* caller, int languageid, QString lexem
                 QMetaObject::Connection cpsu_con;
                 cpsu_con = connect(this, &edit::currentPrettyStringUpdated,
                         [&](QObject* caller){
-                            if(caller = &waitloop){
+                            if(caller == &waitloop){
                                 disconnect(cpsu_con);
                                 waitloop.quit();
                             }
@@ -1039,6 +1043,8 @@ void edit::saveToDatabase(void){
                             punctuationmarkid = currentSentencePart.id;
                             if(punctuationmarkid < 0)
                                 qDebug() << "Unexpected negative punctuation mark id!";
+                            break;
+                        default:
                             break;
                     }
                     //qDebug() << "saveSentencePart" << currentSentence.newid << spart << currentSentencePart.capitalized << formid << compoundformid << grammarformid << punctuationmarkid;
