@@ -47,10 +47,12 @@ private:
     QNetworkReply* m_networkreply;
     QNetworkAccessManager* m_manager;
     QUrl m_last_request_url;
-    QMetaObject::Connection m_tmp_connection;
     QString ms_last_network_answer;
     std::function<void(QString)>  m_last_connected_slot;
+    QMetaObject::Connection m_tmp_error_connection;
 signals:
+    void processingStart(void);
+    void replyError(QNetworkReply::NetworkError error);
     void processingStop(void);
 @<End of class and header @>
 @}
@@ -149,11 +151,18 @@ networkscheduler::networkRequestStatus networkscheduler::checkReplyAndRetryIfNec
     qDebug() << "Could read reply as" << s_reply;
     retrycount = 0;
     m_manager->setTransferTimeout(1000);
+
+#if QT_VERSION >= 0x051500
+    disconnect(m_tmp_error_connection);
+ #endif
     return REQUEST_SUCCESFUL;
 giveup:
     qDebug() << "Tried " + QString::number(retrycount) + " times, giving up with error" << reply->error() << "...";
     retrycount = 0;
     m_manager->setTransferTimeout(1000);
+#if QT_VERSION >= 0x051500
+    disconnect(m_tmp_error_connection);
+ #endif
     return PERMANENT_NETWORK_ERROR;
 }
 @}
@@ -168,7 +177,12 @@ QNetworkReply* networkscheduler::requestNetworkReply(QString url, std::function<
     qDebug() << QTime::currentTime().toString() << "Request" << m_last_request_url.toString();
     QNetworkRequest request(m_last_request_url);
     request.setRawHeader("User-Agent", "Coleitra/0.1 (https://coleitra.org; fpesth@@gmx.de)");
-    return m_manager->get(request);
+    QNetworkReply* reply = m_manager->get(request);
+
+#if QT_VERSION >= 0x051500
+    m_tmp_error_connection = connect(reply, &QNetworkReply::errorOccurred, this, &networkscheduler::replyError);
+ #endif
+    return reply;
 }
 @}
 

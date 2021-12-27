@@ -140,7 +140,6 @@ beginning until unlocking the blocking wait}}
 @O ../src/grammarprovider.h -d
 @{
 @<Start of @'GRAMMARPROVIDER@' header@>
-#include <QNetworkReply>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
@@ -253,7 +252,6 @@ private slots:
     void getWiktionarySections();
     void getWiktionarySection(QString reply);
     void getWiktionaryTemplate(QString reply);
-    void networkReplyErrorOccurred(QNetworkReply::NetworkError code);
     templatearguments parseTemplateArguments(QString templateString);
     void parseMediawikiTableToPlainText(QString wikitext, QList<grammarprovider::tablecell>& table);
     void parse_compoundform(QString reply);
@@ -285,7 +283,6 @@ signals:
     void grammarInfoComplete(QObject* caller, bool silent);
     //void grammarobtained(QObject* caller, QStringList expressions, QList<QList<QList<QString> > > grammarexpressions);
 public:
-    QMetaObject::Connection m_tmp_error_connection;
 private:
     int m_language;
     bool m_silent;
@@ -316,7 +313,6 @@ private:
         QString l_word;
         QMetaObject::Connection l_tmp_connection;
         QMetaObject::Connection l_tmp_error_connection;
-        QNetworkReply* l_networkreply;
         QObject* l_caller;
         templatearguments l_currentarguments;
         QList<QString> l_current_compoundforms;
@@ -327,7 +323,6 @@ private:
             l_busy(parent->m_busy),
             l_word(parent->m_word),
             l_found_compoundform(parent->m_found_compoundform),
-            l_tmp_error_connection(parent->m_tmp_error_connection),
             l_caller(parent->m_caller),
             l_currentarguments(parent->m_currentarguments),
             l_current_compoundforms(parent->m_current_compoundforms){
@@ -338,7 +333,6 @@ private:
             l_parent->m_busy = l_busy;
             l_parent->m_word = l_word;
             l_parent->m_found_compoundform = l_found_compoundform;
-            l_parent->m_tmp_error_connection = l_tmp_error_connection;
             l_parent->m_caller = l_caller;
             l_parent->m_currentarguments = l_currentarguments;
             l_parent->m_current_compoundforms = l_current_compoundforms;
@@ -500,17 +494,7 @@ void grammarprovider::getWiktionarySections(){
     qDebug() << "---- getWiktionarySections number of calls" << numberofcalls++;
     //qDebug() << "getWiktionarySections enter";
     emit processingStart("Querying en.wiktionary for word \"" + m_word + "\"...");
-    QNetworkReply *reply = m_networkscheduler->requestNetworkReply(s_baseurl + "action=parse&page=" + m_word + "&prop=sections&format=json", std::bind(&grammarprovider::getWiktionarySection,this,std::placeholders::_1));
-
-#if QT_VERSION >= 0x051500
-    m_tmp_error_connection = connect(reply, &QNetworkReply::errorOccurred, this,
-                [reply](QNetworkReply::NetworkError) {
-                m_busy = false;
-                emit processingStop();
-                emit networkError(m_caller, m_silent);
-                qDebug() << "Error " << reply->errorString(); 
-            });
-#endif
+    m_networkscheduler->requestNetworkReply(s_baseurl + "action=parse&page=" + m_word + "&prop=sections&format=json", std::bind(&grammarprovider::getWiktionarySection,this,std::placeholders::_1));
 
     //qDebug() << "getWiktionarySections exit";
 }
@@ -587,7 +571,7 @@ void grammarprovider::getWiktionarySection(QString s_reply){
                                 }
                             });
                     best_bet_for_section = j_section["index"].toString().toInt();
-                    QNetworkReply *reply = m_networkscheduler->requestNetworkReply(s_baseurl + "action=parse&page=" + m_word + "&section=" + QString::number(best_bet_for_section) + "&prop=wikitext&format=json", std::bind(&grammarprovider::getWiktionaryTemplate,this,std::placeholders::_1));
+                    m_networkscheduler->requestNetworkReply(s_baseurl + "action=parse&page=" + m_word + "&section=" + QString::number(best_bet_for_section) + "&prop=wikitext&format=json", std::bind(&grammarprovider::getWiktionaryTemplate,this,std::placeholders::_1));
                     qDebug() << "Blocking waitloop for" << m_word << "...";
                     waitloop.exec();
                     qDebug() << "... blocking waitloop for" << m_word << "finished.";
@@ -613,16 +597,7 @@ void grammarprovider::getWiktionarySection(QString s_reply){
     finished:
     if(found_language){
         //qDebug() << "Found language section \"" + language + "\" for word \"" + m_word + "\"";
-        QNetworkReply *reply = m_networkscheduler->requestNetworkReply(s_baseurl + "action=parse&page=" + m_word + "&section=" + QString::number(best_bet_for_section) + "&prop=wikitext&format=json", std::bind(&grammarprovider::getWiktionaryTemplate,this,std::placeholders::_1));
-#if QT_VERSION >= 0x051500
-        connect(reply, &QNetworkReply::errorOccurred, this,
-                [reply](QNetworkReply::NetworkError) {
-                emit processingStop();
-                emit networkError(m_caller, m_silent);
-                qDebug() << "Error " << reply->errorString(); 
-            });
-#endif
-
+        m_networkscheduler->requestNetworkReply(s_baseurl + "action=parse&page=" + m_word + "&section=" + QString::number(best_bet_for_section) + "&prop=wikitext&format=json", std::bind(&grammarprovider::getWiktionaryTemplate,this,std::placeholders::_1));
     }
     else{
         qDebug() << "Could not find language section \"" + language + "\" for word \"" + m_word + "\"";
@@ -632,15 +607,6 @@ void grammarprovider::getWiktionarySection(QString s_reply){
         return;
     }
     //qDebug() << "getWiktionarySection exit";
-}
-@}
-
-\cprotect\subsection{\verb#networkReplyErrorOccurred#}
-@O ../src/grammarprovider.cpp -d
-@{
-void grammarprovider::networkReplyErrorOccurred(QNetworkReply::NetworkError code){
-    emit processingStop();
-    //qDebug() << "Error occured in network request in grammar provider:" << QIODevice::errorString();
 }
 @}
 
@@ -669,7 +635,6 @@ grammarprovider::templatearguments grammarprovider::parseTemplateArguments(QStri
 @}
 
 \cprotect\subsection{\verb#getWiktionaryTemplate#}
-\todorefactor{Replace QNetworkReply with QString}
 @O ../src/grammarprovider.cpp -d
 @{
 void grammarprovider::getWiktionaryTemplate(QString s_reply){
@@ -1111,7 +1076,6 @@ void grammarprovider::getNextSentencePart(QObject* caller){
 @}
 
 \cprotect\subsection{\verb#getPlainTextTableFromReply#}
-\todorefactor{Replace QNetworkReply with QString}
 @O ../src/grammarprovider.cpp -d
 @{
 void grammarprovider::getPlainTextTableFromReply(QString s_reply, QList<grammarprovider::tablecell>& parsedTable){
@@ -1161,7 +1125,6 @@ QList<grammarprovider::compoundPart> grammarprovider::getGrammarCompoundFormPart
 @}
 
 \cprotect\subsection{\verb#parse_compoundform#}
-\todorefactor{Replace QNetworkReply with QString}
 @O ../src/grammarprovider.cpp -d
 @{
 void grammarprovider::parse_compoundform(QString s_reply){
