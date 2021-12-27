@@ -140,8 +140,6 @@ beginning until unlocking the blocking wait}}
 @O ../src/grammarprovider.h -d
 @{
 @<Start of @'GRAMMARPROVIDER@' header@>
-#include <QNetworkAccessManager>
-#include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -158,6 +156,8 @@ beginning until unlocking the blocking wait}}
 #include "settings.h"
 #include "database.h"
 #include "levenshteindistance.h"
+#include "networkscheduler.h"
+
 @<Start of class @'grammarprovider@'@>
     Q_PROPERTY(int language MEMBER m_language)
     Q_PROPERTY(QString word MEMBER m_word)
@@ -181,11 +181,6 @@ public:
         LOOKUPFORM_LEXEME, // Match lexeme to current lexeme when looking up form
         ADDANDUSEFORM,
         ADDANDIGNOREFORM,
-    };
-    enum networkRequestStatus {
-        REQUEST_SUCCESFUL,
-        RETRYING_REQUEST,
-        PERMANENT_NETWORK_ERROR,
     };
     struct lexemePartProcess {
         lexemePartProcess(lexemePartProcessInstruction y_instruction):
@@ -290,23 +285,14 @@ signals:
     void grammarInfoComplete(QObject* caller, bool silent);
     //void grammarobtained(QObject* caller, QStringList expressions, QList<QList<QList<QString> > > grammarexpressions);
 public:
-    QNetworkReply* requestNetworkReply(QString url, std::function<void(QString)> slot);
-    QNetworkReply* repeatLastNetworkRequest();
-    void processNetworkAnswer(QNetworkReply* reply);
-    networkRequestStatus checkReplyAndRetryIfNecessary(QNetworkReply* reply, QString& s_reply);
-    QUrl m_last_request_url;
-    QNetworkReply* m_networkreply;
-    QMetaObject::Connection m_tmp_connection;
     QMetaObject::Connection m_tmp_error_connection;
-    QString ms_last_network_answer;
-    QMap<QString, void (grammarprovider::*)(QString)> m_parser_map; 
-    std::function<void(QString)>  m_last_connected_slot;
 private:
     int m_language;
     bool m_silent;
     bool m_busy;
     bool m_found_compoundform;
     QList<QString> m_current_compoundforms;
+    QMap<QString, void (grammarprovider::*)(QString)> m_parser_map; 
     QString m_word;
     QString s_baseurl;
     QNetworkAccessManager* m_manager;
@@ -314,6 +300,7 @@ private:
     settings* m_settings;
     database* m_database;
     levenshteindistance* m_levenshteindistance;
+    networkscheduler* m_networkscheduler;
     QObject* m_caller;
     templatearguments m_currentarguments;
     QList<grammarform> m_grammarforms;
@@ -340,9 +327,7 @@ private:
             l_busy(parent->m_busy),
             l_word(parent->m_word),
             l_found_compoundform(parent->m_found_compoundform),
-            l_tmp_connection(parent->m_tmp_connection),
             l_tmp_error_connection(parent->m_tmp_error_connection),
-            l_networkreply(parent->m_networkreply),
             l_caller(parent->m_caller),
             l_currentarguments(parent->m_currentarguments),
             l_current_compoundforms(parent->m_current_compoundforms){
@@ -353,9 +338,7 @@ private:
             l_parent->m_busy = l_busy;
             l_parent->m_word = l_word;
             l_parent->m_found_compoundform = l_found_compoundform;
-            l_parent->m_tmp_connection = l_tmp_connection;
             l_parent->m_tmp_error_connection = l_tmp_error_connection;
-            l_parent->m_networkreply = l_networkreply;
             l_parent->m_caller = l_caller;
             l_parent->m_currentarguments = l_currentarguments;
             l_parent->m_current_compoundforms = l_current_compoundforms;
@@ -378,14 +361,12 @@ private:
 @{
 grammarprovider::grammarprovider(QObject *parent) : QObject(parent), m_busy(false)
 {
-    m_manager = new QNetworkAccessManager(this);
-    m_manager->setTransferTimeout(1000);
-    connect(m_manager, &QNetworkAccessManager::finished, this, &grammarprovider::processNetworkAnswer);
     s_baseurl = "https://en.wiktionary.org/w/api.php?";
     QQmlEngine* engine = qobject_cast<QQmlEngine*>(parent);
     m_settings = engine->singletonInstance<settings*>(qmlTypeId("SettingsLib", 1, 0, "Settings"));
     m_database = engine->singletonInstance<database*>(qmlTypeId("DatabaseLib", 1, 0, "Database"));
     m_levenshteindistance = engine->singletonInstance<levenshteindistance*>(qmlTypeId("LevenshteinDistanceLib", 1, 0, "LevenshteinDistance"));
+    m_networkscheduler = engine->singletonInstance<networkscheduler*>(qmlTypeId("NetworkSchedulerLib", 1, 0, "NetworkScheduler"));
     m_parsesections.push_back("Conjugation");
     m_parsesections.push_back("Declension");
     int fi_id = m_database->idfromlanguagename("Finnish");
@@ -479,8 +460,6 @@ grammarprovider::grammarprovider(QObject *parent) : QObject(parent), m_busy(fals
 @O ../src/grammarprovider.cpp -d
 @{
 grammarprovider::~grammarprovider() {
-    disconnect(m_manager, &QNetworkAccessManager::finished, this, &grammarprovider::processNetworkAnswer);
-    delete m_manager;
 }
 @}
 
@@ -509,35 +488,9 @@ void grammarprovider::getGrammarInfoForWord(QObject* caller, int languageid, QSt
 }
 @}
 
-
-\cprotect\subsection{\verb#requestNetworkReply#}
-\todoremove{requestNetworkReply from grammarprovider}
-@O ../src/grammarprovider.cpp -d
-@{
-QNetworkReply* grammarprovider::requestNetworkReply(QString url, std::function<void(QString)> slot){
-    m_last_connected_slot = slot;
-    m_last_request_url = QUrl(url);
-    qDebug() << QTime::currentTime().toString() << "Request" << m_last_request_url.toString();
-    QNetworkRequest request(m_last_request_url);
-    request.setRawHeader("User-Agent", "Coleitra/0.1 (https://coleitra.org; fpesth@@gmx.de)");
-    return m_manager->get(request);
-}
-@}
-
-\cprotect\subsection{\verb#repeatLastNetworkRequest#}
-@O ../src/grammarprovider.cpp -d
-@{
-QNetworkReply* grammarprovider::repeatLastNetworkRequest(){
-    qDebug() << QTime::currentTime().toString() << "Repeated request" << m_last_request_url.toString();
-    QNetworkRequest request(m_last_request_url);
-    request.setRawHeader("User-Agent", "Coleitra/0.1 (https://coleitra.org; fpesth@@gmx.de)");
-    return m_manager->get(request);
-}
-@}
-
 \cprotect\subsection{\verb#getWiktionarySections#}
 
-\todorefactor{Replace QNetworkReply with QString}\tododocument{Error handling for network requests}
+\tododocument{Error handling for network requests}
 
 \codecpp
 @O ../src/grammarprovider.cpp -d
@@ -547,7 +500,7 @@ void grammarprovider::getWiktionarySections(){
     qDebug() << "---- getWiktionarySections number of calls" << numberofcalls++;
     //qDebug() << "getWiktionarySections enter";
     emit processingStart("Querying en.wiktionary for word \"" + m_word + "\"...");
-    QNetworkReply *reply = requestNetworkReply(s_baseurl + "action=parse&page=" + m_word + "&prop=sections&format=json", std::bind(&grammarprovider::getWiktionarySection,this,std::placeholders::_1));
+    QNetworkReply *reply = m_networkscheduler->requestNetworkReply(s_baseurl + "action=parse&page=" + m_word + "&prop=sections&format=json", std::bind(&grammarprovider::getWiktionarySection,this,std::placeholders::_1));
 
 #if QT_VERSION >= 0x051500
     m_tmp_error_connection = connect(reply, &QNetworkReply::errorOccurred, this,
@@ -560,86 +513,6 @@ void grammarprovider::getWiktionarySections(){
 #endif
 
     //qDebug() << "getWiktionarySections exit";
-}
-@}
-
-\cprotect\subsection{\verb#processNetworkAnswer#}
-\todoremove{processNetworkAnswer from grammarprovider}
-@O ../src/grammarprovider.cpp -d
-@{
-void grammarprovider::processNetworkAnswer(QNetworkReply* reply){
-    reply->deleteLater();
-    ms_last_network_answer.clear();
-    switch(checkReplyAndRetryIfNecessary(reply,ms_last_network_answer)){
-        case REQUEST_SUCCESFUL:
-            break;
-        case RETRYING_REQUEST:
-            return;
-        case PERMANENT_NETWORK_ERROR:
-            m_busy = false;
-            emit processingStop();
-            emit networkError(m_caller, m_silent);
-            return;
-    }
-    m_last_connected_slot(ms_last_network_answer);
-}
-@}
-
-\cprotect\subsection{\verb#checkReplyAndRetryIfNecessary#}
-\todoremove{checkReplyAndRetryIfNecessary from grammarprovider}
-@O ../src/grammarprovider.cpp -d
-@{
-grammarprovider::networkRequestStatus grammarprovider::checkReplyAndRetryIfNecessary(QNetworkReply* reply, QString& s_reply){
-    static int retrycount = 0;
-    const int max_retries = 5;
-    if(!reply->isOpen()){
-        qDebug() << "Closed reply, error state " << reply->error();
-        retrycount++;
-        if(retrycount < max_retries){
-            qDebug() <<  "Closed reply, retrying" << retrycount;
-            m_manager->setTransferTimeout(1000+1000*retrycount);
-            repeatLastNetworkRequest();
-            return RETRYING_REQUEST;
-        }
-        else goto giveup;    
-    }
-    if(reply->error()!=QNetworkReply::NoError){
-        qDebug() << "Network error " << reply->error();
-        retrycount++;
-        if(retrycount < max_retries){
-            qDebug() << "Network error, retrying" << retrycount;
-            m_manager->setTransferTimeout(1000+1000*retrycount);
-            repeatLastNetworkRequest();
-            return RETRYING_REQUEST;
-        }
-        else goto giveup;
-    }
-    else{
-        qDebug() << "No network error";
-    }
-    if(reply->isReadable()){
-        s_reply = QString(reply->readAll());
-    }
-    else {
-        qDebug() << "Empty reply with error" << reply->error();
-        retrycount++;
-        if(retrycount < max_retries){
-            qDebug() << "Empty reply, retrying" << retrycount;
-            m_manager->setTransferTimeout(1000+1000*retrycount);
-            repeatLastNetworkRequest();
-            return RETRYING_REQUEST;
-        }
-        else goto giveup;
-    }
-    qDebug() << "Could read reply as" << s_reply;
-    retrycount = 0;
-    m_manager->setTransferTimeout(1000);
-    return REQUEST_SUCCESFUL;
-giveup:
-    qDebug() << "Tried " + QString::number(retrycount) + " times, giving up with error" << reply->error() << "...";
-    retrycount = 0;
-    m_manager->setTransferTimeout(1000);
-    return PERMANENT_NETWORK_ERROR;
 }
 @}
 
@@ -714,7 +587,7 @@ void grammarprovider::getWiktionarySection(QString s_reply){
                                 }
                             });
                     best_bet_for_section = j_section["index"].toString().toInt();
-                    QNetworkReply *reply = requestNetworkReply(s_baseurl + "action=parse&page=" + m_word + "&section=" + QString::number(best_bet_for_section) + "&prop=wikitext&format=json", std::bind(&grammarprovider::getWiktionaryTemplate,this,std::placeholders::_1));
+                    QNetworkReply *reply = m_networkscheduler->requestNetworkReply(s_baseurl + "action=parse&page=" + m_word + "&section=" + QString::number(best_bet_for_section) + "&prop=wikitext&format=json", std::bind(&grammarprovider::getWiktionaryTemplate,this,std::placeholders::_1));
                     qDebug() << "Blocking waitloop for" << m_word << "...";
                     waitloop.exec();
                     qDebug() << "... blocking waitloop for" << m_word << "finished.";
@@ -740,7 +613,7 @@ void grammarprovider::getWiktionarySection(QString s_reply){
     finished:
     if(found_language){
         //qDebug() << "Found language section \"" + language + "\" for word \"" + m_word + "\"";
-        QNetworkReply *reply = requestNetworkReply(s_baseurl + "action=parse&page=" + m_word + "&section=" + QString::number(best_bet_for_section) + "&prop=wikitext&format=json", std::bind(&grammarprovider::getWiktionaryTemplate,this,std::placeholders::_1));
+        QNetworkReply *reply = m_networkscheduler->requestNetworkReply(s_baseurl + "action=parse&page=" + m_word + "&section=" + QString::number(best_bet_for_section) + "&prop=wikitext&format=json", std::bind(&grammarprovider::getWiktionaryTemplate,this,std::placeholders::_1));
 #if QT_VERSION >= 0x051500
         connect(reply, &QNetworkReply::errorOccurred, this,
                 [reply](QNetworkReply::NetworkError) {
@@ -857,7 +730,7 @@ void grammarprovider::getWiktionaryTemplate(QString s_reply){
                 m_currentarguments = parseTemplateArguments(wt_finished);
                 emit processingStop();
                 emit processingStart("Parsing wiktionary data...");
-                requestNetworkReply(s_baseurl + "action=expandtemplates&text=" + QUrl::toPercentEncoding(wt_finished) + "&title=" + m_word + "&prop=wikitext&format=json", std::bind(parser.value(),this,std::placeholders::_1));
+                m_networkscheduler->requestNetworkReply(s_baseurl + "action=expandtemplates&text=" + QUrl::toPercentEncoding(wt_finished) + "&title=" + m_word + "&prop=wikitext&format=json", std::bind(parser.value(),this,std::placeholders::_1));
                 return;
             }
         }
