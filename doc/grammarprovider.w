@@ -256,23 +256,23 @@ public slots:
     Q_INVOKABLE QList<grammarprovider::compoundPart> getGrammarCompoundFormParts(QString compoundword, QList<QString> compoundstrings, int id_language);
 private slots:
     void getWiktionarySections();
-    void getWiktionarySection(QNetworkReply* reply);
-    void getWiktionaryTemplate(QNetworkReply* reply);
+    void getWiktionarySection(QString reply);
+    void getWiktionaryTemplate(QString reply);
     void networkReplyErrorOccurred(QNetworkReply::NetworkError code);
     templatearguments parseTemplateArguments(QString templateString);
     void parseMediawikiTableToPlainText(QString wikitext, QList<grammarprovider::tablecell>& table);
-    void parse_compoundform(QNetworkReply* reply);
+    void parse_compoundform(QString reply);
     QList<QPair<QString,int> > fi_compound_parser(QObject* caller, int fi_id, int lexeme_id, QList<int> compound_lexemes);
     void fi_requirements(QObject* caller, int fi_id);
-    void parse_fi_verbs(QNetworkReply* reply);
-    void parse_fi_nominals(QNetworkReply* reply);
+    void parse_fi_verbs(QString reply);
+    void parse_fi_nominals(QString reply);
     void de_requirements(QObject* caller, int de_id);
-    void parse_de_noun_n(QNetworkReply* reply);
-    void parse_de_noun_m(QNetworkReply* reply);
-    void parse_de_noun_f(QNetworkReply* reply);
-    void parse_de_verb(QNetworkReply* reply);
+    void parse_de_noun_n(QString reply);
+    void parse_de_noun_m(QString reply);
+    void parse_de_noun_f(QString reply);
+    void parse_de_verb(QString reply);
     void process_grammar(QList<grammarform> grammarforms, QList<tablecell> parsedTable, QList<QList<QString> > additional_grammarforms = {});
-    void getPlainTextTableFromReply(QNetworkReply* reply, QList<grammarprovider::tablecell>& parsedTable);
+    void getPlainTextTableFromReply(QString reply, QList<grammarprovider::tablecell>& parsedTable);
 signals:
     void processingStart(const QString& waitingstring);
     void processingStop(void);
@@ -290,7 +290,7 @@ signals:
     void grammarInfoComplete(QObject* caller, bool silent);
     //void grammarobtained(QObject* caller, QStringList expressions, QList<QList<QList<QString> > > grammarexpressions);
 public:
-    QNetworkReply* requestNetworkReply(QString url, std::function<void(QNetworkReply*)> slot);
+    QNetworkReply* requestNetworkReply(QString url, std::function<void(QString)> slot);
     QNetworkReply* repeatLastNetworkRequest();
     void processNetworkAnswer(QNetworkReply* reply);
     networkRequestStatus checkReplyAndRetryIfNecessary(QNetworkReply* reply, QString& s_reply);
@@ -299,8 +299,8 @@ public:
     QMetaObject::Connection m_tmp_connection;
     QMetaObject::Connection m_tmp_error_connection;
     QString ms_last_network_answer;
-    QMap<QString, void (grammarprovider::*)(QNetworkReply*)> m_parser_map; 
-    std::function<void(QNetworkReply*)>  m_last_connected_slot;
+    QMap<QString, void (grammarprovider::*)(QString)> m_parser_map; 
+    std::function<void(QString)>  m_last_connected_slot;
 private:
     int m_language;
     bool m_silent;
@@ -514,7 +514,7 @@ void grammarprovider::getGrammarInfoForWord(QObject* caller, int languageid, QSt
 \todoremove{requestNetworkReply from grammarprovider}
 @O ../src/grammarprovider.cpp -d
 @{
-QNetworkReply* grammarprovider::requestNetworkReply(QString url, std::function<void(QNetworkReply*)> slot){
+QNetworkReply* grammarprovider::requestNetworkReply(QString url, std::function<void(QString)> slot){
     m_last_connected_slot = slot;
     m_last_request_url = QUrl(url);
     qDebug() << QTime::currentTime().toString() << "Request" << m_last_request_url.toString();
@@ -581,7 +581,7 @@ void grammarprovider::processNetworkAnswer(QNetworkReply* reply){
             emit networkError(m_caller, m_silent);
             return;
     }
-    m_last_connected_slot(reply);
+    m_last_connected_slot(ms_last_network_answer);
 }
 @}
 
@@ -646,10 +646,8 @@ giveup:
 \cprotect\subsection{\verb#getWiktionarySection#}
 @O ../src/grammarprovider.cpp -d
 @{
-void grammarprovider::getWiktionarySection(QNetworkReply* reply){
+void grammarprovider::getWiktionarySection(QString s_reply){
     //qDebug() << "getWiktionarySection enter";
-
-    QString s_reply = ms_last_network_answer;
         
     //qDebug() << s_reply;
 
@@ -801,8 +799,7 @@ grammarprovider::templatearguments grammarprovider::parseTemplateArguments(QStri
 \todorefactor{Replace QNetworkReply with QString}
 @O ../src/grammarprovider.cpp -d
 @{
-void grammarprovider::getWiktionaryTemplate(QNetworkReply* reply){
-    QString s_reply = ms_last_network_answer;   
+void grammarprovider::getWiktionaryTemplate(QString s_reply){
  
     QJsonDocument j_document = QJsonDocument::fromJson(s_reply.toUtf8());
     QString wikitemplate_text = j_document.object()["parse"].toObject()["wikitext"].toObject()["*"].toString();
@@ -844,7 +841,7 @@ void grammarprovider::getWiktionaryTemplate(QNetworkReply* reply){
             wt_opens.pop_back();
         }
     }
-    QMapIterator<QString, void (grammarprovider::*)(QNetworkReply*)> parser(m_parser_map); 
+    QMapIterator<QString, void (grammarprovider::*)(QString)> parser(m_parser_map); 
     while (parser.hasNext()) {
         parser.next();
         foreach(const QString& wt_finished, wt_finisheds){
@@ -1244,12 +1241,8 @@ void grammarprovider::getNextSentencePart(QObject* caller){
 \todorefactor{Replace QNetworkReply with QString}
 @O ../src/grammarprovider.cpp -d
 @{
-void grammarprovider::getPlainTextTableFromReply(QNetworkReply* reply, QList<grammarprovider::tablecell>& parsedTable){
-    QString s_reply = ms_last_network_answer;
-
-    QObject::disconnect(m_tmp_connection);
-    reply->deleteLater();
-
+void grammarprovider::getPlainTextTableFromReply(QString s_reply, QList<grammarprovider::tablecell>& parsedTable){
+    
     QJsonDocument j_document = QJsonDocument::fromJson(s_reply.toUtf8());
     QString wikitemplate_text = j_document.object()["expandtemplates"].toObject()["wikitext"].toString();
     parseMediawikiTableToPlainText(wikitemplate_text, parsedTable);
@@ -1298,7 +1291,7 @@ QList<grammarprovider::compoundPart> grammarprovider::getGrammarCompoundFormPart
 \todorefactor{Replace QNetworkReply with QString}
 @O ../src/grammarprovider.cpp -d
 @{
-void grammarprovider::parse_compoundform(QNetworkReply* reply){
+void grammarprovider::parse_compoundform(QString s_reply){
     qDebug() << "Got compound form";
     int argnumber=0;
     m_current_compoundforms.clear();
