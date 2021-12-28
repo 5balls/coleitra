@@ -136,7 +136,6 @@ beginning until unlocking the blocking wait}}
 \end{figure}
 
 \section{Interface}
-\todorefactor{Seperate class networkscheduler for network functionality in grammarprovider}
 @O ../src/grammarprovider.h -d
 @{
 @<Start of @'GRAMMARPROVIDER@' header@>
@@ -266,10 +265,11 @@ private slots:
     void parse_de_verb(QString reply);
     void process_grammar(QList<grammarform> grammarforms, QList<tablecell> parsedTable, QList<QList<QString> > additional_grammarforms = {});
     void getPlainTextTableFromReply(QString reply, QList<grammarprovider::tablecell>& parsedTable);
+    void processNetworkError(QString s_failure_reason);
 signals:
     void processingStart(const QString& waitingstring);
     void processingStop(void);
-    void networkError(QObject* caller, bool silent);
+    void networkError(QObject* caller, bool silent, QString s_failure_reason);
     void grammarInfoAvailable(QObject* caller, int numberOfObjects, bool silent);
     void grammarInfoNotAvailable(QObject* caller, bool silent);
     void formObtained(QObject* caller, QString form, QList<QList<QString> > grammarexpressions, bool silent, QList<QString> compoundforms);
@@ -361,6 +361,7 @@ grammarprovider::grammarprovider(QObject *parent) : QObject(parent), m_busy(fals
     m_database = engine->singletonInstance<database*>(qmlTypeId("DatabaseLib", 1, 0, "Database"));
     m_levenshteindistance = engine->singletonInstance<levenshteindistance*>(qmlTypeId("LevenshteinDistanceLib", 1, 0, "LevenshteinDistance"));
     m_networkscheduler = engine->singletonInstance<networkscheduler*>(qmlTypeId("NetworkSchedulerLib", 1, 0, "NetworkScheduler"));
+    connect(m_networkscheduler, &networkscheduler::requestFailed, this, &grammarprovider::processNetworkError);
     m_parsesections.push_back("Conjugation");
     m_parsesections.push_back("Declension");
     int fi_id = m_database->idfromlanguagename("Finnish");
@@ -1083,6 +1084,15 @@ void grammarprovider::getPlainTextTableFromReply(QString s_reply, QList<grammarp
     QJsonDocument j_document = QJsonDocument::fromJson(s_reply.toUtf8());
     QString wikitemplate_text = j_document.object()["expandtemplates"].toObject()["wikitext"].toString();
     parseMediawikiTableToPlainText(wikitemplate_text, parsedTable);
+}
+@}
+
+
+\cprotect\subsection{\verb#getPlainTextTableFromReply#}
+@O ../src/grammarprovider.cpp -d
+@{
+void grammarprovider::processNetworkError(QString s_failure_reason){
+    emit networkError(m_caller, m_silent, s_failure_reason);
 }
 @}
 

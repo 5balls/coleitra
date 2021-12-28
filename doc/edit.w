@@ -124,7 +124,7 @@ private:
     QList<scheduled_add> m_scheduled_adds;
     bool m_add_busy;
     void addScheduledLexemeHeuristically(void);
-    void networkErrorFromGrammarProvider(QObject* caller, bool silent);
+    void networkErrorFromGrammarProvider(QObject* caller, bool silent, QString s_failure_reason);
     struct context {
         edit* l_parent;
         QObject* l_caller;
@@ -767,12 +767,12 @@ void edit::addLexemeHeuristically(QObject* caller, int languageid, QString lexem
     }
 }
 
-void edit::networkErrorFromGrammarProvider(QObject* caller, bool silent){
+void edit::networkErrorFromGrammarProvider(QObject* caller, bool silent, QString s_failure_reason){
     //if(caller != m_caller) return;
     disconnect(m_grammarprovider,&grammarprovider::grammarInfoAvailable,this,&edit::grammarInfoAvailableFromGrammarProvider);
     disconnect(m_grammarprovider,&grammarprovider::grammarInfoNotAvailable,this,&edit::grammarInfoNotAvailableFromGrammarProvider);
     disconnect(m_grammarprovider,&grammarprovider::networkError, this, &edit::networkErrorFromGrammarProvider);
-    emit addLexemeHeuristicallyResult(m_caller, "<b>Warning:</b> Network error when trying to look up grammar information on en.wiktionary.org. Do we have internet access?");
+    emit addLexemeHeuristicallyResult(m_caller, "<b>Warning:</b> Network request failed with error \"" + s_failure_reason + "\" when trying to look up grammar information on en.wiktionary.org. Do we have internet access?");
     m_add_busy = false;
 }
 

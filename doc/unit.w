@@ -82,30 +82,23 @@ TEST_CASE("Unittest example","[settings]")
 #include <QUrl>
 #include <QNetworkAccessManager>
 #include <QCoreApplication>
-#include "grammarprovider.h"
+#include <QQmlEngine>
+#include "networkscheduler.h"
 
-TEST_CASE("Grammarprovider network functions","[grammarprovider]")
-{
-  Mocxx moc;
-  
-  INFO("Register singletons");
-  @<Register singleton @'Settings@' class @'settings@' version @'1@' @'0@' @>
-  @<Register singleton @'Database@' class @'database@' version @'1@' @'0@' @>
-  @<Register singleton @'LevenshteinDistance@' class @'levenshteindistance@' version @'1@' @'0@' @>
+TEST_CASE("Basic network functions","[networkscheduler]"){
+    Mocxx moc;
 
-  INFO("grammarprovider constructor");
-  QQmlEngine qe_test;
-  grammarprovider gp_test(&qe_test);
+    QQmlEngine qe_test;
+    networkscheduler net_test(&qe_test);
 
-  INFO("sections");
-  SECTION("Repeat last network request")
-  {
-    REQUIRE(gp_test.m_last_request_url == QUrl());
-    moc.ReplaceMember([](QNetworkAccessManager* foo, const QNetworkRequest& bar) -> QNetworkReply* { qDebug() << "Hello replacement function"; return nullptr; }, &QNetworkAccessManager::get);
-    gp_test.requestNetworkReply("coleitra.org");
-    REQUIRE(gp_test.m_last_request_url == QUrl("coleitra.org"));
-    moc.Restore(&QNetworkAccessManager::get);
-    gp_test.requestNetworkReply("coleitra.org");
-  }
+    SECTION("Repeat last network request"){
+        int i_numberOfNetworkRequests = 0;
+        moc.ReplaceMember([&](QNetworkAccessManager* foo, const QNetworkRequest& bar) -> QNetworkReply* {i_numberOfNetworkRequests++; return nullptr; }, &QNetworkAccessManager::get);
+        net_test.requestNetworkReply("coleitra.org",[](QString s_reply){
+                qDebug() << s_reply;
+                });
+        REQUIRE(i_numberOfNetworkRequests == 1);
+    }
 }
+
 @}

@@ -18,6 +18,7 @@
 \chapter{Network scheduler}
 This is a generic class for scheduling network requests.
 
+\section{Error handling}
 
 \section{Interface}
 @O ../src/networkscheduler.h -d
@@ -32,27 +33,29 @@ This is a generic class for scheduling network requests.
 public:
     explicit networkscheduler(QObject *parent = nullptr);
     ~networkscheduler(void);
+public slots:
+    QNetworkReply* requestNetworkReply(QString url, std::function<void(QString)> slot);
+private:
     enum networkRequestStatus {
         REQUEST_SUCCESFUL,
         RETRYING_REQUEST,
         PERMANENT_NETWORK_ERROR,
     };
-public slots:
-    QNetworkReply* requestNetworkReply(QString url, std::function<void(QString)> slot);
+    struct requestData {
+        std::function<void(QString)> f_callback;
+        QString s_answer;
+    };
+    QMap<QUrl, requestData> m_request_list;
+    QNetworkAccessManager* m_manager;
+    QMetaObject::Connection m_tmp_error_connection;
 private slots:
     void processNetworkAnswer(QNetworkReply* reply);
     networkRequestStatus checkReplyAndRetryIfNecessary(QNetworkReply* reply, QString& s_reply);
-    QNetworkReply* repeatLastNetworkRequest();
-private:
-    QNetworkReply* m_networkreply;
-    QNetworkAccessManager* m_manager;
-    QUrl m_last_request_url;
-    QString ms_last_network_answer;
-    std::function<void(QString)>  m_last_connected_slot;
-    QMetaObject::Connection m_tmp_error_connection;
+    QNetworkReply* repeatNetworkRequest(QUrl url);
 signals:
     void processingStart(void);
     void replyError(QNetworkReply::NetworkError error);
+    void requestFailed(QString s_reason);
     void processingStop(void);
 @<End of class and header @>
 @}
@@ -87,9 +90,9 @@ networkscheduler::~networkscheduler() {
 @O ../src/grammarprovider.cpp -d
 @{
 void networkscheduler::processNetworkAnswer(QNetworkReply* reply){
-    reply->deleteLater();
-    ms_last_network_answer.clear();
-    switch(checkReplyAndRetryIfNecessary(reply,ms_last_network_answer)){
+    QUrl url_request = reply->request().url();
+    QString ms_network_answer;
+    switch(checkReplyAndRetryIfNecessary(reply,ms_network_answer)){
         case REQUEST_SUCCESFUL:
             break;
         case RETRYING_REQUEST:
@@ -98,7 +101,9 @@ void networkscheduler::processNetworkAnswer(QNetworkReply* reply){
             emit processingStop();
             return;
     }
-    m_last_connected_slot(ms_last_network_answer);
+    m_request_list[url_request].s_answer = ms_network_answer;
+    emit processingStop();
+    (m_request_list[url_request].f_callback)(ms_network_answer);
 }
 @}
 
@@ -109,60 +114,103 @@ void networkscheduler::processNetworkAnswer(QNetworkReply* reply){
 networkscheduler::networkRequestStatus networkscheduler::checkReplyAndRetryIfNecessary(QNetworkReply* reply, QString& s_reply){
     static int retrycount = 0;
     const int max_retries = 5;
-    if(!reply->isOpen()){
-        qDebug() << "Closed reply, error state " << reply->error();
+    QString s_failure_reason;
+    if(reply->error() != QNetworkReply::NoError){
+        switch(reply->error()){
+            // Not possible but for compiler warning:
+            case QNetworkReply::NoError:
+            // We should give up in case of this errors:
+            case QNetworkReply::ConnectionRefusedError:
+            case QNetworkReply::OperationCanceledError:
+            case QNetworkReply::SslHandshakeFailedError:
+            case QNetworkReply::BackgroundRequestNotAllowedError:
+            case QNetworkReply::TooManyRedirectsError:
+            case QNetworkReply::InsecureRedirectError:
+            case QNetworkReply::ProxyConnectionRefusedError:
+            case QNetworkReply::ProxyAuthenticationRequiredError:
+            case QNetworkReply::ContentAccessDenied:
+            case QNetworkReply::ContentOperationNotPermittedError:
+            case QNetworkReply::ContentNotFoundError:
+            case QNetworkReply::AuthenticationRequiredError:
+            case QNetworkReply::ContentReSendError:
+            case QNetworkReply::ContentConflictError:
+            case QNetworkReply::ContentGoneError:
+            case QNetworkReply::OperationNotImplementedError:
+            case QNetworkReply::ProtocolUnknownError:
+            case QNetworkReply::ProtocolInvalidOperationError:
+            case QNetworkReply::ProtocolFailure:
+                s_failure_reason = "Network reply got error which lead to directly giving up: " + QVariant::fromValue(reply->error()).toString();
+                goto giveup;
+                break;
+            // In case of this errors it may be worth to try again:
+            case QNetworkReply::RemoteHostClosedError:
+            case QNetworkReply::HostNotFoundError:
+            case QNetworkReply::TimeoutError:
+            case QNetworkReply::TemporaryNetworkFailureError:
+            case QNetworkReply::NetworkSessionFailedError:
+            case QNetworkReply::ProxyConnectionClosedError:
+            case QNetworkReply::ProxyNotFoundError:
+            case QNetworkReply::ProxyTimeoutError:
+            case QNetworkReply::InternalServerError:
+            case QNetworkReply::ServiceUnavailableError:
+            case QNetworkReply::UnknownNetworkError:
+            case QNetworkReply::UnknownProxyError:
+            case QNetworkReply::UnknownContentError:
+            case QNetworkReply::UnknownServerError:
+                s_failure_reason = "Network reply got error which lead to giving up after " + QString::number(max_retries) + " retries:" + QString(reply->error());
+                retrycount++;
+                if(retrycount < max_retries){
+                    m_manager->setTransferTimeout(1000+1000*retrycount);
+                    repeatNetworkRequest(reply->request().url());
+                    reply->deleteLater();
+                    return RETRYING_REQUEST;
+                }
+                else goto giveup;
+                break;
+        }
+    }
+    /*if(!reply->isOpen()){
+        qDebug() << "Closed reply";
         retrycount++;
         if(retrycount < max_retries){
             qDebug() <<  "Closed reply, retrying" << retrycount;
             m_manager->setTransferTimeout(1000+1000*retrycount);
-            repeatLastNetworkRequest();
+            repeatNetworkRequest(reply->request().url());
+            reply->deleteLater();
             return RETRYING_REQUEST;
         }
         else goto giveup;    
-    }
-    if(reply->error()!=QNetworkReply::NoError){
-        qDebug() << "Network error " << reply->error();
-        retrycount++;
-        if(retrycount < max_retries){
-            qDebug() << "Network error, retrying" << retrycount;
-            m_manager->setTransferTimeout(1000+1000*retrycount);
-            repeatLastNetworkRequest();
-            return RETRYING_REQUEST;
-        }
-        else goto giveup;
-    }
-    else{
-        qDebug() << "No network error";
-    }
+    }*/
     if(reply->isReadable()){
         s_reply = QString(reply->readAll());
     }
     else {
-        qDebug() << "Empty reply with error" << reply->error();
+        s_failure_reason = "Network reply could not be read, giving up.";
         retrycount++;
         if(retrycount < max_retries){
-            qDebug() << "Empty reply, retrying" << retrycount;
             m_manager->setTransferTimeout(1000+1000*retrycount);
-            repeatLastNetworkRequest();
+            repeatNetworkRequest(reply->request().url());
+            reply->deleteLater();
             return RETRYING_REQUEST;
         }
         else goto giveup;
     }
-    qDebug() << "Could read reply as" << s_reply;
     retrycount = 0;
     m_manager->setTransferTimeout(1000);
 
 #if QT_VERSION >= 0x051500
     disconnect(m_tmp_error_connection);
  #endif
+    reply->deleteLater();
     return REQUEST_SUCCESFUL;
 giveup:
-    qDebug() << "Tried " + QString::number(retrycount) + " times, giving up with error" << reply->error() << "...";
     retrycount = 0;
     m_manager->setTransferTimeout(1000);
 #if QT_VERSION >= 0x051500
     disconnect(m_tmp_error_connection);
  #endif
+    reply->deleteLater();
+    emit requestFailed(s_failure_reason);
     return PERMANENT_NETWORK_ERROR;
 }
 @}
@@ -171,11 +219,11 @@ giveup:
 \cprotect\subsection{\verb#requestNetworkReply#}
 @O ../src/networkscheduler.cpp -d
 @{
-QNetworkReply* networkscheduler::requestNetworkReply(QString url, std::function<void(QString)> slot){
-    m_last_connected_slot = slot;
-    m_last_request_url = QUrl(url);
-    qDebug() << QTime::currentTime().toString() << "Request" << m_last_request_url.toString();
-    QNetworkRequest request(m_last_request_url);
+QNetworkReply* networkscheduler::requestNetworkReply(QString s_url, std::function<void(QString)> slot){
+    emit processingStart();
+    QUrl url = QUrl(s_url);
+    m_request_list[url] = {slot};
+    QNetworkRequest request(url);
     request.setRawHeader("User-Agent", "Coleitra/0.1 (https://coleitra.org; fpesth@@gmx.de)");
     QNetworkReply* reply = m_manager->get(request);
 
@@ -187,12 +235,11 @@ QNetworkReply* networkscheduler::requestNetworkReply(QString url, std::function<
 @}
 
 
-\cprotect\subsection{\verb#repeatLastNetworkRequest#}
+\cprotect\subsection{\verb#repeatNetworkRequest#}
 @O ../src/networkscheduler.cpp -d
 @{
-QNetworkReply* networkscheduler::repeatLastNetworkRequest(){
-    qDebug() << QTime::currentTime().toString() << "Repeated request" << m_last_request_url.toString();
-    QNetworkRequest request(m_last_request_url);
+QNetworkReply* networkscheduler::repeatNetworkRequest(QUrl url){
+    QNetworkRequest request(url);
     request.setRawHeader("User-Agent", "Coleitra/0.1 (https://coleitra.org; fpesth@@gmx.de)");
     return m_manager->get(request);
 }
