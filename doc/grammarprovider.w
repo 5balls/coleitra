@@ -135,6 +135,68 @@ beginning until unlocking the blocking wait}}
 \caption{Network queries in grammar provider}
 \end{figure}
 
+\noindent\begin{tikzpicture}[%
+    >=triangle 60,              % Nice arrows; your taste may be different
+    start chain=going below,    % General flow is top-to-bottom
+    node distance=6mm and 50mm, % Global setup of box spacing
+    every join/.style={norm}   % Default linetype for connecting boxes
+    ]
+\tikzset{
+  base/.style={draw, on chain, on grid, align=center, minimum height=4ex},
+  proc/.style={base, rectangle},
+  test/.style={base, diamond, aspect=2},
+  term/.style={proc, rounded corners},
+  emit/.style={proc, rounded corners, double, double distance=1mm},
+  wait/.style={base, trapezium, trapezium left angle=120, trapezium right angle=60},
+  coord/.style={coordinate, on chain, on grid, node distance=6mm and 25mm},
+  nmark/.style={draw, cyan, circle, font={\sffamily\bfseries}},
+  norm/.style={->, draw},
+  sig/.style={->, decorate, decoration={snake}, draw},
+  sigyes/.style={->, decorate, decoration={snake}, draw},
+  it/.style={font={\small\itshape}}
+}
+\node [proc, start chain=1] (p1) {getGrammarInfoForWord};
+\node [term, join] (p2) {getWiktionarySections};
+\node [emit, join, fill=blue!40] (p2e) {emit processingStart};
+\node [term, join=by sig, right=of p2e] (p3) {getWiktionarySection};
+\node [test, join] (p4) {Etymology?};
+\node [term, join=by sig, right=of p4] (p5) {getWiktionaryTemplate};
+\node [test, join, fill=white] (p5a) {Found template?};
+\node [test, join, below=18ex of p5a, fill=white] (p6) {Compoundform?};
+\node [emit, join, fill=purple!40] (p6a) {emit processingStop};
+\node [emit, join, fill=blue!40] (p6b) {emit processingStart};
+\node [term, join, fill=white] (p7) {parse\_compoundform};
+\node [wait, join, text width=5cm, fill=white] (p8) {Wait for grammarInfoComplete or grammarInfoNotAvailable};
+\node [emit, join, fill=yellow!40] (p9) {emit grammarInfoComplete};
+\node [term, below=2cm of p9] (p19) {Template not supported};
+\node [emit, join, fill=purple!40] (p20) {emit processingStop};
+\node [emit, join, fill=red!40] (p21) {emit grammarInfoNotAvailable};
+\node [left=0.75cm of p6] {no};
+\node [right=0.75cm of p5a] {no};
+\node [emit, left=of p7, fill=purple!40] (p14) {emit processingStop};
+\node [emit, join, fill=blue!40] (p14b) {emit processingStart};
+\node [term, join=by sig, left=of p14b, text width=4cm] (p15) {Language specific parse function};
+\node [term, join] (p16) {process\_grammar};
+\node [emit, join, fill=purple!40] (p17) {emit processingStop};
+\node [emit, join, fill=green!40] (p18) {emit grammarInfoAvailable};
+\draw [->, norm] (p7.east) to [out=0, in=0] ($(p2)+(10cm,0)$) to [out=180, in=0] (p2.east);
+\node [wait, below=of p4, left=of p5a, text width=5cm, fill=white] (p10) {Wait for grammarInfoComplete or grammarInfoNotAvailable};
+\draw [->, norm] (p4) to (p10);
+\node [test, below=14ex of p10, join] (p11) {Found language?};
+\node [emit, join, fill=purple!40] (p12) {emit processingStop};
+\node [emit, join, fill=red!40] (p13) {emit grammarInfoNotAvailable};
+\begin{pgfonlayer}{bg} 
+    \draw [->, sig] (p11.east) to [out=0, in=-90] node[above, rotate=45] {yes}  (p5.200);
+    \draw [->, norm] (p6.west) to [out=180, in=90] (p14.north);
+    \draw [->, norm] (p5a.east) to [out=0, in=90] (p19.north);
+    \draw [draw=none] (p4) to node[above] {yes} (p5);
+    \draw [draw=none] (p4) to node[right] {yes/no} (p10);
+    \draw [draw=none] (p11) to node[right] {no} (p12);
+    \draw [draw=none] (p6) to node[right] {yes} (p6a);
+    \draw [draw=none] (p5a) to node[right] {yes} (p6);
+\end{pgfonlayer}
+\end{tikzpicture}
+
 \section{Interface}
 @O ../src/grammarprovider.h -d
 @{
@@ -822,6 +884,7 @@ void grammarprovider::parseMediawikiTableToPlainText(QString wikitext, QList<gra
 @O ../src/grammarprovider.cpp -d
 @{
 void grammarprovider::process_grammar(QList<grammarform> grammarforms, QList<tablecell> parsedTable, QList<QList<QString> > additional_grammarforms){
+    QList<grammarform> l_grammarforms;
     if(!parsedTable.isEmpty()){
         foreach(const grammarform& gf_expectedcell, grammarforms){
             tablecell tc_current = parsedTable.first();
@@ -856,7 +919,7 @@ matching_form:
                         grammarform currentGrammarForm = gf_expectedcell;
                         currentGrammarForm.string = tc_current.content;
                         currentGrammarForm.grammarexpressions += additional_grammarforms;
-                        m_grammarforms.push_back(currentGrammarForm);
+                        l_grammarforms.push_back(currentGrammarForm);
                         // There may be more than one:
                         parsedTable.pop_front();
                         if(!parsedTable.isEmpty()){
@@ -878,9 +941,10 @@ matching_form:
         }
     }
 out:
-    std::sort(m_grammarforms.begin(), m_grammarforms.end(), [](grammarform a, grammarform b) {
+    std::sort(l_grammarforms.begin(), l_grammarforms.end(), [](grammarform a, grammarform b) {
         return a.index < b.index;
     });
+    m_grammarforms += l_grammarforms;
     //qDebug() << "Got" << m_grammarforms.size();
 
     emit processingStop();

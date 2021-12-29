@@ -74,5 +74,9 @@ literate={ä}{{\"a}}1 {ö}{{\"o}}1 {ü}{{\"u}}1 {é}{{\'e}}1 {—}{{-}}1,
 % This is to fix positioning of todo comments on the left margin:
 \setlength{\marginparwidth}{2.7cm}
 
+\usetikzlibrary{shapes,arrows,chains,decorations.pathmorphing,calc}
+\pgfdeclarelayer{bg}
+\pgfsetlayers{bg,main}
+
 \setcounter{secnumdepth}{5}
 \setcounter{tocdepth}{5}

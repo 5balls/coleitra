@@ -24,6 +24,7 @@
 \usepackage{cprotect}
 \usepackage{verbatim}
 \usepackage{pgf-umlsd}
+\usepackage{tikz}
 \usepackage[textsize=tiny, textwidth=2.7cm, colorinlistoftodos]{todonotes}
 \usepackage[colorlinks=true]{hyperref}
 \makeindex
