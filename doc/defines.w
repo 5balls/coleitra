@@ -77,6 +77,26 @@ literate={ä}{{\"a}}1 {ö}{{\"o}}1 {ü}{{\"u}}1 {é}{{\'e}}1 {—}{{-}}1,
 \usetikzlibrary{shapes,arrows,chains,decorations.pathmorphing,calc}
 \pgfdeclarelayer{bg}
 \pgfsetlayers{bg,main}
+\newcommand{\tikzflowchart}{\tikzset{
+  base/.style={draw, on chain, on grid, align=center, minimum height=4ex},
+  proc/.style={base, rectangle},
+  test/.style={base, diamond, aspect=2},
+  term/.style={proc, rounded corners},
+  emit/.style={proc, rounded corners, double, double distance=1mm},
+  wait/.style={base, trapezium, trapezium left angle=120, trapezium right angle=60},
+  var/.style={base, rectangle split, rectangle split parts=2, rounded corners},
+  coord/.style={coordinate, on chain, on grid, node distance=6mm and 25mm},
+  nmark/.style={draw, cyan, circle, font={\sffamily\bfseries}},
+  norm/.style={->, draw},
+  sig/.style={->, decorate, decoration={snake}, draw},
+  class/.style={dotted, draw},
+  it/.style={font={\small\itshape}},
+  >=triangle 60,
+  start chain=going below,
+  node distance=6mm and 50mm,
+  every join/.style={norm}
+}}
+
 
 \setcounter{secnumdepth}{5}
 \setcounter{tocdepth}{5}

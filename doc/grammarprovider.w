@@ -135,67 +135,48 @@ beginning until unlocking the blocking wait}}
 \caption{Network queries in grammar provider}
 \end{figure}
 
-\noindent\begin{tikzpicture}[%
-    >=triangle 60,              % Nice arrows; your taste may be different
-    start chain=going below,    % General flow is top-to-bottom
-    node distance=6mm and 50mm, % Global setup of box spacing
-    every join/.style={norm}   % Default linetype for connecting boxes
-    ]
-\tikzset{
-  base/.style={draw, on chain, on grid, align=center, minimum height=4ex},
-  proc/.style={base, rectangle},
-  test/.style={base, diamond, aspect=2},
-  term/.style={proc, rounded corners},
-  emit/.style={proc, rounded corners, double, double distance=1mm},
-  wait/.style={base, trapezium, trapezium left angle=120, trapezium right angle=60},
-  coord/.style={coordinate, on chain, on grid, node distance=6mm and 25mm},
-  nmark/.style={draw, cyan, circle, font={\sffamily\bfseries}},
-  norm/.style={->, draw},
-  sig/.style={->, decorate, decoration={snake}, draw},
-  sigyes/.style={->, decorate, decoration={snake}, draw},
-  it/.style={font={\small\itshape}}
-}
-\node [proc, start chain=1] (p1) {getGrammarInfoForWord};
+\begin{figure}
+\centering
+\begin{tikzpicture}
+\tikzflowchart
+\node [proc, start chain=1, fill=white] (p1) {getGrammarInfoForWord};
 \node [term, join] (p2) {getWiktionarySections};
-\node [emit, join, fill=blue!40] (p2e) {emit processingStart};
-\node [term, join=by sig, right=of p2e] (p3) {getWiktionarySection};
+\node [term, join=by sig, right=of p2] (p3) {getWiktionarySection};
 \node [test, join] (p4) {Etymology?};
 \node [term, join=by sig, right=of p4] (p5) {getWiktionaryTemplate};
 \node [test, join, fill=white] (p5a) {Found template?};
 \node [test, join, below=18ex of p5a, fill=white] (p6) {Compoundform?};
-\node [emit, join, fill=purple!40] (p6a) {emit processingStop};
-\node [emit, join, fill=blue!40] (p6b) {emit processingStart};
-\node [term, join, fill=white] (p7) {parse\_compoundform};
+\node [term, join, below=18ex of p6, fill=white] (p7) {parse\_compoundform};
 \node [wait, join, text width=5cm, fill=white] (p8) {Wait for grammarInfoComplete or grammarInfoNotAvailable};
 \node [emit, join, fill=yellow!40] (p9) {emit grammarInfoComplete};
 \node [term, below=2cm of p9] (p19) {Template not supported};
-\node [emit, join, fill=purple!40] (p20) {emit processingStop};
 \node [emit, join, fill=red!40] (p21) {emit grammarInfoNotAvailable};
 \node [left=0.75cm of p6] {no};
 \node [right=0.75cm of p5a] {no};
-\node [emit, left=of p7, fill=purple!40] (p14) {emit processingStop};
-\node [emit, join, fill=blue!40] (p14b) {emit processingStart};
-\node [term, join=by sig, left=of p14b, text width=4cm] (p15) {Language specific parse function};
+\node [term, left=of p7, text width=4cm] (p14) {\ldots continue getWiktionaryTemplate};
+\node [term, join=by sig, left=of p14, text width=4cm] (p15) {Language specific parse function};
 \node [term, join] (p16) {process\_grammar};
-\node [emit, join, fill=purple!40] (p17) {emit processingStop};
+\node [emit, join, fill=orange!40] (p17a) {emit processedGrammar};
 \node [emit, join, fill=green!40] (p18) {emit grammarInfoAvailable};
-\draw [->, norm] (p7.east) to [out=0, in=0] ($(p2)+(10cm,0)$) to [out=180, in=0] (p2.east);
 \node [wait, below=of p4, left=of p5a, text width=5cm, fill=white] (p10) {Wait for grammarInfoComplete or grammarInfoNotAvailable};
 \draw [->, norm] (p4) to (p10);
 \node [test, below=14ex of p10, join] (p11) {Found language?};
-\node [emit, join, fill=purple!40] (p12) {emit processingStop};
 \node [emit, join, fill=red!40] (p13) {emit grammarInfoNotAvailable};
 \begin{pgfonlayer}{bg} 
     \draw [->, sig] (p11.east) to [out=0, in=-90] node[above, rotate=45] {yes}  (p5.200);
     \draw [->, norm] (p6.west) to [out=180, in=90] (p14.north);
     \draw [->, norm] (p5a.east) to [out=0, in=90] (p19.north);
-    \draw [draw=none] (p4) to node[above] {yes} (p5);
-    \draw [draw=none] (p4) to node[right] {yes/no} (p10);
-    \draw [draw=none] (p11) to node[right] {no} (p12);
-    \draw [draw=none] (p6) to node[right] {yes} (p6a);
+    \draw [->, norm] (p7.east) to [out=0, in=0] ($(p2)+(10cm,1cm)$) to [out=180, in=45] (p2.45);
+    \draw [draw=none] (p4) to node[above] {yes} node[var,below=0.2cm] {m\_caller \nodepart{second} waitloop} (p5);
+    \draw [draw=none] (p4) to node[right] {yes} (p10);
+    \draw [->, norm] (p4.west) to [out=180, in=180] node[left] {no} (p11.west);
+    \draw [draw=none] (p11) to node[right] {no} (p13);
+    \draw [draw=none] (p6) to node[right] {yes} (p7);
     \draw [draw=none] (p5a) to node[right] {yes} (p6);
 \end{pgfonlayer}
 \end{tikzpicture}
+\caption{Flow chart of inner workings of grammarprovider class}
+\end{figure}
 
 \section{Interface}
 @O ../src/grammarprovider.h -d
@@ -310,28 +291,29 @@ public slots:
     Q_INVOKABLE void getNextSentencePart(QObject* caller);
     Q_INVOKABLE QList<grammarprovider::compoundPart> getGrammarCompoundFormParts(QString compoundword, QList<QString> compoundstrings, int id_language);
 private slots:
-    void getWiktionarySections();
-    void getWiktionarySection(QString reply);
-    void getWiktionaryTemplate(QString reply);
+    void getWiktionarySections(QObject *caller);
+    void getWiktionarySection(QString reply, QObject* caller);
+    void getWiktionaryTemplate(QString reply, QObject* caller);
     templatearguments parseTemplateArguments(QString templateString);
     void parseMediawikiTableToPlainText(QString wikitext, QList<grammarprovider::tablecell>& table);
-    void parse_compoundform(QString reply);
+    void parse_compoundform(QString reply, QObject* caller);
     QList<QPair<QString,int> > fi_compound_parser(QObject* caller, int fi_id, int lexeme_id, QList<int> compound_lexemes);
     void fi_requirements(QObject* caller, int fi_id);
-    void parse_fi_verbs(QString reply);
-    void parse_fi_nominals(QString reply);
+    void parse_fi_verbs(QString reply, QObject* caller);
+    void parse_fi_nominals(QString reply, QObject* caller);
     void de_requirements(QObject* caller, int de_id);
-    void parse_de_noun_n(QString reply);
-    void parse_de_noun_m(QString reply);
-    void parse_de_noun_f(QString reply);
-    void parse_de_verb(QString reply);
+    void parse_de_noun_n(QString reply, QObject* caller);
+    void parse_de_noun_m(QString reply, QObject* caller);
+    void parse_de_noun_f(QString reply, QObject* caller);
+    void parse_de_verb(QString reply, QObject* caller);
     void process_grammar(QList<grammarform> grammarforms, QList<tablecell> parsedTable, QList<QList<QString> > additional_grammarforms = {});
     void getPlainTextTableFromReply(QString reply, QList<grammarprovider::tablecell>& parsedTable);
     void processNetworkError(QString s_failure_reason);
 signals:
-    void processingStart(const QString& waitingstring);
-    void processingStop(void);
+    //void processingStart(const QString& waitingstring);
+    //void processingStop(void);
     void networkError(QObject* caller, bool silent, QString s_failure_reason);
+
     void grammarInfoAvailable(QObject* caller, int numberOfObjects, bool silent);
     void grammarInfoNotAvailable(QObject* caller, bool silent);
     void formObtained(QObject* caller, QString form, QList<QList<QString> > grammarexpressions, bool silent, QList<QString> compoundforms);
@@ -342,6 +324,8 @@ signals:
     void sentenceAddAndUseForm(QObject* caller, QString form, QList<QList<QString> > grammarexpressions, bool silent);
     void sentenceAddAndIgnoreForm(QObject* caller, QString form, QList<QList<QString> > grammarexpressions, bool silent);
     void sentenceComplete(QObject* caller, QList<QList<QString> > grammarexpressions, bool silent);
+    
+    void processedGrammar(QObject* caller, bool silent);
     void grammarInfoComplete(QObject* caller, bool silent);
     //void grammarobtained(QObject* caller, QStringList expressions, QList<QList<QList<QString> > > grammarexpressions);
 public:
@@ -351,7 +335,7 @@ private:
     bool m_busy;
     bool m_found_compoundform;
     QList<QString> m_current_compoundforms;
-    QMap<QString, void (grammarprovider::*)(QString)> m_parser_map; 
+    QMap<QString, void (grammarprovider::*)(QString, QObject*)> m_parser_map; 
     QString m_word;
     QString s_baseurl;
     QNetworkAccessManager* m_manager;
@@ -541,7 +525,7 @@ void grammarprovider::getGrammarInfoForWord(QObject* caller, int languageid, QSt
     m_word = word;
     m_silent = false;
     m_found_compoundform = false;
-    getWiktionarySections();
+    getWiktionarySections(m_caller);
 }
 @}
 
@@ -552,12 +536,11 @@ void grammarprovider::getGrammarInfoForWord(QObject* caller, int languageid, QSt
 \codecpp
 @O ../src/grammarprovider.cpp -d
 @{
-void grammarprovider::getWiktionarySections(){
+void grammarprovider::getWiktionarySections(QObject* caller){
     static int numberofcalls=0;
     qDebug() << "---- getWiktionarySections number of calls" << numberofcalls++;
     //qDebug() << "getWiktionarySections enter";
-    emit processingStart("Querying en.wiktionary for word \"" + m_word + "\"...");
-    m_networkscheduler->requestNetworkReply(s_baseurl + "action=parse&page=" + m_word + "&prop=sections&format=json", std::bind(&grammarprovider::getWiktionarySection,this,std::placeholders::_1));
+    m_networkscheduler->requestNetworkReply(s_baseurl + "action=parse&page=" + m_word + "&prop=sections&format=json", std::bind(&grammarprovider::getWiktionarySection,this,std::placeholders::_1, m_caller));
 
     //qDebug() << "getWiktionarySections exit";
 }
@@ -566,7 +549,7 @@ void grammarprovider::getWiktionarySections(){
 \cprotect\subsection{\verb#getWiktionarySection#}
 @O ../src/grammarprovider.cpp -d
 @{
-void grammarprovider::getWiktionarySection(QString s_reply){
+void grammarprovider::getWiktionarySection(QString s_reply, QObject* caller){
     //qDebug() << "getWiktionarySection enter";
         
     //qDebug() << s_reply;
@@ -634,7 +617,7 @@ void grammarprovider::getWiktionarySection(QString s_reply){
                                 }
                             });
                     best_bet_for_section = j_section["index"].toString().toInt();
-                    m_networkscheduler->requestNetworkReply(s_baseurl + "action=parse&page=" + m_word + "&section=" + QString::number(best_bet_for_section) + "&prop=wikitext&format=json", std::bind(&grammarprovider::getWiktionaryTemplate,this,std::placeholders::_1));
+                    m_networkscheduler->requestNetworkReply(s_baseurl + "action=parse&page=" + m_word + "&section=" + QString::number(best_bet_for_section) + "&prop=wikitext&format=json", std::bind(&grammarprovider::getWiktionaryTemplate,this,std::placeholders::_1,m_caller));
                     qDebug() << "Blocking waitloop for" << m_word << "...";
                     waitloop.exec();
                     qDebug() << "... blocking waitloop for" << m_word << "finished.";
@@ -660,12 +643,11 @@ void grammarprovider::getWiktionarySection(QString s_reply){
     finished:
     if(found_language){
         //qDebug() << "Found language section \"" + language + "\" for word \"" + m_word + "\"";
-        m_networkscheduler->requestNetworkReply(s_baseurl + "action=parse&page=" + m_word + "&section=" + QString::number(best_bet_for_section) + "&prop=wikitext&format=json", std::bind(&grammarprovider::getWiktionaryTemplate,this,std::placeholders::_1));
+        m_networkscheduler->requestNetworkReply(s_baseurl + "action=parse&page=" + m_word + "&section=" + QString::number(best_bet_for_section) + "&prop=wikitext&format=json", std::bind(&grammarprovider::getWiktionaryTemplate,this,std::placeholders::_1,m_caller));
     }
     else{
         qDebug() << "Could not find language section \"" + language + "\" for word \"" + m_word + "\"";
         m_busy = false;
-        emit processingStop();
         emit grammarInfoNotAvailable(m_caller, m_silent);
         return;
     }
@@ -700,7 +682,7 @@ grammarprovider::templatearguments grammarprovider::parseTemplateArguments(QStri
 \cprotect\subsection{\verb#getWiktionaryTemplate#}
 @O ../src/grammarprovider.cpp -d
 @{
-void grammarprovider::getWiktionaryTemplate(QString s_reply){
+void grammarprovider::getWiktionaryTemplate(QString s_reply, QObject* caller){
  
     QJsonDocument j_document = QJsonDocument::fromJson(s_reply.toUtf8());
     QString wikitemplate_text = j_document.object()["parse"].toObject()["wikitext"].toObject()["*"].toString();
@@ -742,29 +724,24 @@ void grammarprovider::getWiktionaryTemplate(QString s_reply){
             wt_opens.pop_back();
         }
     }
-    QMapIterator<QString, void (grammarprovider::*)(QString)> parser(m_parser_map); 
+    QMapIterator<QString, void (grammarprovider::*)(QString, QObject*)> parser(m_parser_map); 
     while (parser.hasNext()) {
         parser.next();
         foreach(const QString& wt_finished, wt_finisheds){
             if(wt_finished.startsWith("{{" + parser.key())){
                 if(parser.key() == "compound"){
                     m_currentarguments = parseTemplateArguments(wt_finished);
-                    emit processingStop();
-                    emit processingStart("Parsing wiktionary compound form data...");
                     m_found_compoundform = true;
-                    parse_compoundform(nullptr);
+                    parse_compoundform("",m_caller);
                     return;
                 }
                 m_currentarguments = parseTemplateArguments(wt_finished);
-                emit processingStop();
-                emit processingStart("Parsing wiktionary data...");
-                m_networkscheduler->requestNetworkReply(s_baseurl + "action=expandtemplates&text=" + QUrl::toPercentEncoding(wt_finished) + "&title=" + m_word + "&prop=wikitext&format=json", std::bind(parser.value(),this,std::placeholders::_1));
+                m_networkscheduler->requestNetworkReply(s_baseurl + "action=expandtemplates&text=" + QUrl::toPercentEncoding(wt_finished) + "&title=" + m_word + "&prop=wikitext&format=json", std::bind(parser.value(),this,std::placeholders::_1,m_caller));
                 return;
             }
         }
     }
     qDebug() << "Template(s)" << wt_finisheds << "not supported!";
-    emit processingStop();
     emit grammarInfoNotAvailable(m_caller, m_silent);
 }
 @}
@@ -947,7 +924,7 @@ out:
     m_grammarforms += l_grammarforms;
     //qDebug() << "Got" << m_grammarforms.size();
 
-    emit processingStop();
+    emit processedGrammar(m_caller,m_silent);
     emit grammarInfoAvailable(m_caller, m_grammarforms.size(), m_silent);
     //emit grammarobtained(m_caller, expressions, grammarexpressions);
 }
@@ -1201,7 +1178,7 @@ QList<grammarprovider::compoundPart> grammarprovider::getGrammarCompoundFormPart
 \cprotect\subsection{\verb#parse_compoundform#}
 @O ../src/grammarprovider.cpp -d
 @{
-void grammarprovider::parse_compoundform(QString s_reply){
+void grammarprovider::parse_compoundform(QString s_reply, QObject* caller){
     qDebug() << "Got compound form";
     int argnumber=0;
     m_current_compoundforms.clear();
@@ -1248,7 +1225,7 @@ void grammarprovider::parse_compoundform(QString s_reply){
                                 waitloop.quit();
                             }
                         });
-                getWiktionarySections();
+                getWiktionarySections(m_caller);
                 qDebug() << "Blocking waitloop for compoundform" << m_word << "...";
                 waitloop.exec();
                 qDebug() << "... blocking waitloop for compoundform" << m_word << "finished.";
@@ -1256,8 +1233,7 @@ void grammarprovider::parse_compoundform(QString s_reply){
             m_current_compoundforms += arg;
         }
     }
-    qDebug() << __FUNCTION__ << __LINE__ << "*** grammarInfoComplete EMIT ***";
-    emit grammarInfoComplete(m_caller, m_silent);
+    emit grammarInfoComplete(m_caller,m_silent);
 }
 @}
 

@@ -22,7 +22,7 @@ void grammarprovider::fi_requirements(QObject* caller, int fi_id){
         m_silent = true;
         QEventLoop waitloop;
         connect( this, &grammarprovider::grammarInfoComplete, &waitloop, &QEventLoop::quit );
-        getWiktionarySections();
+        getWiktionarySections(m_caller);
         waitloop.exec();
     }
 }
@@ -39,7 +39,7 @@ QList<QPair<QString,int> > grammarprovider::fi_compound_parser(QObject* caller, 
 \cprotect\subsubsection{\verb#parse_fi_verbs#}
 @O ../src/grammarprovider.cpp -d
 @{
-void grammarprovider::parse_fi_verbs(QString reply){
+void grammarprovider::parse_fi_verbs(QString reply, QObject* caller){
     QList<grammarprovider::tablecell> parsedTable;
     getPlainTextTableFromReply(reply, parsedTable);
     QList<grammarform> grammarforms {
@@ -218,7 +218,7 @@ void grammarprovider::parse_fi_verbs(QString reply){
 \cprotect\subsubsection{\verb#parse_fi_nominals#}
 @O ../src/grammarprovider.cpp -d
 @{
-void grammarprovider::parse_fi_nominals(QString reply){
+void grammarprovider::parse_fi_nominals(QString reply, QObject* caller){
 
     QList<grammarprovider::tablecell> parsedTable;
     getPlainTextTableFromReply(reply, parsedTable);
@@ -291,7 +291,7 @@ void grammarprovider::de_requirements(QObject* caller, int de_id){
         m_silent = true;
         QEventLoop waitloop;
         connect( this, &grammarprovider::grammarInfoComplete, &waitloop, &QEventLoop::quit );
-        getWiktionarySections();
+        getWiktionarySections(m_caller);
         waitloop.exec();
     }
 }
@@ -300,7 +300,7 @@ void grammarprovider::de_requirements(QObject* caller, int de_id){
 \cprotect\subsubsection{\verb#parse_de_noun_n#}
 @O ../src/grammarprovider.cpp -d
 @{
-void grammarprovider::parse_de_noun_n(QString reply){
+void grammarprovider::parse_de_noun_n(QString reply, QObject* caller){
     QList<grammarprovider::tablecell> parsedTable;
     getPlainTextTableFromReply(reply, parsedTable);
 
@@ -321,7 +321,7 @@ void grammarprovider::parse_de_noun_n(QString reply){
 \cprotect\subsubsection{\verb#parse_de_noun_m#}
 @O ../src/grammarprovider.cpp -d
 @{
-void grammarprovider::parse_de_noun_m(QString reply){
+void grammarprovider::parse_de_noun_m(QString reply, QObject* caller){
 
     QList<grammarprovider::tablecell> parsedTable;
     getPlainTextTableFromReply(reply, parsedTable);
@@ -343,7 +343,7 @@ void grammarprovider::parse_de_noun_m(QString reply){
 \cprotect\subsubsection{\verb#parse_de_noun_f#}
 @O ../src/grammarprovider.cpp -d
 @{
-void grammarprovider::parse_de_noun_f(QString reply){
+void grammarprovider::parse_de_noun_f(QString reply, QObject* caller){
 
     QList<grammarprovider::tablecell> parsedTable;
     getPlainTextTableFromReply(reply, parsedTable);
@@ -365,7 +365,7 @@ void grammarprovider::parse_de_noun_f(QString reply){
 \cprotect\subsubsection{\verb#parse_de_verb#}
 @O ../src/grammarprovider.cpp -d
 @{
-void grammarprovider::parse_de_verb(QString reply){
+void grammarprovider::parse_de_verb(QString reply, QObject* caller){
     // Work in process....
 
     QList<grammarprovider::tablecell> parsedTable;
