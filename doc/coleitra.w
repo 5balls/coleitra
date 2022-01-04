@@ -26,6 +26,7 @@
 @i title.w
 
 \tableofcontents
+\listoffigures
 
 @i abstract.w
 

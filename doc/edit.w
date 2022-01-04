@@ -44,7 +44,7 @@
     \draw [draw=none] (n-formInDatabase) to node[right] {no} (n-classGrammarprovider);
 \end{pgfonlayer}
 \end{tikzpicture}
-\caption{Flow chart of interaction between edit and grammarprovider class}
+\caption{Flow chart of addLexemeHeuristically}
 \end{figure}
 
 \begin{figure}
@@ -101,8 +101,8 @@
     \draw [->, norm] (n-formInstructionAddAndIgnoreForm.east) to [out=0, in=0] node[above] {yes} (n-formInstructionNotImplemented.east);
 
 \end{pgfonlayer}
-
 \end{tikzpicture}
+\caption{Flow chart of getNextGrammarObject}
 \end{figure}
 
 \begin{figure}
@@ -163,6 +163,7 @@
     \draw [->, norm] (n-addScheduledLexemeHeuristically.west) to [out=180, in=-90] ($(n-addScheduledLexemeHeuristically)!0.5!(n-addLexemeHeuristically)+(-3cm,0cm)$) to [out=90, in=180] (n-addLexemeHeuristically.west);
 \end{pgfonlayer}
 \end{tikzpicture}
+\caption{Flow chart of communication between edit.w and grammarprovider.w when grammar object is available}
 \end{figure}
 \clearpage
 

@@ -34,7 +34,7 @@ public:
     explicit networkscheduler(QObject *parent = nullptr);
     ~networkscheduler(void);
 public slots:
-    QNetworkReply* requestNetworkReply(QString url, std::function<void(QString)> slot);
+    QNetworkReply* requestNetworkReply(QObject* caller, QString url, std::function<void(QString)> slot);
 private:
     enum networkRequestStatus {
         REQUEST_SUCCESFUL,
@@ -44,6 +44,7 @@ private:
     struct requestData {
         std::function<void(QString)> f_callback;
         QString s_answer;
+        QObject* caller;
     };
     QMap<QUrl, requestData> m_request_list;
     QNetworkAccessManager* m_manager;
@@ -55,7 +56,7 @@ private slots:
 signals:
     void processingStart(void);
     void replyError(QNetworkReply::NetworkError error);
-    void requestFailed(QString s_reason);
+    void requestFailed(QObject* caller, QString s_reason);
     void processingStop(void);
 @<End of class and header @>
 @}
@@ -209,8 +210,9 @@ giveup:
 #if QT_VERSION >= 0x051500
     disconnect(m_tmp_error_connection);
  #endif
+    QUrl url = reply->request().url();
     reply->deleteLater();
-    emit requestFailed(s_failure_reason);
+    emit requestFailed(m_request_list[url].caller, s_failure_reason);
     return PERMANENT_NETWORK_ERROR;
 }
 @}
@@ -219,10 +221,10 @@ giveup:
 \cprotect\subsection{\verb#requestNetworkReply#}
 @O ../src/networkscheduler.cpp -d
 @{
-QNetworkReply* networkscheduler::requestNetworkReply(QString s_url, std::function<void(QString)> slot){
+QNetworkReply* networkscheduler::requestNetworkReply(QObject* caller, QString s_url, std::function<void(QString)> slot){
     emit processingStart();
     QUrl url = QUrl(s_url);
-    m_request_list[url] = {slot};
+    m_request_list[url] = {slot,"",caller};
     QNetworkRequest request(url);
     request.setRawHeader("User-Agent", "Coleitra/0.1 (https://coleitra.org; fpesth@@gmx.de)");
     QNetworkReply* reply = m_manager->get(request);

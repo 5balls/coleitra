@@ -33,13 +33,12 @@ void grammarprovider::fi_requirements(QObject* caller, int fi_id){
         }
     }
     if(!found_form){
-        m_caller = caller;
         m_language = fi_id;
         m_word = "olla";
         m_silent = true;
         QEventLoop waitloop;
         connect( this, &grammarprovider::grammarInfoComplete, &waitloop, &QEventLoop::quit );
-        getWiktionarySections(m_caller);
+        getWiktionarySections(caller);
         waitloop.exec();
     }
 }
@@ -228,7 +227,7 @@ void grammarprovider::parse_fi_verbs(QString reply, QObject* caller){
         {61,65,3,{{"Infinitive","Fourth"},{"Voice","Active"},{"Case","Partitive"}}},
         {62,66,3,{{"Infinitive","Fifth"},{"Voice","Active"}}},
     };
-    process_grammar(grammarforms,parsedTable,{{"Part of speech","Verb"}});
+    process_grammar(caller, grammarforms,parsedTable,{{"Part of speech","Verb"}});
 }
 @}
 
@@ -279,9 +278,9 @@ void grammarprovider::parse_fi_nominals(QString reply, QObject* caller){
         {36,27,2,{{"Case","Possessive"},{"Number","Singular"},{"Number","Plural"},{"Person","Third"}}},
     };
     if(m_currentarguments.named["pos"] == "adj")
-        process_grammar(grammarforms,parsedTable,{{"Part of speech","Adjective"}});
+        process_grammar(caller, grammarforms,parsedTable,{{"Part of speech","Adjective"}});
     else
-        process_grammar(grammarforms,parsedTable,{{"Part of speech","Noun"}});
+        process_grammar(caller, grammarforms,parsedTable,{{"Part of speech","Noun"}});
 }
 @}
 
@@ -302,13 +301,12 @@ void grammarprovider::de_requirements(QObject* caller, int de_id){
         }
     }
     if(!found_form){
-        m_caller = caller;
         m_language = de_id;
         m_word = "sein";
         m_silent = true;
         QEventLoop waitloop;
         connect( this, &grammarprovider::grammarInfoComplete, &waitloop, &QEventLoop::quit );
-        getWiktionarySections(m_caller);
+        getWiktionarySections(caller);
         waitloop.exec();
     }
 }
@@ -331,7 +329,7 @@ void grammarprovider::parse_de_noun_n(QString reply, QObject* caller){
         {7,5,4,{{"Gender","Neuter"},{"Case","Accusative"},{"Number","Singular"}}},
         {8,5,6,{{"Gender","Neuter"},{"Case","Accusative"},{"Number","Plural"}}},
     };
-    process_grammar(grammarforms,parsedTable,{{"Part of speech","Noun"}});
+    process_grammar(caller, grammarforms,parsedTable,{{"Part of speech","Noun"}});
 }
 @}
 
@@ -353,7 +351,7 @@ void grammarprovider::parse_de_noun_m(QString reply, QObject* caller){
         {7,5,4,{{"Gender","Masculine"},{"Case","Accusative"},{"Number","Singular"}}},
         {8,5,6,{{"Gender","Masculine"},{"Case","Accusative"},{"Number","Plural"}}},
     };
-    process_grammar(grammarforms,parsedTable,{{"Part of speech","Noun"}});
+    process_grammar(caller, grammarforms,parsedTable,{{"Part of speech","Noun"}});
 }
 @}
 
@@ -375,7 +373,7 @@ void grammarprovider::parse_de_noun_f(QString reply, QObject* caller){
         {7,5,4,{{"Gender","Feminine"},{"Case","Accusative"},{"Number","Singular"}}},
         {8,5,6,{{"Gender","Feminine"},{"Case","Accusative"},{"Number","Plural"}}},
     };
-    process_grammar(grammarforms,parsedTable,{{"Part of speech","Noun"}});
+    process_grammar(caller, grammarforms,parsedTable,{{"Part of speech","Noun"}});
 }
 @}
 
@@ -481,6 +479,6 @@ void grammarprovider::parse_de_verb(QString reply, QObject* caller){
         {91,38,4,{{"Mood","Subjunctive 2"},{"Tense","Future 2"},{"Person","Third"},{"Number","Singular"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Part of speech","Verb"},{"Verbform","Participle"},{"Tense","Past"}}},LOOKUPFORM}},
         {92,38,5,{{"Mood","Subjunctive 2"},{"Tense","Future 2"},{"Person","Third"},{"Number","Plural"}},SENTENCE,{IGNOREFORM,LOOKUPFORM,{LOOKUPFORM_LEXEME,{{"Part of speech","Verb"},{"Verbform","Participle"},{"Tense","Past"}}},LOOKUPFORM}},
     };
-    process_grammar(grammarforms,parsedTable,{{"Part of speech","Verb"}});
+    process_grammar(caller, grammarforms,parsedTable,{{"Part of speech","Verb"}});
 }
 @}
