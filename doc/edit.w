@@ -193,10 +193,9 @@ private:
 public:
     explicit edit(QObject *parent = nullptr);
     Q_PROPERTY(QString dbversion MEMBER m_dbversion NOTIFY dbversionChanged);
+    // Lexeme id and form id managed by grammarprovider
     @<Id property @'translation@' @>
-    @<Id property @'lexeme@' @>
     @<Id property @'sentence@' @>
-    @<Id property @'form@' @>
     @<Id property @'compoundForm@' @>
     @<Id property @'grammarForm@' @>
     @<Id property @'grammarFormComponent@' @>
@@ -204,9 +203,8 @@ private:
     struct form {
         int id;
         int newid;
-        QString string;
         int grammarform;
-        QList<QString> compoundforms;
+        grammarprovider::grammarform m_form;
     };
     enum sentencePartType {
         FORM,
@@ -333,7 +331,7 @@ private:
 private slots:
     void grammarInfoNotAvailableFromGrammarProvider(QObject* caller, bool silent);
     void grammarInfoAvailableFromGrammarProvider(QObject* caller, int numberOfObjects, bool silent);
-    void formObtainedFromGrammarProvider(QObject* caller, QString form, QList<QList<QString> > grammarexpressions, bool silent, QList<QString> compoundforms);
+    void formObtainedFromGrammarProvider(QObject* caller, bool silent, grammarprovider::grammarform form);
     void compoundFormObtainedFromGrammarProvider(QObject* caller, QString form, bool silent);
     void sentenceAvailableFromGrammarProvider(QObject* caller, int parts, bool silent);
     void sentenceLookupFormFromGramarProvider(QObject* caller, QString form, QList<QList<QString> > grammarexpressions, bool silent);
@@ -344,7 +342,7 @@ private slots:
     void grammarInfoCompleteFromGrammarProvider(QObject* caller, bool silent);
 public:
     Q_INVOKABLE int createGrammarFormId(int language, QList<QList<QString> > grammarexpressions);
-    Q_INVOKABLE void addForm(int lexemeid, int formid, int grammarform, QString string, int languageid, int translationid=0, QList<QString> compoundforms={});
+    Q_INVOKABLE void addForm(int lexemeid, int formid, int grammarform, grammarprovider::grammarform form, int languageid, int translationid=0);
     Q_INVOKABLE void addSentence(int lexemeid, int sentenceid, int grammarform, QList<QList<int> > parts, int languageid, int translationid=0);
     Q_INVOKABLE QString lookupFormStringFromId(int formid);
     Q_INVOKABLE int lookupForm(int language, int lexemeid, QString string, QList<QList<QString> > grammarexpressions);
@@ -395,9 +393,9 @@ int edit::createGrammarFormId(int language, QList<QList<QString> > grammarexpres
     return m_database->grammarFormIdFromStrings(language,grammarexpressions);
 }
 
-void edit::addForm(int lexemeid, int formid, int grammarform, QString string, int languageid, int translationid, QList<QString> compoundforms){
-    qDebug() << "addForm" << lexemeid << formid << grammarform << string << languageid << translationid << compoundforms;
-    form newForm = {formid,0,string,grammarform,compoundforms};
+void edit::addForm(int lexemeid, int formid, int grammarform, grammarprovider::grammarform m_form, int languageid, int translationid){
+    qDebug() << "addForm" << lexemeid << formid << grammarform << languageid << translationid;
+    form newForm = {formid,0,grammarform,m_form};
     //qDebug() << __FILE__ << __FUNCTION__ << __LINE__ << lexemeid << languageid << translationid;
     lexeme& currentLexeme = getCreateLexeme(lexemeid, languageid, translationid);
     currentLexeme.forms.push_back(newForm);
@@ -462,7 +460,7 @@ QString edit::lookupFormStringFromId(int formid){
         foreach(const lexeme& m_lexeme, *lexemes)
             foreach(const form& m_form, m_lexeme.forms)
                 if(m_form.id == formid)
-                    return m_form.string;
+                    return m_form.m_form.string;
     }
     return m_database->stringFromFormId(formid);
 }
@@ -489,7 +487,7 @@ int edit::lookupForm(int language, int lexemeid, QString string, QList<QList<QSt
         }
         foreach(const lexeme& m_lexeme, *lexemes)
             foreach(const form& m_form, m_lexeme.forms)
-                if(m_form.string == string)
+                if(m_form.m_form.string == string)
                     if((m_form.grammarform == grammarid) || (grammarid == 0))
                         return m_form.id;
     }
@@ -573,7 +571,7 @@ QString edit::prettyPrintLexeme(int lexeme_id){
             foreach(const lexeme& m_lexeme, *lexemes)
                 if(lexeme_id == m_lexeme.id){
                     foreach(const form& m_form, m_lexeme.forms)
-                        pretty_string += m_form.string + ", ";
+                        pretty_string += m_form.m_form.string + ", ";
                     foreach(const sentence& m_sentence, m_lexeme.sentences){
                         foreach(const sentencepart& m_sentencepart, m_sentence.parts){
                             switch(m_sentencepart.type){
@@ -631,7 +629,7 @@ QString edit::stringFromFormId(int formid){
         foreach(const lexeme& m_lexeme, *lexemes)
             foreach(const form& m_form, m_lexeme.forms)
                 if(m_form.id == formid)
-                    return m_form.string;
+                    return m_form.m_form.string;
     }
     return "";
 }
@@ -678,7 +676,7 @@ int edit::lookupFormLexeme(int language, int lexemeid, QString string, QList<QLi
         foreach(const lexeme& m_lexeme, *lexemes){
             if(m_lexeme.id == lexemeid){
                 foreach(const form& m_form, m_lexeme.forms){
-                    if(m_form.string == string){
+                    if(m_form.m_form.string == string){
                         if((m_form.grammarform == grammarid) || (grammarid == 0))
                             return m_form.id;
                     }
@@ -952,7 +950,6 @@ void edit::grammarInfoAvailableFromGrammarProvider(QObject* caller, int numberOf
     disconnect(m_grammarprovider,&grammarprovider::sentenceComplete,this,&edit::sentenceCompleteFromGrammarProvider);
     disconnect(m_grammarprovider,&grammarprovider::grammarInfoComplete,this,&edit::grammarInfoCompleteFromGrammarProvider);
 
-    m_current_lexeme_id = lexemeId();
     //qDebug() << "Obtained " << numberOfObjects << " forms for lexeme " << m_current_lexeme_id;
     connect(m_grammarprovider,&grammarprovider::formObtained,this,&edit::formObtainedFromGrammarProvider);
     connect(m_grammarprovider,&grammarprovider::compoundFormObtained,this,&edit::compoundFormObtainedFromGrammarProvider);
@@ -966,27 +963,36 @@ void edit::grammarInfoAvailableFromGrammarProvider(QObject* caller, int numberOf
     m_grammarprovider->getNextGrammarObject(caller);
 }
 
-void edit::formObtainedFromGrammarProvider(QObject* caller, QString form, QList<QList<QString> > grammarexpressions, bool silent, QList<QString> compoundforms){
+void edit::formObtainedFromGrammarProvider(QObject* caller, bool silent, grammarprovider::grammarform form){
     // qDebug() << __FUNCTION__ << __LINE__ << "silent" << silent;
-    int grammar_id = createGrammarFormId(m_current_language_id, grammarexpressions);
-    int form_id = formId();
+    int grammar_id = createGrammarFormId(m_current_language_id, form.grammarexpressions);
+    int form_id = form.id;
+    m_current_lexeme_id = form.lexeme_id;
     //qDebug() << "Obtained form " << form << "id" << form_id;
     if(!silent){
 
         QString prettyprintcompoundforms;
-        if(!compoundforms.isEmpty()){
+        if(!form.compounds.isEmpty()){
             prettyprintcompoundforms = " (";
-            foreach(QString compoundform, compoundforms)
-                prettyprintcompoundforms += compoundform + "|";
+            grammarprovider::compoundPart compoundform;
+            foreach(compoundform, form.compounds)
+            {
+                if(compoundform.id != 0){
+                    prettyprintcompoundforms += compoundform.string + lookupFormStringFromId(compoundform.id) + "|";
+                }
+                else{
+                    prettyprintcompoundforms += compoundform.string + "|";
+                }
+            }
             prettyprintcompoundforms.chop(1);
             prettyprintcompoundforms += ")";
         }
-        m_current_pretty_lexeme += form + prettyprintcompoundforms + ", ";
-        addForm(m_current_lexeme_id,form_id,grammar_id,form,m_current_language_id, m_current_translation_id, compoundforms);
+        m_current_pretty_lexeme += form.string + prettyprintcompoundforms + ", ";
+        addForm(m_current_lexeme_id,form_id,grammar_id,form,m_current_language_id, m_current_translation_id);
     }
     else{
         // Don't add to translation but as normal lexeme:
-        addForm(m_current_lexeme_id,form_id,grammar_id,form,m_current_language_id, 0, compoundforms);
+        addForm(m_current_lexeme_id,form_id,grammar_id,form,m_current_language_id, 0);
     }
     m_grammarprovider->getNextGrammarObject(caller);
 }
@@ -1094,9 +1100,7 @@ void edit::resetEverything(void){
     m_current_translation->lexemes.clear();
     m_lexemes.clear();
     m_translationId = -1;
-    m_lexemeId = -1;
     m_sentenceId = -1;
-    m_formId = -1;
     m_compoundFormId = -1;
     m_grammarFormId = -1;
     m_grammarFormComponentId = -1;
@@ -1147,15 +1151,14 @@ void edit::saveToDatabase(void){
                 form& currentForm = formi.next();
                 //qDebug() << "newForm" << currentLexeme.newid << currentForm.grammarform << currentForm.string;
                 if(currentForm.id < 0)
-                    currentForm.newid = m_database->newForm(currentLexeme.newid, currentForm.grammarform, currentForm.string);
+                    currentForm.newid = m_database->newForm(currentLexeme.newid, currentForm.grammarform, currentForm.m_form.string);
                 else
                     currentForm.newid = currentForm.id;
-                if(!currentForm.compoundforms.isEmpty()){
+                if(!currentForm.m_form.compounds.isEmpty()){
                     qDebug() << "Saving compound parts for this form:";
-                    QList<grammarprovider::compoundPart> compoundformparts = m_grammarprovider->getGrammarCompoundFormParts(currentForm.string, currentForm.compoundforms, currentLexeme.languageid);
                     grammarprovider::compoundPart compoundformpart;
                     int part=1;
-                    foreach(compoundformpart, compoundformparts){
+                    foreach(compoundformpart, currentForm.m_form.compounds){
                         m_database->newCompoundFormPart(currentForm.newid, part, compoundformpart.id, compoundformpart.capitalized, compoundformpart.string);
                         part++;
                     }

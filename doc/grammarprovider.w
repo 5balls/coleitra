@@ -205,6 +205,10 @@ beginning until unlocking the blocking wait}}
 public:
     explicit grammarprovider(QObject *parent = nullptr);
     ~grammarprovider(void);
+    @<Id property @'lexeme@'@>
+    @<Id property @'form@'@>
+// Another public needed as Id property messes with public and private:
+public:
     struct tablecell {
         int row;
         int column;
@@ -236,7 +240,14 @@ public:
         lexemePartProcessInstruction instruction;
         QList<QList<QString> > grammarexpressions;
     };
+    struct compoundPart {
+        int id;
+        bool capitalized;
+        QString string;
+    };
     struct grammarform {
+        grammarform(){
+        }
         grammarform(int y_index,
                 int y_row,
                 int y_column,
@@ -263,6 +274,7 @@ public:
             processList(y_processList),
             string(""){
             }
+        int id;
         int index;
         int row;
         int column;
@@ -270,6 +282,9 @@ public:
         QList<QList<QString> > grammarexpressions;
         lexemePartType type;
         QList<lexemePartProcess> processList;
+        QList<compoundPart> compounds;
+        int lexeme_id; // used internal in grammarprovider class only
+        int language_id;
     };
     struct templatearguments {
         QMap<QString, QString> named;
@@ -280,17 +295,12 @@ public:
         int m_languageid;
         QString m_word;
     };
-    struct compoundPart {
-        int id;
-        bool capitalized;
-        QString string;
-    };
 public slots:
     Q_INVOKABLE void getGrammarInfoForWord(QObject* caller, int languageid, QString word);
     Q_INVOKABLE void getNextGrammarObject(QObject* caller);
     Q_INVOKABLE void getNextSentencePart(QObject* caller);
-    Q_INVOKABLE QList<grammarprovider::compoundPart> getGrammarCompoundFormParts(QString compoundword, QList<QString> compoundstrings, int id_language);
 private slots:
+    QList<grammarprovider::compoundPart> getGrammarCompoundFormParts(QString compoundword, QList<QString> compoundstrings, int id_language);
     void getWiktionarySections(QObject *caller);
     void getWiktionarySection(QString reply, QObject* caller);
     void getWiktionaryTemplate(QString reply, QObject* caller);
@@ -316,7 +326,7 @@ signals:
 
     void grammarInfoAvailable(QObject* caller, int numberOfObjects, bool silent);
     void grammarInfoNotAvailable(QObject* caller, bool silent);
-    void formObtained(QObject* caller, QString form, QList<QList<QString> > grammarexpressions, bool silent, QList<QString> compoundforms);
+    void formObtained(QObject* caller, bool silent, grammarform form);
     void compoundFormObtained(QObject* caller, QString form, bool silent);
     void sentenceAvailable(QObject* caller, int parts, bool silent);
     void sentenceLookupForm(QObject* caller, QString form, QList<QList<QString> > grammarexpressions, bool silent);
@@ -346,6 +356,7 @@ private:
     networkscheduler* m_networkscheduler;
     templatearguments m_currentarguments;
     QList<grammarform> m_grammarforms;
+    QList<grammarform> mi_grammarforms;
     QList<scheduled_lookup> m_scheduled_lookups;
     QMap<int, void (grammarprovider::*)(QObject*,int)> m_requirements_map;
     QMap<int, QList<QPair<QString,int> > (grammarprovider::*)(QObject* caller, int id, int lexeme_id, QList<int> compound_lexemes)> m_compound_parser_map;
@@ -534,8 +545,12 @@ void grammarprovider::getGrammarInfoForWord(QObject* caller, int languageid, QSt
 @{
 void grammarprovider::getWiktionarySections(QObject* caller){
     static int numberofcalls=0;
-    qDebug() << "---- getWiktionarySections number of calls" << numberofcalls++;
+    //qDebug() << "---- getWiktionarySections number of calls" << numberofcalls++;
     //qDebug() << "getWiktionarySections enter";
+    /* I suspect it doesn't hurt to get a new lexeme id here - as any group of
+       forms belonging together will have to pass through here and it won't
+       hurt to skip a few id's here. */
+    lexemeId();
     m_networkscheduler->requestNetworkReply(caller, s_baseurl + "action=parse&page=" + m_word + "&prop=sections&format=json", std::bind(&grammarprovider::getWiktionarySection,this,std::placeholders::_1, caller));
 
     //qDebug() << "getWiktionarySections exit";
@@ -892,6 +907,12 @@ matching_form:
                         grammarform currentGrammarForm = gf_expectedcell;
                         currentGrammarForm.string = tc_current.content;
                         currentGrammarForm.grammarexpressions += additional_grammarforms;
+                        currentGrammarForm.language_id = m_language;
+                        if(m_found_compoundform){
+                            currentGrammarForm.compounds = getGrammarCompoundFormParts(currentGrammarForm.string, m_current_compoundforms, m_language);
+                        }
+                        currentGrammarForm.id = formId();
+                        currentGrammarForm.lexeme_id = m_lexemeId;
                         l_grammarforms.push_back(currentGrammarForm);
                         // There may be more than one:
                         parsedTable.pop_front();
@@ -918,6 +939,7 @@ out:
         return a.index < b.index;
     });
     m_grammarforms += l_grammarforms;
+    mi_grammarforms += l_grammarforms;
     //qDebug() << "Got" << m_grammarforms.size();
 
     emit processedGrammar(caller,m_silent);
@@ -930,9 +952,9 @@ out:
 @O ../src/grammarprovider.cpp -d
 @{
 void grammarprovider::getNextGrammarObject(QObject* caller){
-    qDebug() << "grammarprovider::getNextGrammarObject enter";
+    //qDebug() << "grammarprovider::getNextGrammarObject enter";
     if(m_grammarforms.isEmpty()){
-        qDebug() << __FUNCTION__ << __LINE__ << "*** grammarInfoComplete EMIT ***";
+        //qDebug() << __FUNCTION__ << __LINE__ << "*** grammarInfoComplete EMIT ***";
         emit grammarInfoComplete(caller,m_silent);
         if(!m_scheduled_lookups.isEmpty()){
             scheduled_lookup next_lookup = m_scheduled_lookups.first();
@@ -944,115 +966,110 @@ void grammarprovider::getNextGrammarObject(QObject* caller){
             m_busy = false;
         }
         //qDebug() << "grammarprovider::getNextGrammarObject exit" << __LINE__;
-        return;
     }
-    QMutableListIterator<grammarform> grammarFormI(m_grammarforms);
-    grammarform& form = grammarFormI.next();
-    //qDebug() << "form.string" << form.string;
-    switch(form.type){
-        case FORM:
-            {
-                //qDebug() << form.index << form.string << "FORM" << form.grammarexpressions;
-                QString string = form.string;
-                QList<QList<QString > > ge = form.grammarexpressions;
-                if(!m_grammarforms.isEmpty())
-                    m_grammarforms.removeFirst();
-                else 
-                    qDebug() << "ERROR m_grammarforms is empty!" << __LINE__;
+    else{
+        QMutableListIterator<grammarform> grammarFormI(m_grammarforms);
+        grammarform& form = grammarFormI.next();
+        grammarform form2 = form;
+        //qDebug() << "form.string" << form.string;
+        switch(form.type){
+            case FORM:
                 {
-                    qDebug() << "----- formObtained" << caller << string << ge << m_silent << m_found_compoundform << m_current_compoundforms;
-                    qDebug() << __FUNCTION__ << __LINE__ << "*** formObtained EMIT ***";
-                    if(m_found_compoundform)
-                        emit formObtained(caller, string, ge, m_silent, m_current_compoundforms);
-                    else
-                        emit formObtained(caller, string, ge, m_silent, {});
+                    //qDebug() << form.index << form.string << "FORM" << form.grammarexpressions;
+                    if(!m_grammarforms.isEmpty())
+                        m_grammarforms.removeFirst();
+                    else 
+                        qDebug() << "ERROR m_grammarforms is empty!" << __LINE__;
+                    {
+                       // qDebug() << __FUNCTION__ << __LINE__ << "*** formObtained EMIT ***";
+                        emit formObtained(caller, m_silent, form2);
+                    }
+                    //qDebug() << "grammarprovider::getNextGrammarObject exit" << __LINE__;
+                    return;
                 }
-                //qDebug() << "grammarprovider::getNextGrammarObject exit" << __LINE__;
-                return;
-            }
-            break;
-        case FORM_WITH_IGNORED_PARTS:
-            {
-                QList<QList<QString > > ge = form.grammarexpressions;
-                QStringList formparts = form.string.split(QLatin1Char(' '));
-                if(formparts.size() == form.processList.size()){
-                    int formparti = 0;
-                    foreach(const QString& formpart, formparts){
-                        switch(form.processList.at(formparti).instruction){
-                            case IGNOREFORM:
-                                //qDebug() << "IGNOREFORM" << formpart;
-                                break;
-                            case LOOKUPFORM:
-                                //qDebug() << "LOOKUPFORM" << formpart;
-                                break;
-                            case LOOKUPFORM_LEXEME:
-                                //qDebug() << "LOOKUPFORM_LEXEME" << formpart;
-                                break;
-                            case ADDANDUSEFORM:
-                                //qDebug() << "ADDANDUSEFORM" << formpart;
-                                if(!m_grammarforms.isEmpty())
-                                    m_grammarforms.removeFirst();
-                                else 
-                                    qDebug() << "ERROR m_grammarforms is empty!" << __LINE__;
-                                {
-                                    qDebug() << "----- formObtained" << caller << formpart << ge << m_silent << m_found_compoundform << m_current_compoundforms;
-                                    qDebug() << __FUNCTION__ << __LINE__ << "*** formObtained EMIT ***";
-                                    if(m_found_compoundform)
-                                        emit formObtained(caller, formpart, ge, m_silent, m_current_compoundforms);
-                                    else
-                                        emit formObtained(caller, formpart, ge, m_silent, {});
-                                }
-                                // return needed here to be reentrant:
+                break;
+            case FORM_WITH_IGNORED_PARTS:
+                {
+                    QList<QList<QString > > ge = form.grammarexpressions;
+                    QStringList formparts = form.string.split(QLatin1Char(' '));
+                    if(formparts.size() == form.processList.size()){
+                        int formparti = 0;
+                        foreach(const QString& formpart, formparts){
+                            switch(form.processList.at(formparti).instruction){
+                                case IGNOREFORM:
+                                    //qDebug() << "IGNOREFORM" << formpart;
+                                    break;
+                                case LOOKUPFORM:
+                                    //qDebug() << "LOOKUPFORM" << formpart;
+                                    break;
+                                case LOOKUPFORM_LEXEME:
+                                    //qDebug() << "LOOKUPFORM_LEXEME" << formpart;
+                                    break;
+                                case ADDANDUSEFORM:
+                                    //qDebug() << "ADDANDUSEFORM" << formpart;
+                                    if(!m_grammarforms.isEmpty())
+                                        m_grammarforms.removeFirst();
+                                    else 
+                                        qDebug() << "ERROR m_grammarforms is empty!" << __LINE__;
+                                    {
+                                        //qDebug() << __FUNCTION__ << __LINE__ << "*** formObtained EMIT ***";
+                                        grammarform formpart_form = form2;
+                                        formpart_form.string = formpart;
+                                        emit formObtained(caller, m_silent, formpart_form);
+                                    }
+                                    // return needed here to be reentrant:
+                                    return;
+                                    break;
+                                case ADDANDIGNOREFORM:
+                                    break;
+                            }
+                            formparti++;
+                        }
+                    }
+                    else {
+                        qDebug() << "Process list size (=" + QString::number(form.processList.size()) +  ") does not match number of form parts (=" + formparts.size() + ")!";
+                    }
+                }
+                break;
+            case COMPOUNDFORM:
+                //qDebug() << __FILE__ << __LINE__ << __FUNCTION__;
+                //qDebug() << form.index << form.string << "COMPOUNDFORM" << form.grammarexpressions;
+                break;
+            case SENTENCE:
+                //qDebug() << form.index << form.string << "SENTENCE" << form.grammarexpressions;
+                {
+                    QStringList sentenceparts = form.string.split(QLatin1Char(' '));
+                    if(sentenceparts.size() == form.processList.size()){
+                        //Preprocess sentence:
+                        QMutableListIterator<lexemePartProcess> lexemeProcessI(form.processList);
+                        int sentencepartid = 0;
+                        while(lexemeProcessI.hasNext()){
+                            lexemePartProcess& currentProcess = lexemeProcessI.next();
+                            if(currentProcess.instruction == ADDANDUSEFORM){
+                                //qDebug() << "ADDANDUSEFORM for part" << sentenceparts.at(sentencepartid) << sentencepartid << currentProcess.grammarexpressions;
+                                currentProcess.instruction = LOOKUPFORM_LEXEME;
+                                //qDebug() << "----- formObtained" << caller << sentenceparts.at(sentencepartid) << currentProcess.grammarexpressions << m_silent << m_found_compoundform;
+                                //qDebug() << __FUNCTION__ << __LINE__ << "*** formObtained EMIT ***";
+                                grammarform sentencepart_form = form;
+                                sentencepart_form.string = sentenceparts.at(sentencepartid);
+                                sentencepart_form.grammarexpressions = currentProcess.grammarexpressions;
+                                emit formObtained(caller, m_silent, sentencepart_form);
+                                //qDebug() << "grammarprovider::getNextGrammarObject exit" << __LINE__;
                                 return;
-                                break;
-                            case ADDANDIGNOREFORM:
-                                break;
+                            }
+                            sentencepartid++;
                         }
-                        formparti++;
+                        emit sentenceAvailable(caller, form.processList.size(), m_silent);
+                    }
+                    else {
+                        qDebug() << "Process list size (=" + QString::number(form.processList.size()) +  ") does not match number of sentence parts (=" + sentenceparts.size() + ")!";
                     }
                 }
-                else {
-                    qDebug() << "Process list size (=" + QString::number(form.processList.size()) +  ") does not match number of form parts (=" + formparts.size() + ")!";
-                }
-            }
-            break;
-        case COMPOUNDFORM:
-            //qDebug() << form.index << form.string << "COMPOUNDFORM" << form.grammarexpressions;
-            break;
-        case SENTENCE:
-            //qDebug() << form.index << form.string << "SENTENCE" << form.grammarexpressions;
-            {
-                QStringList sentenceparts = form.string.split(QLatin1Char(' '));
-                if(sentenceparts.size() == form.processList.size()){
-                    //Preprocess sentence:
-                    QMutableListIterator<lexemePartProcess> lexemeProcessI(form.processList);
-                    int sentencepartid = 0;
-                    while(lexemeProcessI.hasNext()){
-                        lexemePartProcess& currentProcess = lexemeProcessI.next();
-                        if(currentProcess.instruction == ADDANDUSEFORM){
-                            //qDebug() << "ADDANDUSEFORM for part" << sentenceparts.at(sentencepartid) << sentencepartid << currentProcess.grammarexpressions;
-                            currentProcess.instruction = LOOKUPFORM_LEXEME;
-                            qDebug() << "----- formObtained" << caller << sentenceparts.at(sentencepartid) << currentProcess.grammarexpressions << m_silent << m_found_compoundform;
-                            qDebug() << __FUNCTION__ << __LINE__ << "*** formObtained EMIT ***";
-                            if(m_found_compoundform)
-                                emit formObtained(caller, sentenceparts.at(sentencepartid), currentProcess.grammarexpressions, m_silent, m_current_compoundforms);
-                            else
-                                emit formObtained(caller, sentenceparts.at(sentencepartid), currentProcess.grammarexpressions, m_silent, {});
-                            //qDebug() << "grammarprovider::getNextGrammarObject exit" << __LINE__;
-                            return;
-                        }
-                        sentencepartid++;
-                    }
-                    emit sentenceAvailable(caller, form.processList.size(), m_silent);
-                }
-                else {
-                    qDebug() << "Process list size (=" + QString::number(form.processList.size()) +  ") does not match number of sentence parts (=" + sentenceparts.size() + ")!";
-                }
-            }
-            break;
-        default:
-            qDebug() << form.index << form.string << "unknown form!" << form.grammarexpressions;
-            break;
+                break;
+            default:
+                //qDebug() << form.index << form.string << "unknown form!" << form.grammarexpressions;
+                break;
+        }
     }
     //qDebug() << "grammarprovider::getNextGrammarObject exit" << __LINE__;
 }
@@ -1122,7 +1139,6 @@ void grammarprovider::getPlainTextTableFromReply(QString s_reply, QList<grammarp
 }
 @}
 
-
 \cprotect\subsection{\verb#getPlainTextTableFromReply#}
 @O ../src/grammarprovider.cpp -d
 @{
@@ -1135,11 +1151,14 @@ void grammarprovider::processNetworkError(QObject* caller, QString s_failure_rea
 @O ../src/grammarprovider.cpp -d
 @{
 QList<grammarprovider::compoundPart> grammarprovider::getGrammarCompoundFormParts(QString compoundword, QList<QString> compoundstrings, int id_language){
-    // Forms are saved strictly sequential, so all
-    // needed forms should be in the database already
+    qDebug() << __FILE__ << __FUNCTION__ << __LINE__ << compoundword << compoundstrings << id_language;
+    /* The previous assumption, that all forms are in the database already does
+       not work anymore after a refactoring. */
     bool found_all_lexemes = true;
     QList<QList<QPair<QString,int> > > compoundformpart_candidates;
+    QString m_debug_compoundparts;
     foreach(QString compoundform, compoundstrings){
+        // First check database:
         QList<int> possible_lexemes = m_database->searchLexemes(compoundform, true);
         int found_lexeme = 0;
         foreach(int possible_lexeme, possible_lexemes){
@@ -1149,22 +1168,52 @@ QList<grammarprovider::compoundPart> grammarprovider::getGrammarCompoundFormPart
             }
         }
         if(found_lexeme > 0){
+            // Collect all form candidates:
             QList<QPair<QString,int> > forms = m_database->listFormsOfLexeme(found_lexeme);
             compoundformpart_candidates.push_back(forms);
         }
         else{
+            // We have not found any matching lexeme in database, let's check our memory:
+            grammarform form;
+            found_lexeme = 0;
+            qDebug() << __FILE__ << __FUNCTION__ << __LINE__ << mi_grammarforms.size();
+            foreach(form, mi_grammarforms){
+                if((form.string == compoundform) && (form.language_id == id_language)){
+                    found_lexeme = form.lexeme_id;
+                    break;
+                }
+            }
+            if(found_lexeme != 0){
+                // Collect all form candidates:
+                QList<QPair<QString,int> > forms;
+                foreach(form, mi_grammarforms){
+                    if(form.lexeme_id == found_lexeme){
+                        forms.push_back({form.string,form.id});
+                        m_debug_compoundparts += form.string + " ";
+                    }
+                }
+                compoundformpart_candidates.push_back(forms);
+                continue;
+            }
             found_all_lexemes = false;
             break;
         }
     }
-    qDebug() << "Found all lexemes:" << found_all_lexemes;
+    qDebug() << "Found all lexemes:" << found_all_lexemes << m_debug_compoundparts;
     QList<levenshteindistance::compoundpart> compoundparts = m_levenshteindistance->stringdivision(compoundformpart_candidates,compoundword);
     levenshteindistance::compoundpart m_compoundpart;
     QList<compoundPart> compoundpartsgrammar;
     foreach(m_compoundpart, compoundparts){
+        if(m_compoundpart.id != 0){
+            m_debug_compoundparts += QString::number(m_compoundpart.id) + " ";
+        }
+        else{
+            m_debug_compoundparts += m_compoundpart.string;
+        }
         compoundpartsgrammar.push_back({m_compoundpart.id,m_compoundpart.capitalized,m_compoundpart.string});
         qDebug() << "Compound part" << m_compoundpart.division << m_compoundpart.id << m_compoundpart.capitalized << m_compoundpart.string;
     }
+    qDebug() << "Compound parts:" << m_debug_compoundparts;
     return compoundpartsgrammar;
 }
 @}
@@ -1203,7 +1252,7 @@ void grammarprovider::parse_compoundform(QString s_reply, QObject* caller){
                 gic_con = connect(this, &grammarprovider::grammarInfoComplete,
                         [&](QObject* caller, bool silent){
                             if(caller == &waitloop){
-                                qDebug() << "Got grammarInfoComplete signal in lambda function for compoundform search" << m_word << caller;
+                                //qDebug() << "Got grammarInfoComplete signal in lambda function for compoundform search" << m_word << caller;
                                 disconnect(gic_con);
                                 disconnect(gina_con);
                                 waitloop.quit();
@@ -1212,16 +1261,16 @@ void grammarprovider::parse_compoundform(QString s_reply, QObject* caller){
                 gina_con = connect(this, &grammarprovider::grammarInfoNotAvailable,
                         [&](QObject* caller, bool silent){
                             if(caller == &waitloop){
-                                qDebug() << "Got grammarInfoNotComplete signal in lambda function for compoundform search" << m_word << caller;
+                                //qDebug() << "Got grammarInfoNotComplete signal in lambda function for compoundform search" << m_word << caller;
                                 disconnect(gic_con);
                                 disconnect(gina_con);
                                 waitloop.quit();
                             }
                         });
                 getWiktionarySections(&waitloop);
-                qDebug() << "Blocking waitloop for compoundform" << m_word << "...";
+                //qDebug() << "Blocking waitloop" << &waitloop << "for compoundform" << m_word << "...";
                 waitloop.exec();
-                qDebug() << "... blocking waitloop for compoundform" << m_word << "finished.";
+                //qDebug() << "... blocking waitloop" << &waitloop << "for compoundform" << m_word << "finished.";
             }
             m_current_compoundforms += arg;
         }
