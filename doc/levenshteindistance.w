@@ -36,9 +36,11 @@ public:
         QString string;
     };
 public slots:
-    Q_INVOKABLE double distance(const QString& string1, const QString& string2);
+    Q_INVOKABLE int distance(const QString& string1, const QString& string2);
     Q_INVOKABLE QList<compoundpart> stringdivision(QList<QList<QPair<QString,int> > > compoundformpart_candidates, QString compoundform, QList<int> divisions = {});
 private:
+    int levenshteindistance_min;
+    QList<levenshteindistance::compoundpart> currently_best_result;
 signals:
 @<End of class and header @>
 @}
@@ -51,6 +53,7 @@ signals:
 
 levenshteindistance::levenshteindistance(QObject *parent) : QObject(parent)
 {
+    levenshteindistance_min = std::numeric_limits<int>::max();
     // Testing compoundpart finder:
     /*QList<QPair<QString,int> > dampfforms = {{"Dampf",2},{"Dämpfe",3},{"Dampfes",4},{"Dampfs",5},{"Dämpfe",6},{"Dampf",7},{"Dampfe",8},{"Dämpfen",9},{"Dampf",10},{"Dämpfe",11}};
    
@@ -74,10 +77,15 @@ levenshteindistance::levenshteindistance(QObject *parent) : QObject(parent)
 }
 
 
-double levenshteindistance::distance(const QString& string1, const QString& string2){
+int levenshteindistance::distance(const QString& string1, const QString& string2){
     int m = string1.size();
     int n = string2.size();
-    double dist[m+1][n+1];
+    int** dist = new int*[m+1];
+    for(int i = 0; i < m+1; i++)
+        dist[i] = new int[n+1];
+    for(int i=0; i<=m; i++)
+        for(int j=0; j<=n; j++)
+            dist[i][j] = 0;
     for(int i=1; i<=m; i++)
         dist[i][0] = i;
     for(int j=1; j<=n; j++)
@@ -97,7 +105,21 @@ double levenshteindistance::distance(const QString& string1, const QString& stri
                 dist[i][j] = dist[i-1][j-1] + substitution_cost;
         }
     }
-    return dist[m][n];
+    if(dist[m][n] < 0){
+        qDebug() << "Error in " << __FILE__ << __FUNCTION__ << __LINE__ << string1 << string2;
+        for(int i=0; i<=m; i++){
+            QString s_line;
+            for(int j=0; j<=n; j++){
+                s_line += QString::number(dist[i][j]) + " ";
+            }
+            qDebug() << s_line;
+        }
+    }
+    int min_dist = dist[m][n];
+    for(int i = 0; i < m+1; i++)
+        delete [] dist[i];
+    delete [] dist;
+    return min_dist;
 }
 
 QList<levenshteindistance::compoundpart> levenshteindistance::stringdivision(QList<QList<QPair<QString,int> > > compoundformpart_candidates, QString compoundform, QList<int> divisions){
@@ -105,11 +127,12 @@ QList<levenshteindistance::compoundpart> levenshteindistance::stringdivision(QLi
     int stringsize = compoundform.size();
     int current_ndiv = divisions.size()+1;
     int remaining_ndiv = ndiv - current_ndiv;
+    QString ms_debugstring;
     //qDebug() << "ndiv" << ndiv << "stringsize" << stringsize << "current_ndiv" << current_ndiv << "remaining_ndiv" << remaining_ndiv;
-    static int levenshteindistance_min = std::numeric_limits<int>::max();
-    static QList<levenshteindistance::compoundpart> currently_best_result;
+    //static int levenshteindistance_min = std::numeric_limits<int>::max();
+    //static QList<levenshteindistance::compoundpart> currently_best_result;
     if(current_ndiv==1){
-        levenshteindistance_min = std::numeric_limits<int>::max();
+        levenshteindistance_min = 10000;
         currently_best_result.clear();
     }
     if(remaining_ndiv <= 0){
@@ -118,7 +141,7 @@ QList<levenshteindistance::compoundpart> levenshteindistance::stringdivision(QLi
            for this division: */ 
         QList<levenshteindistance::compoundpart> current_testdivision;
         int part=0;
-        double levstd_sum=0;
+        int levstd_sum=0;
         QList<QPair<QString,int> > compoundform_candidate;
         foreach(compoundform_candidate, compoundformpart_candidates){
             QString divisionstring;
@@ -127,8 +150,11 @@ QList<levenshteindistance::compoundpart> levenshteindistance::stringdivision(QLi
             else if(part<current_ndiv-1)
                 divisionstring = compoundform.mid(divisions.at(part-1)+1,divisions.at(part)-divisions.at(part-1));
             else
+            {
                 divisionstring = compoundform.right(compoundform.size()-divisions.at(part-1)-1);
-            //qDebug() << "divisionstring" << divisionstring;
+                //qDebug() << divisionstring;
+            }
+            //ms_debugstring += "divisionstring " + divisionstring;
             int min_levstd_form = std::numeric_limits<int>::max();
             int min_id = 0;
             QPair<QString,int> compoundform_form;
@@ -137,7 +163,7 @@ QList<levenshteindistance::compoundpart> levenshteindistance::stringdivision(QLi
                    here as it might not lead to the desired result
                    for most locales. However this will only lead to
                    a bit more storage so it is probably fine for now. */
-                double levstd_form = distance(divisionstring.toLower(), compoundform_form.first.toLower());
+                int levstd_form = distance(divisionstring.toLower(), compoundform_form.first.toLower());
                 //qDebug() << divisionstring.toLower() << compoundform_form.second << compoundform_form.first.toLower() << levstd_form;
                 if(levstd_form < min_levstd_form){
                     min_levstd_form = levstd_form;
@@ -159,6 +185,7 @@ QList<levenshteindistance::compoundpart> levenshteindistance::stringdivision(QLi
             levstd_sum += min_levstd_form;
             part++;
         }
+        //qDebug() << levstd_sum;
         //qDebug() << "Levenshtein distance sum" << levstd_sum;
         if(levstd_sum < levenshteindistance_min){
             //qDebug() << "New minimum!";
@@ -176,6 +203,27 @@ QList<levenshteindistance::compoundpart> levenshteindistance::stringdivision(QLi
         QList<int> newdivisions = divisions;
         newdivisions.push_back(div);
         stringdivision(compoundformpart_candidates, compoundform, newdivisions);
+    }
+    if(levenshteindistance_min != 0)
+    {
+        QString s_best_result;
+        compoundpart result;
+        foreach(result, currently_best_result){
+            if(!result.string.isEmpty())
+                s_best_result += QString::number(result.id) + "'" + result.string + "', ";
+            else
+                s_best_result += compoundform + QString::number(result.id) + ";" + QString::number(result.division) + ", ";
+        }
+        QList<QPair<QString,int> > compoundform_candidate2;
+        foreach(compoundform_candidate2, compoundformpart_candidates){
+            QPair<QString,int> comp_cand;
+            QString m_deb;
+            foreach(comp_cand, compoundform_candidate2){
+                m_deb += comp_cand.first + " " + QString::number(comp_cand.second) + ",";
+            }
+            qDebug() << m_deb;
+        }
+        qDebug() << "Could not find exact match, found " + QString::number(lastdivision) + " " + QString::number(levenshteindistance_min) + " " + s_best_result;
     }
     return currently_best_result;
 }

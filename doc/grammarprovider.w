@@ -527,7 +527,7 @@ void grammarprovider::getGrammarInfoForWord(QObject* caller, int languageid, QSt
     m_found_compoundform = false;
     if(m_requirements_map.contains(languageid))
         (this->*(m_requirements_map[languageid]))(caller,languageid);
-    qDebug() << "...requirements done";
+    //qDebug() << "...requirements done";
     m_language = languageid;
     m_word = word;
     m_silent = false;
@@ -592,7 +592,7 @@ void grammarprovider::getWiktionarySection(QString s_reply, QObject* caller){
                 templatearguments l_currentarguments = m_currentarguments;
                 QList<QString> l_current_compoundforms = m_current_compoundforms;
                 if(s_section == "Etymology"){
-                    qDebug() << "Found etymology section";
+                    //qDebug() << "Found etymology section";
                     // Check, if this is a compund word
                     /* Store state (restored at end of scope): */
                     context save_state(this);
@@ -603,7 +603,7 @@ void grammarprovider::getWiktionarySection(QString s_reply, QObject* caller){
                        that either this is not a compound word or we
                        have obtained all compound forms */
                     QEventLoop waitloop;
-                    qDebug() << __FILE__ << __FUNCTION__ << __LINE__ << &waitloop;
+                    //qDebug() << __FILE__ << __FUNCTION__ << __LINE__ << &waitloop;
                     /* We have to check for the caller pointer because
                        this might get recursive */
                     QMetaObject::Connection gic_con;
@@ -611,7 +611,7 @@ void grammarprovider::getWiktionarySection(QString s_reply, QObject* caller){
                     gic_con = connect(this, &grammarprovider::grammarInfoComplete,
                             [&](QObject* caller, bool silent){
                                 if(caller == &waitloop){
-                                    qDebug() << "Got grammarInfoComplete signal in lambda function for etymology section" << m_word << caller;
+                                    //qDebug() << "Got grammarInfoComplete signal in lambda function for etymology section" << m_word << caller;
                                     disconnect(gic_con);
                                     disconnect(gina_con);
                                     waitloop.quit();
@@ -620,7 +620,7 @@ void grammarprovider::getWiktionarySection(QString s_reply, QObject* caller){
                     gina_con = connect(this, &grammarprovider::grammarInfoNotAvailable,
                             [&](QObject* caller, bool silent){
                                 if(caller == &waitloop){
-                                    qDebug() << "Got grammarInfoNotComplete signal in lambda function for etymology section" << m_word << caller;
+                                    //qDebug() << "Got grammarInfoNotComplete signal in lambda function for etymology section" << m_word << caller;
                                     disconnect(gic_con);
                                     disconnect(gina_con);
                                     waitloop.quit();
@@ -628,13 +628,13 @@ void grammarprovider::getWiktionarySection(QString s_reply, QObject* caller){
                             });
                     best_bet_for_section = j_section["index"].toString().toInt();
                     m_networkscheduler->requestNetworkReply(&waitloop,s_baseurl + "action=parse&page=" + m_word + "&section=" + QString::number(best_bet_for_section) + "&prop=wikitext&format=json", std::bind(&grammarprovider::getWiktionaryTemplate,this,std::placeholders::_1,&waitloop));
-                    qDebug() << "Blocking waitloop for" << m_word << "...";
+                    //qDebug() << "Blocking waitloop for" << m_word << "...";
                     waitloop.exec();
-                    qDebug() << "... blocking waitloop for" << m_word << "finished.";
+                    //qDebug() << "... blocking waitloop for" << m_word << "finished.";
                     l_found_compoundform = m_found_compoundform;
                     l_currentarguments = m_currentarguments;
                     foreach(QString arg, l_currentarguments.unnamed){
-                        qDebug() << "Blocking loop came back with arg" << arg;
+                        //qDebug() << "Blocking loop came back with arg" << arg;
                     }
                     l_current_compoundforms = m_current_compoundforms;
                 }
@@ -656,7 +656,7 @@ void grammarprovider::getWiktionarySection(QString s_reply, QObject* caller){
         m_networkscheduler->requestNetworkReply(caller,s_baseurl + "action=parse&page=" + m_word + "&section=" + QString::number(best_bet_for_section) + "&prop=wikitext&format=json", std::bind(&grammarprovider::getWiktionaryTemplate,this,std::placeholders::_1,caller));
     }
     else{
-        qDebug() << "Could not find language section \"" + language + "\" for word \"" + m_word + "\"";
+        //qDebug() << "Could not find language section \"" + language + "\" for word \"" + m_word + "\"";
         m_busy = false;
         emit grammarInfoNotAvailable(caller, m_silent);
         return;
@@ -752,7 +752,7 @@ void grammarprovider::getWiktionaryTemplate(QString s_reply, QObject* caller){
             }
         }
     }
-    qDebug() << "Template(s)" << wt_finisheds << "not supported!";
+    //qDebug() << "Template(s)" << wt_finisheds << "not supported!";
     emit grammarInfoNotAvailable(caller, m_silent);
 }
 @}
@@ -1151,7 +1151,7 @@ void grammarprovider::processNetworkError(QObject* caller, QString s_failure_rea
 @O ../src/grammarprovider.cpp -d
 @{
 QList<grammarprovider::compoundPart> grammarprovider::getGrammarCompoundFormParts(QString compoundword, QList<QString> compoundstrings, int id_language){
-    qDebug() << __FILE__ << __FUNCTION__ << __LINE__ << compoundword << compoundstrings << id_language;
+    //qDebug() << __FILE__ << __FUNCTION__ << __LINE__ << compoundword << compoundstrings << id_language;
     /* The previous assumption, that all forms are in the database already does
        not work anymore after a refactoring. */
     bool found_all_lexemes = true;
@@ -1176,7 +1176,7 @@ QList<grammarprovider::compoundPart> grammarprovider::getGrammarCompoundFormPart
             // We have not found any matching lexeme in database, let's check our memory:
             grammarform form;
             found_lexeme = 0;
-            qDebug() << __FILE__ << __FUNCTION__ << __LINE__ << mi_grammarforms.size();
+            //qDebug() << __FILE__ << __FUNCTION__ << __LINE__ << mi_grammarforms.size();
             foreach(form, mi_grammarforms){
                 if((form.string == compoundform) && (form.language_id == id_language)){
                     found_lexeme = form.lexeme_id;
@@ -1199,8 +1199,9 @@ QList<grammarprovider::compoundPart> grammarprovider::getGrammarCompoundFormPart
             break;
         }
     }
-    qDebug() << "Found all lexemes:" << found_all_lexemes << m_debug_compoundparts;
-    QList<levenshteindistance::compoundpart> compoundparts = m_levenshteindistance->stringdivision(compoundformpart_candidates,compoundword);
+    //qDebug() << "Found all lexemes:" << found_all_lexemes << m_debug_compoundparts;
+    levenshteindistance local_levenshteindistance;
+    QList<levenshteindistance::compoundpart> compoundparts = local_levenshteindistance.stringdivision(compoundformpart_candidates,compoundword);
     levenshteindistance::compoundpart m_compoundpart;
     QList<compoundPart> compoundpartsgrammar;
     foreach(m_compoundpart, compoundparts){
@@ -1211,9 +1212,9 @@ QList<grammarprovider::compoundPart> grammarprovider::getGrammarCompoundFormPart
             m_debug_compoundparts += m_compoundpart.string;
         }
         compoundpartsgrammar.push_back({m_compoundpart.id,m_compoundpart.capitalized,m_compoundpart.string});
-        qDebug() << "Compound part" << m_compoundpart.division << m_compoundpart.id << m_compoundpart.capitalized << m_compoundpart.string;
+        //qDebug() << "Compound part" << m_compoundpart.division << m_compoundpart.id << m_compoundpart.capitalized << m_compoundpart.string;
     }
-    qDebug() << "Compound parts:" << m_debug_compoundparts;
+    //qDebug() << "Compound parts:" << m_debug_compoundparts;
     return compoundpartsgrammar;
 }
 @}
@@ -1222,7 +1223,7 @@ QList<grammarprovider::compoundPart> grammarprovider::getGrammarCompoundFormPart
 @O ../src/grammarprovider.cpp -d
 @{
 void grammarprovider::parse_compoundform(QString s_reply, QObject* caller){
-    qDebug() << "Got compound form";
+    //qDebug() << "Got compound form";
     int argnumber=0;
     m_current_compoundforms.clear();
     foreach(const QString& arg, m_currentarguments.unnamed){
@@ -1235,15 +1236,15 @@ void grammarprovider::parse_compoundform(QString s_reply, QObject* caller){
                 int languageid = m_database->languageIdFromGrammarFormId(grammarform);
                 if(languageid == m_language){
                     found_form = true;
-                    qDebug() << "Found form" << arg;
+                    //qDebug() << "Found form" << arg;
                     break;
                 }
             }
             if(!found_form){
-                qDebug() << "Could not find form" << arg << ", looking it up...";
+                //qDebug() << "Could not find form" << arg << ", looking it up...";
                 context save_state(this);
                 QEventLoop waitloop;
-                qDebug() << __FILE__ << __FUNCTION__ << __LINE__ << &waitloop;
+                //qDebug() << __FILE__ << __FUNCTION__ << __LINE__ << &waitloop;
                 m_word = arg;
                 m_silent = true;
                 m_found_compoundform = false;

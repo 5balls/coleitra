@@ -394,7 +394,7 @@ int edit::createGrammarFormId(int language, QList<QList<QString> > grammarexpres
 }
 
 void edit::addForm(int lexemeid, int formid, int grammarform, grammarprovider::grammarform m_form, int languageid, int translationid){
-    qDebug() << "addForm" << lexemeid << formid << grammarform << languageid << translationid;
+    //qDebug() << "addForm" << lexemeid << formid << grammarform << languageid << translationid;
     form newForm = {formid,0,grammarform,m_form};
     //qDebug() << __FILE__ << __FUNCTION__ << __LINE__ << lexemeid << languageid << translationid;
     lexeme& currentLexeme = getCreateLexeme(lexemeid, languageid, translationid);
@@ -1155,7 +1155,7 @@ void edit::saveToDatabase(void){
                 else
                     currentForm.newid = currentForm.id;
                 if(!currentForm.m_form.compounds.isEmpty()){
-                    qDebug() << "Saving compound parts for this form:";
+                    //qDebug() << "Saving compound parts for this form:";
                     grammarprovider::compoundPart compoundformpart;
                     int part=1;
                     foreach(compoundformpart, currentForm.m_form.compounds){
