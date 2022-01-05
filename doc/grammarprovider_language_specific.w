@@ -37,9 +37,43 @@ void grammarprovider::fi_requirements(QObject* caller, int fi_id){
         m_word = "olla";
         m_silent = true;
         QEventLoop waitloop;
-        connect( this, &grammarprovider::grammarInfoComplete, &waitloop, &QEventLoop::quit );
-        getWiktionarySections(caller);
+        QMetaObject::Connection gia_con;
+        QMetaObject::Connection gina_con;
+        QMetaObject::Connection ne_con;
+        gia_con = connect(this, &grammarprovider::grammarInfoAvailable,
+                [&](QObject* caller, int size, bool silent){
+                if(caller == &waitloop){
+                    //qDebug() << "Got grammarInfoComplete signal in lambda function for fi_requirements" << m_word << caller;
+                    disconnect(gia_con);
+                    disconnect(gina_con);
+                    disconnect(ne_con);
+                    waitloop.quit();
+                }
+            });
+        gina_con = connect(this, &grammarprovider::grammarInfoNotAvailable,
+                [&](QObject* caller, bool silent){
+                if(caller == &waitloop){
+                    //qDebug() << "Got grammarInfoNotComplete signal in lambda function for fi_requirements" << m_word << caller;
+                    disconnect(gia_con);
+                    disconnect(gina_con);
+                    disconnect(ne_con);
+                    waitloop.quit();
+                }
+            });
+        ne_con = connect(m_networkscheduler, &networkscheduler::requestFailed,
+                [&](QObject* caller, QString s_reason){
+                if(caller == &waitloop){
+                    //qDebug() << "Got requestFailed signal" << s_reason << "in lambda function for fi_requirements" << m_word << caller;
+                    disconnect(gia_con);
+                    disconnect(gina_con);
+                    disconnect(ne_con);
+                    waitloop.quit();
+                }
+            });
+        getWiktionarySections(&waitloop);
+        //qDebug() << "Blocking waitloop" << &waitloop << "for fi_requirements" << m_word << "...";
         waitloop.exec();
+        //qDebug() << "... blocking waitloop for" << m_word << "finished.";
     }
 }
 @}
@@ -305,9 +339,43 @@ void grammarprovider::de_requirements(QObject* caller, int de_id){
         m_word = "sein";
         m_silent = true;
         QEventLoop waitloop;
-        connect( this, &grammarprovider::grammarInfoComplete, &waitloop, &QEventLoop::quit );
-        getWiktionarySections(caller);
+        QMetaObject::Connection gia_con;
+        QMetaObject::Connection gina_con;
+        QMetaObject::Connection ne_con;
+        gia_con = connect(this, &grammarprovider::grammarInfoAvailable,
+                [&](QObject* caller, int size, bool silent){
+                if(caller == &waitloop){
+                    //qDebug() << "Got grammarInfoComplete signal in lambda function for fi_requirements" << m_word << caller;
+                    disconnect(gia_con);
+                    disconnect(gina_con);
+                    disconnect(ne_con);
+                    waitloop.quit();
+                }
+            });
+        gina_con = connect(this, &grammarprovider::grammarInfoNotAvailable,
+                [&](QObject* caller, bool silent){
+                if(caller == &waitloop){
+                    //qDebug() << "Got grammarInfoNotComplete signal in lambda function for fi_requirements" << m_word << caller;
+                    disconnect(gia_con);
+                    disconnect(gina_con);
+                    disconnect(ne_con);
+                    waitloop.quit();
+                }
+            });
+        ne_con = connect(m_networkscheduler, &networkscheduler::requestFailed,
+                [&](QObject* caller, QString s_reason){
+                if(caller == &waitloop){
+                    //qDebug() << "Got requestFailed signal" << s_reason << "in lambda function for fi_requirements" << m_word << caller;
+                    disconnect(gia_con);
+                    disconnect(gina_con);
+                    disconnect(ne_con);
+                    waitloop.quit();
+                }
+            });
+        //qDebug() << "Blocking waitloop" << &waitloop << "for de_requirements" << m_word << "...";
+        getWiktionarySections(&waitloop);
         waitloop.exec();
+        //qDebug() << "... blocking waitloop for" << m_word << "finished.";
     }
 }
 @}

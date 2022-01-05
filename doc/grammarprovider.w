@@ -285,6 +285,7 @@ public:
         QList<compoundPart> compounds;
         int lexeme_id; // used internal in grammarprovider class only
         int language_id;
+        bool b_silent;
     };
     struct templatearguments {
         QMap<QString, QString> named;
@@ -326,6 +327,8 @@ signals:
 
     void grammarInfoAvailable(QObject* caller, int numberOfObjects, bool silent);
     void grammarInfoNotAvailable(QObject* caller, bool silent);
+    void gotGrammarInfoForWord(QObject* caller, int numberOfObjects, bool silent);
+    void noGrammarInfoForWord(QObject* caller, bool silent);
     void formObtained(QObject* caller, bool silent, grammarform form);
     void compoundFormObtained(QObject* caller, QString form, bool silent);
     void sentenceAvailable(QObject* caller, int parts, bool silent);
@@ -533,7 +536,52 @@ void grammarprovider::getGrammarInfoForWord(QObject* caller, int languageid, QSt
     m_word = word;
     m_silent = false;
     m_found_compoundform = false;
-    getWiktionarySections(caller);
+    /* We block here with an event loop, because we want to send an signal,
+       when we are finished */
+    QEventLoop waitloop;
+    QMetaObject::Connection gia_con;
+    QMetaObject::Connection gina_con;
+    QMetaObject::Connection ne_con;
+    gia_con = connect(this, &grammarprovider::grammarInfoAvailable,
+            [&](QObject* caller, int size, bool silent){
+            if(caller == &waitloop){
+            //qDebug() << "Got grammarInfoComplete signal in lambda function for getGrammarInfoForWord" << m_word << caller;
+            disconnect(gia_con);
+            disconnect(gina_con);
+            disconnect(ne_con);
+            waitloop.quit();
+            }
+            });
+    gina_con = connect(this, &grammarprovider::grammarInfoNotAvailable,
+            [&](QObject* caller, bool silent){
+            if(caller == &waitloop){
+            //qDebug() << "Got grammarInfoNotComplete signal in lambda function for getGrammarInfoForWord" << m_word << caller;
+            disconnect(gia_con);
+            disconnect(gina_con);
+            disconnect(ne_con);
+            emit noGrammarInfoForWord(caller, m_silent);
+            waitloop.quit();
+            }
+            });
+    ne_con = connect(m_networkscheduler, &networkscheduler::requestFailed,
+            [&](QObject* caller, QString s_reason){
+            if(caller == &waitloop){
+            //qDebug() << "Got requestFailed signal" << s_reason << "in lambda function for getGrammarInfoForWord" << m_word << caller;
+            disconnect(gia_con);
+            disconnect(gina_con);
+            disconnect(ne_con);
+            emit noGrammarInfoForWord(caller, m_silent);
+            waitloop.quit();
+            }
+            });
+
+    getWiktionarySections(&waitloop);
+
+    //qDebug() << "Blocking waitloop" << &waitloop << "for getGrammarInfoForWord" << m_word << "...";
+    waitloop.exec();
+    //qDebug() << "... blocking waitloop for" << m_word << "finished.";
+    emit gotGrammarInfoForWord(caller, m_grammarforms.size(), m_silent);
+    //qDebug() << "getGrammarInfoForWord finished!";
 }
 @}
 
@@ -624,7 +672,7 @@ void grammarprovider::getWiktionarySection(QString s_reply, QObject* caller){
                     gina_con = connect(this, &grammarprovider::grammarInfoNotAvailable,
                             [&](QObject* caller, bool silent){
                                 if(caller == &waitloop){
-                                    //qDebug() << "Got grammarInfoNotComplete signal in lambda function for etymology section" << m_word << caller;
+                                    //qDebug() << "Got grammarInfoNotAvailable signal in lambda function for etymology section" << m_word << caller;
                                     disconnect(gic_con);
                                     disconnect(gina_con);
                                     disconnect(ne_con);
@@ -634,7 +682,7 @@ void grammarprovider::getWiktionarySection(QString s_reply, QObject* caller){
                     ne_con = connect(m_networkscheduler, &networkscheduler::requestFailed,
                             [&](QObject* caller, QString s_reason){
                                 if(caller == &waitloop){
-                                    qDebug() << "Got requestFailed signal" << s_reason << "in lambda function for etymology section" << m_word << caller;
+                                    //qDebug() << "Got requestFailed signal" << s_reason << "in lambda function for etymology section" << m_word << caller;
                                     disconnect(gic_con);
                                     disconnect(gina_con);
                                     disconnect(ne_con);
@@ -924,6 +972,7 @@ matching_form:
                         currentGrammarForm.string = tc_current.content;
                         currentGrammarForm.grammarexpressions += additional_grammarforms;
                         currentGrammarForm.language_id = m_language;
+                        currentGrammarForm.b_silent = m_silent;
                         if(m_found_compoundform){
                             currentGrammarForm.compounds = getGrammarCompoundFormParts(currentGrammarForm.string, m_current_compoundforms, m_language);
                         }
@@ -998,7 +1047,7 @@ void grammarprovider::getNextGrammarObject(QObject* caller){
                         qDebug() << "ERROR m_grammarforms is empty!" << __LINE__;
                     {
                        // qDebug() << __FUNCTION__ << __LINE__ << "*** formObtained EMIT ***";
-                        emit formObtained(caller, m_silent, form2);
+                        emit formObtained(caller, form2.b_silent, form2);
                     }
                     //qDebug() << "grammarprovider::getNextGrammarObject exit" << __LINE__;
                     return;
@@ -1031,7 +1080,7 @@ void grammarprovider::getNextGrammarObject(QObject* caller){
                                         //qDebug() << __FUNCTION__ << __LINE__ << "*** formObtained EMIT ***";
                                         grammarform formpart_form = form2;
                                         formpart_form.string = formpart;
-                                        emit formObtained(caller, m_silent, formpart_form);
+                                        emit formObtained(caller, formpart_form.b_silent, formpart_form);
                                     }
                                     // return needed here to be reentrant:
                                     return;
@@ -1069,13 +1118,13 @@ void grammarprovider::getNextGrammarObject(QObject* caller){
                                 grammarform sentencepart_form = form;
                                 sentencepart_form.string = sentenceparts.at(sentencepartid);
                                 sentencepart_form.grammarexpressions = currentProcess.grammarexpressions;
-                                emit formObtained(caller, m_silent, sentencepart_form);
+                                emit formObtained(caller, sentencepart_form.b_silent, sentencepart_form);
                                 //qDebug() << "grammarprovider::getNextGrammarObject exit" << __LINE__;
                                 return;
                             }
                             sentencepartid++;
                         }
-                        emit sentenceAvailable(caller, form.processList.size(), m_silent);
+                        emit sentenceAvailable(caller, form.processList.size(), form.b_silent);
                     }
                     else {
                         qDebug() << "Process list size (=" + QString::number(form.processList.size()) +  ") does not match number of sentence parts (=" + sentenceparts.size() + ")!";
@@ -1106,7 +1155,7 @@ void grammarprovider::getNextSentencePart(QObject* caller){
     // Check that there is still stuff to process:
     if(form.processList.isEmpty()){
         QList<QList<QString > > ge = form.grammarexpressions;
-        emit sentenceComplete(caller,ge,m_silent);
+        emit sentenceComplete(caller,ge,form.b_silent);
         return;
     }
     // Process sentence parts:
@@ -1122,19 +1171,19 @@ void grammarprovider::getNextSentencePart(QObject* caller){
             break;
         case LOOKUPFORM:
             //qDebug() << sentenceparts.at(0) << "LOOKUPFORM" << process.grammarexpressions;
-            emit sentenceLookupForm(caller,sentenceparts.at(0),process.grammarexpressions, m_silent);
+            emit sentenceLookupForm(caller,sentenceparts.at(0),process.grammarexpressions, form.b_silent);
             break;
         case LOOKUPFORM_LEXEME:
             //qDebug() << sentenceparts.at(0) << "LOOKUPFORM_LEXEME" << process.grammarexpressions;
-            emit sentenceLookupFormLexeme(caller,sentenceparts.at(0),process.grammarexpressions, m_silent);
+            emit sentenceLookupFormLexeme(caller,sentenceparts.at(0),process.grammarexpressions, form.b_silent);
             break;
         case ADDANDUSEFORM:
             //qDebug() << sentenceparts.at(0) << "ADDANDUSEFORM" << process.grammarexpressions;
-            emit sentenceAddAndUseForm(caller,sentenceparts.at(0),process.grammarexpressions, m_silent);
+            emit sentenceAddAndUseForm(caller,sentenceparts.at(0),process.grammarexpressions, form.b_silent);
             break;
         case ADDANDIGNOREFORM:
             //qDebug() << sentenceparts.at(0) << "ADDANDIGNOREFORM" << process.grammarexpressions;
-            emit sentenceAddAndIgnoreForm(caller,sentenceparts.at(0),process.grammarexpressions, m_silent);
+            emit sentenceAddAndIgnoreForm(caller,sentenceparts.at(0),process.grammarexpressions, form.b_silent);
             break;
         default:
             //qDebug() << "Unknown processing instruction... ignoring!";
@@ -1265,6 +1314,7 @@ void grammarprovider::parse_compoundform(QString s_reply, QObject* caller){
                 m_silent = true;
                 m_found_compoundform = false;
                 QMetaObject::Connection gic_con;
+                QMetaObject::Connection gia_con;
                 QMetaObject::Connection gina_con;
                 QMetaObject::Connection ne_con;
                 gic_con = connect(this, &grammarprovider::grammarInfoComplete,
@@ -1272,6 +1322,18 @@ void grammarprovider::parse_compoundform(QString s_reply, QObject* caller){
                             if(caller == &waitloop){
                                 //qDebug() << "Got grammarInfoComplete signal in lambda function for compoundform search" << m_word << caller;
                                 disconnect(gic_con);
+                                disconnect(gia_con);
+                                disconnect(gina_con);
+                                disconnect(ne_con);
+                                waitloop.quit();
+                            }
+                        });
+                gia_con = connect(this, &grammarprovider::grammarInfoAvailable,
+                        [&](QObject* caller, bool silent){
+                            if(caller == &waitloop){
+                                //qDebug() << "Got grammarInfoAvailable signal in lambda function for compoundform search" << m_word << caller;
+                                disconnect(gic_con);
+                                disconnect(gia_con);
                                 disconnect(gina_con);
                                 disconnect(ne_con);
                                 waitloop.quit();
@@ -1282,6 +1344,7 @@ void grammarprovider::parse_compoundform(QString s_reply, QObject* caller){
                             if(caller == &waitloop){
                                 //qDebug() << "Got grammarInfoNotComplete signal in lambda function for compoundform search" << m_word << caller;
                                 disconnect(gic_con);
+                                disconnect(gia_con);
                                 disconnect(gina_con);
                                 disconnect(ne_con);
                                 waitloop.quit();
@@ -1290,8 +1353,9 @@ void grammarprovider::parse_compoundform(QString s_reply, QObject* caller){
                 ne_con = connect(m_networkscheduler, &networkscheduler::requestFailed,
                         [&](QObject* caller, QString s_reason){
                             if(caller == &waitloop){
-                                qDebug() << "Got requestFailed signal" << s_reason << "in lambda function for compoundform search" << m_word << caller;
+                                //qDebug() << "Got requestFailed signal" << s_reason << "in lambda function for compoundform search" << m_word << caller;
                                 disconnect(gic_con);
+                                disconnect(gia_con);
                                 disconnect(gina_con);
                                 disconnect(ne_con);
                                 waitloop.quit();
