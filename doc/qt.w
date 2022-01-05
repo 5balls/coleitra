@@ -77,6 +77,7 @@ Here are the files described, which are needed for compiling code for the Qt fra
         <file>ColeitraWidgetRoundedYellowRectangleButton.qml</file>
         <file>ColeitraWidgetRoundedBlueRectangleButton.qml</file>
         <file>ColeitraWidgetLicenseSelectId.qml</file>
+        <file>ColeitraWidgetProgressPopup.qml</file>
         <file>main.qml</file>
         <file>settings.svg</file>
         <file>settings_pressed.svg</file>

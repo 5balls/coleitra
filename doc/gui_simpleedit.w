@@ -55,6 +55,8 @@ FocusScope {
                     if(!(oldtext === "")){
                         Edit.moveLexemeOutOfTranslation(language, oldtext);
                     }
+                    progressPopup.popupTitle = "Obtaining grammar information for " + text;
+                    progressPopup.open();
                     Edit.addLexemeHeuristically(simpleeditinput,language, text, translationid);
                 }
                 oldtext = text;
@@ -70,8 +72,16 @@ FocusScope {
                     if(caller != simpleeditinput) return;
                     searchresult.text = result;
                     simpleeditinput.parent.parent.readytosave = Edit.isReadyToSave();
+                    progressPopup.close();
+                }
+                function onProcessingUpdate(progress_action){
+                    progressPopup.popupAction = progress_action;
                 }
             }
+        }
+        ColeitraWidgetProgressPopup {
+            id: progressPopup
+            width: parent.width
         }
 
     }
@@ -183,4 +193,29 @@ ColeitraPage {
 }
 @}
 
+@O ../src/ColeitraWidgetProgressPopup.qml
+@{
+import QtQuick 2.14
+import QtQuick.Controls 2.14
 
+Popup {
+    property string popupTitle: ""
+    property string popupAction: ""
+    Column {
+        width: parent.width
+        ColeitraGridLabel {
+            width: parent.width
+            text: "<b>" + popupTitle + "</b>"
+        }
+        ColeitraGridLabel {
+            width: parent.width
+            text: "<i>" + popupAction + "</i>"
+        }
+        ProgressBar {
+            width: parent.width
+            indeterminate: true
+        }
+    }
+    @<Background grey rounded control@>
+}
+@}

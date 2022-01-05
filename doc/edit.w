@@ -218,6 +218,7 @@ public:
 signals:
     void dbversionChanged(const QString &newVersion);
     void processingStart(const QString &waitingString);
+    void processingUpdate(const QString &waitingString);
     void processingStop(void);
     void addLexemeHeuristicallyResult(QObject* caller, const QString &result);
     void currentPrettyStringUpdated(QObject* caller);
@@ -244,6 +245,7 @@ edit::edit(QObject *parent) : QObject(parent), m_add_busy(false), m_current_sent
     connect(m_grammarprovider,&grammarprovider::gotGrammarInfoForWord,this,&edit::gotGrammarInfoForWordFromGrammarProvider);
     connect(m_grammarprovider,&grammarprovider::noGrammarInfoForWord,this,&edit::noGrammarInfoForWordFromGrammarProvider);
     connect(m_grammarprovider,&grammarprovider::networkError, this, &edit::networkErrorFromGrammarProvider);
+    connect(m_grammarprovider,&grammarprovider::processingUpdate, this, &edit::processingUpdate);
 
     connect(m_grammarprovider,&grammarprovider::formObtained,this,&edit::formObtainedFromGrammarProvider);
     connect(m_grammarprovider,&grammarprovider::compoundFormObtained,this,&edit::compoundFormObtainedFromGrammarProvider);
@@ -260,6 +262,7 @@ edit::~edit() {
     disconnect(m_grammarprovider,&grammarprovider::gotGrammarInfoForWord,this,&edit::gotGrammarInfoForWordFromGrammarProvider);
     disconnect(m_grammarprovider,&grammarprovider::noGrammarInfoForWord,this,&edit::noGrammarInfoForWordFromGrammarProvider);
     disconnect(m_grammarprovider,&grammarprovider::networkError, this, &edit::networkErrorFromGrammarProvider);
+    disconnect(m_grammarprovider,&grammarprovider::processingUpdate, this, &edit::processingUpdate);
 
     disconnect(m_grammarprovider,&grammarprovider::formObtained,this,&edit::formObtainedFromGrammarProvider);
     disconnect(m_grammarprovider,&grammarprovider::compoundFormObtained,this,&edit::compoundFormObtainedFromGrammarProvider);

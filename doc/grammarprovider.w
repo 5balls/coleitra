@@ -323,6 +323,7 @@ private slots:
 signals:
     //void processingStart(const QString& waitingstring);
     //void processingStop(void);
+    void processingUpdate(const QString& waitingstring);
     void networkError(QObject* caller, bool silent, QString s_failure_reason);
 
     void grammarInfoAvailable(QObject* caller, int numberOfObjects, bool silent);
@@ -529,6 +530,7 @@ void grammarprovider::getGrammarInfoForWord(QObject* caller, int languageid, QSt
     // TODO: Add timeout in case lookup is not successfull
     // Check requirements:
     m_found_compoundform = false;
+    emit processingUpdate("Checking requirements for language " + QString::number(languageid));
     if(m_requirements_map.contains(languageid))
         (this->*(m_requirements_map[languageid]))(caller,languageid);
     //qDebug() << "...requirements done";
@@ -580,6 +582,9 @@ void grammarprovider::getGrammarInfoForWord(QObject* caller, int languageid, QSt
     //qDebug() << "Blocking waitloop" << &waitloop << "for getGrammarInfoForWord" << m_word << "...";
     waitloop.exec();
     //qDebug() << "... blocking waitloop for" << m_word << "finished.";
+    /* This doesn't work here, don't know why:
+       emit processingUpdate("Processing " + QString::number(m_grammarforms.size()) + " grammar forms...");
+     */
     emit gotGrammarInfoForWord(caller, m_grammarforms.size(), m_silent);
     //qDebug() << "getGrammarInfoForWord finished!";
 }
@@ -594,6 +599,7 @@ void grammarprovider::getGrammarInfoForWord(QObject* caller, int languageid, QSt
 @{
 void grammarprovider::getWiktionarySections(QObject* caller){
     static int numberofcalls=0;
+    emit processingUpdate("Lookup word " + m_word + " on en.wiktionary.org");
     //qDebug() << "---- getWiktionarySections number of calls" << numberofcalls++;
     //qDebug() << "getWiktionarySections enter";
     /* I suspect it doesn't hurt to get a new lexeme id here - as any group of
