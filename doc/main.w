@@ -18,7 +18,7 @@
 \section{Main}
 
 \codecpp
-@o ../src/main.h -d
+@O ../src/main.h -d
 @{
 @<Start of @'MAIN@' header@>
 #include <QtGlobal>
@@ -83,7 +83,7 @@ qmlRegisterSingletonType<@2>("@1Lib", @3, @4, "@1", [](
 
 
 \codecpp
-@o ../src/main.cpp -d
+@O ../src/main.cpp -d
 @{
 #include "main.h"
 

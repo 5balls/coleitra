@@ -125,7 +125,7 @@ add_definitions(${Qt5Widgets_DEFINITIONS} ${QtQml_DEFINITIONS} ${QtNetwork} ${${
 
 A slightly different command is needed if we compile for android as the program entry point is a java function and not our C++ main function:
 
-@o ../src/CMakeLists.txt
+@O ../src/CMakeLists.txt
 @{
 @<Requirements for CMakeLists.txt@>
 if(ANDROID)
@@ -148,7 +148,7 @@ target_link_libraries(coleitra PUBLIC ${QT_LIBS} ${LIBS})
 
 In this step we finally can produce the APK file. For a new release we should probably increase the VERSION\_CODE.
 
-@o ../src/CMakeLists.txt
+@O ../src/CMakeLists.txt
 @{
 if(ANDROID)
     include(${CMAKE_CURRENT_LIST_DIR}/qt-android-cmake/AddQtAndroidApk.cmake)

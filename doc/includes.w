@@ -26,5 +26,10 @@
 \usepackage{pgf-umlsd}
 \usepackage{tikz}
 \usepackage[textsize=tiny, textwidth=2.7cm, colorinlistoftodos]{todonotes}
+\usepackage{etoolbox}% http://ctan.org/pkg/etoolbox
+\makeatletter
+\patchcmd{\@@makechapterhead}{\vspace*{50\p@@}}{}{}{}% Removes space above \chapter head
+\patchcmd{\@@makeschapterhead}{\vspace*{50\p@@}}{}{}{}% Removes space above \chapter* head
+\makeatother
 \usepackage[colorlinks=true]{hyperref}
 \makeindex
