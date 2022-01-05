@@ -28,6 +28,7 @@ This is a generic class for scheduling network requests.
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
 #include <QNetworkReply>
+#include <QDateTime>
 
 @<Start of class @'networkscheduler@'@>
 public:
@@ -35,6 +36,7 @@ public:
     ~networkscheduler(void);
 public slots:
     QNetworkReply* requestNetworkReply(QObject* caller, QString url, std::function<void(QString)> slot);
+    void setTimeout(int timeout);
 private:
     enum networkRequestStatus {
         REQUEST_SUCCESFUL,
@@ -49,6 +51,8 @@ private:
     QMap<QUrl, requestData> m_request_list;
     QNetworkAccessManager* m_manager;
     QMetaObject::Connection m_tmp_error_connection;
+    int m_timeout;
+    qint64 start_time;
 private slots:
     void processNetworkAnswer(QNetworkReply* reply);
     networkRequestStatus checkReplyAndRetryIfNecessary(QNetworkReply* reply, QString& s_reply);
@@ -70,10 +74,11 @@ signals:
 \cprotect\subsection{\verb#networkscheduler#}
 @O ../src/networkscheduler.cpp -d
 @{
-networkscheduler::networkscheduler(QObject *parent) : QObject(parent)
+networkscheduler::networkscheduler(QObject *parent) : QObject(parent),
+m_timeout(1000)
 {
     m_manager = new QNetworkAccessManager(this);
-    m_manager->setTransferTimeout(1000);
+    m_manager->setTransferTimeout(m_timeout);
     connect(m_manager, &QNetworkAccessManager::finished, this, &networkscheduler::processNetworkAnswer);
 }
 @}
@@ -84,6 +89,16 @@ networkscheduler::networkscheduler(QObject *parent) : QObject(parent)
 networkscheduler::~networkscheduler() {
     disconnect(m_manager, &QNetworkAccessManager::finished, this, &networkscheduler::processNetworkAnswer);
     delete m_manager;
+}
+@}
+
+
+\cprotect\subsection{\verb#setTimeout#}
+@O ../src/networkscheduler.cpp -d
+@{
+void networkscheduler::setTimeout(int timeout){
+    m_timeout = timeout;
+    m_manager->setTransferTimeout(timeout);
 }
 @}
 
@@ -103,6 +118,7 @@ void networkscheduler::processNetworkAnswer(QNetworkReply* reply){
             return;
     }
     m_request_list[url_request].s_answer = ms_network_answer;
+    qDebug() << QDateTime::currentMSecsSinceEpoch() - start_time << "ms for request";
     emit processingStop();
     (m_request_list[url_request].f_callback)(ms_network_answer);
 }
@@ -122,7 +138,6 @@ networkscheduler::networkRequestStatus networkscheduler::checkReplyAndRetryIfNec
             case QNetworkReply::NoError:
             // We should give up in case of this errors:
             case QNetworkReply::ConnectionRefusedError:
-            case QNetworkReply::OperationCanceledError:
             case QNetworkReply::SslHandshakeFailedError:
             case QNetworkReply::BackgroundRequestNotAllowedError:
             case QNetworkReply::TooManyRedirectsError:
@@ -158,10 +173,12 @@ networkscheduler::networkRequestStatus networkscheduler::checkReplyAndRetryIfNec
             case QNetworkReply::UnknownProxyError:
             case QNetworkReply::UnknownContentError:
             case QNetworkReply::UnknownServerError:
+            // This one seems to be triggered by timeout:
+            case QNetworkReply::OperationCanceledError:
                 s_failure_reason = "Network reply got error which lead to giving up after " + QString::number(max_retries) + " retries:" + QString(reply->error());
                 retrycount++;
                 if(retrycount < max_retries){
-                    m_manager->setTransferTimeout(1000+1000*retrycount);
+                    m_manager->setTransferTimeout(m_timeout+m_timeout*retrycount);
                     repeatNetworkRequest(reply->request().url());
                     reply->deleteLater();
                     return RETRYING_REQUEST;
@@ -189,7 +206,7 @@ networkscheduler::networkRequestStatus networkscheduler::checkReplyAndRetryIfNec
         s_failure_reason = "Network reply could not be read, giving up.";
         retrycount++;
         if(retrycount < max_retries){
-            m_manager->setTransferTimeout(1000+1000*retrycount);
+            m_manager->setTransferTimeout(m_timeout+m_timeout*retrycount);
             repeatNetworkRequest(reply->request().url());
             reply->deleteLater();
             return RETRYING_REQUEST;
@@ -197,7 +214,7 @@ networkscheduler::networkRequestStatus networkscheduler::checkReplyAndRetryIfNec
         else goto giveup;
     }
     retrycount = 0;
-    m_manager->setTransferTimeout(1000);
+    m_manager->setTransferTimeout(m_timeout);
 
 #if QT_VERSION >= 0x051500
     disconnect(m_tmp_error_connection);
@@ -206,12 +223,13 @@ networkscheduler::networkRequestStatus networkscheduler::checkReplyAndRetryIfNec
     return REQUEST_SUCCESFUL;
 giveup:
     retrycount = 0;
-    m_manager->setTransferTimeout(1000);
+    m_manager->setTransferTimeout(m_timeout);
 #if QT_VERSION >= 0x051500
     disconnect(m_tmp_error_connection);
  #endif
     QUrl url = reply->request().url();
     reply->deleteLater();
+    qDebug() << url << retrycount << s_failure_reason;
     emit requestFailed(m_request_list[url].caller, s_failure_reason);
     return PERMANENT_NETWORK_ERROR;
 }
@@ -222,6 +240,7 @@ giveup:
 @O ../src/networkscheduler.cpp -d
 @{
 QNetworkReply* networkscheduler::requestNetworkReply(QObject* caller, QString s_url, std::function<void(QString)> slot){
+    start_time = QDateTime::currentMSecsSinceEpoch();
     emit processingStart();
     QUrl url = QUrl(s_url);
     m_request_list[url] = {slot,"",caller};

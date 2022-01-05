@@ -345,6 +345,7 @@ private:
     bool m_busy;
     bool m_found_compoundform;
     QList<QString> m_current_compoundforms;
+    QString ms_current_section;
     QMap<QString, void (grammarprovider::*)(QString, QObject*)> m_parser_map; 
     QString m_word;
     QString s_baseurl;
@@ -578,6 +579,7 @@ void grammarprovider::getWiktionarySection(QString s_reply, QObject* caller){
     foreach(const QJsonValue& jv_section, j_sections){
         QJsonObject j_section = jv_section.toObject();
         s_section = j_section["line"].toString();
+        ms_current_section = s_section;
         section_level = j_section["level"].toString().toInt();
         if(section_level <= language_section_level) break;
         //qDebug() << "Section" << s_section << "language" << language;
@@ -608,12 +610,14 @@ void grammarprovider::getWiktionarySection(QString s_reply, QObject* caller){
                        this might get recursive */
                     QMetaObject::Connection gic_con;
                     QMetaObject::Connection gina_con;
+                    QMetaObject::Connection ne_con;
                     gic_con = connect(this, &grammarprovider::grammarInfoComplete,
                             [&](QObject* caller, bool silent){
                                 if(caller == &waitloop){
                                     //qDebug() << "Got grammarInfoComplete signal in lambda function for etymology section" << m_word << caller;
                                     disconnect(gic_con);
                                     disconnect(gina_con);
+                                    disconnect(ne_con);
                                     waitloop.quit();
                                 }
                             });
@@ -623,6 +627,17 @@ void grammarprovider::getWiktionarySection(QString s_reply, QObject* caller){
                                     //qDebug() << "Got grammarInfoNotComplete signal in lambda function for etymology section" << m_word << caller;
                                     disconnect(gic_con);
                                     disconnect(gina_con);
+                                    disconnect(ne_con);
+                                    waitloop.quit();
+                                }
+                            });
+                    ne_con = connect(m_networkscheduler, &networkscheduler::requestFailed,
+                            [&](QObject* caller, QString s_reason){
+                                if(caller == &waitloop){
+                                    qDebug() << "Got requestFailed signal" << s_reason << "in lambda function for etymology section" << m_word << caller;
+                                    disconnect(gic_con);
+                                    disconnect(gina_con);
+                                    disconnect(ne_con);
                                     waitloop.quit();
                                 }
                             });
@@ -873,6 +888,7 @@ void grammarprovider::parseMediawikiTableToPlainText(QString wikitext, QList<gra
 @{
 void grammarprovider::process_grammar(QObject* caller, QList<grammarform> grammarforms, QList<tablecell> parsedTable, QList<QList<QString> > additional_grammarforms){
     QList<grammarform> l_grammarforms;
+    lexemeId();
     if(!parsedTable.isEmpty()){
         foreach(const grammarform& gf_expectedcell, grammarforms){
             tablecell tc_current = parsedTable.first();
@@ -1250,12 +1266,14 @@ void grammarprovider::parse_compoundform(QString s_reply, QObject* caller){
                 m_found_compoundform = false;
                 QMetaObject::Connection gic_con;
                 QMetaObject::Connection gina_con;
+                QMetaObject::Connection ne_con;
                 gic_con = connect(this, &grammarprovider::grammarInfoComplete,
                         [&](QObject* caller, bool silent){
                             if(caller == &waitloop){
                                 //qDebug() << "Got grammarInfoComplete signal in lambda function for compoundform search" << m_word << caller;
                                 disconnect(gic_con);
                                 disconnect(gina_con);
+                                disconnect(ne_con);
                                 waitloop.quit();
                             }
                         });
@@ -1265,6 +1283,17 @@ void grammarprovider::parse_compoundform(QString s_reply, QObject* caller){
                                 //qDebug() << "Got grammarInfoNotComplete signal in lambda function for compoundform search" << m_word << caller;
                                 disconnect(gic_con);
                                 disconnect(gina_con);
+                                disconnect(ne_con);
+                                waitloop.quit();
+                            }
+                        });
+                ne_con = connect(m_networkscheduler, &networkscheduler::requestFailed,
+                        [&](QObject* caller, QString s_reason){
+                            if(caller == &waitloop){
+                                qDebug() << "Got requestFailed signal" << s_reason << "in lambda function for compoundform search" << m_word << caller;
+                                disconnect(gic_con);
+                                disconnect(gina_con);
+                                disconnect(ne_con);
                                 waitloop.quit();
                             }
                         });
