@@ -44,6 +44,7 @@ private:
 @<Start of class @'edit@'@>
 public:
     explicit edit(QObject *parent = nullptr);
+    ~edit(void);
     Q_PROPERTY(QString dbversion MEMBER m_dbversion NOTIFY dbversionChanged);
     // Lexeme id and form id managed by grammarprovider
     @<Id property @'translation@' @>
@@ -239,6 +240,36 @@ edit::edit(QObject *parent) : QObject(parent), m_add_busy(false), m_current_sent
     translation newTranslation = {translationId(),0,{}};
     m_translations.append(newTranslation);
     m_current_translation = &(m_translations.last());
+    // Connecions:
+    connect(m_grammarprovider,&grammarprovider::gotGrammarInfoForWord,this,&edit::gotGrammarInfoForWordFromGrammarProvider);
+    connect(m_grammarprovider,&grammarprovider::noGrammarInfoForWord,this,&edit::noGrammarInfoForWordFromGrammarProvider);
+    connect(m_grammarprovider,&grammarprovider::networkError, this, &edit::networkErrorFromGrammarProvider);
+
+    connect(m_grammarprovider,&grammarprovider::formObtained,this,&edit::formObtainedFromGrammarProvider);
+    connect(m_grammarprovider,&grammarprovider::compoundFormObtained,this,&edit::compoundFormObtainedFromGrammarProvider);
+    connect(m_grammarprovider,&grammarprovider::sentenceAvailable,this,&edit::sentenceAvailableFromGrammarProvider);
+    connect(m_grammarprovider,&grammarprovider::sentenceLookupForm,this,&edit::sentenceLookupFormFromGramarProvider);
+    connect(m_grammarprovider,&grammarprovider::sentenceLookupFormLexeme,this,&edit::sentenceLookupFormLexemeFromGrammarProvider);
+    connect(m_grammarprovider,&grammarprovider::sentenceAddAndUseForm,this,&edit::sentenceAddAndUseFormFromGrammarProvider);
+    connect(m_grammarprovider,&grammarprovider::sentenceAddAndIgnoreForm,this,&edit::sentenceAddAndIgnoreFormFromGrammerProvider);
+    connect(m_grammarprovider,&grammarprovider::sentenceComplete,this,&edit::sentenceCompleteFromGrammarProvider);
+    connect(m_grammarprovider,&grammarprovider::grammarInfoComplete,this,&edit::grammarInfoCompleteFromGrammarProvider);
+}
+
+edit::~edit() {
+    disconnect(m_grammarprovider,&grammarprovider::gotGrammarInfoForWord,this,&edit::gotGrammarInfoForWordFromGrammarProvider);
+    disconnect(m_grammarprovider,&grammarprovider::noGrammarInfoForWord,this,&edit::noGrammarInfoForWordFromGrammarProvider);
+    disconnect(m_grammarprovider,&grammarprovider::networkError, this, &edit::networkErrorFromGrammarProvider);
+
+    disconnect(m_grammarprovider,&grammarprovider::formObtained,this,&edit::formObtainedFromGrammarProvider);
+    disconnect(m_grammarprovider,&grammarprovider::compoundFormObtained,this,&edit::compoundFormObtainedFromGrammarProvider);
+    disconnect(m_grammarprovider,&grammarprovider::sentenceAvailable,this,&edit::sentenceAvailableFromGrammarProvider);
+    disconnect(m_grammarprovider,&grammarprovider::sentenceLookupForm,this,&edit::sentenceLookupFormFromGramarProvider);
+    disconnect(m_grammarprovider,&grammarprovider::sentenceLookupFormLexeme,this,&edit::sentenceLookupFormLexemeFromGrammarProvider);
+    disconnect(m_grammarprovider,&grammarprovider::sentenceAddAndUseForm,this,&edit::sentenceAddAndUseFormFromGrammarProvider);
+    disconnect(m_grammarprovider,&grammarprovider::sentenceAddAndIgnoreForm,this,&edit::sentenceAddAndIgnoreFormFromGrammerProvider);
+    disconnect(m_grammarprovider,&grammarprovider::sentenceComplete,this,&edit::sentenceCompleteFromGrammarProvider);
+    disconnect(m_grammarprovider,&grammarprovider::grammarInfoComplete,this,&edit::grammarInfoCompleteFromGrammarProvider);
 }
 
 int edit::createGrammarFormId(int language, QList<QList<QString> > grammarexpressions){
@@ -761,9 +792,6 @@ void edit::addLexemeHeuristically(QObject* caller, int languageid, QString lexem
             addScheduledLexemeHeuristically();
         }
         else {
-            connect(m_grammarprovider,&grammarprovider::gotGrammarInfoForWord,this,&edit::gotGrammarInfoForWordFromGrammarProvider);
-            connect(m_grammarprovider,&grammarprovider::noGrammarInfoForWord,this,&edit::noGrammarInfoForWordFromGrammarProvider);
-            connect(m_grammarprovider,&grammarprovider::networkError, this, &edit::networkErrorFromGrammarProvider);
             m_grammarprovider->getGrammarInfoForWord(m_caller, languageid, lexemestring);
         }
     }
@@ -771,9 +799,6 @@ void edit::addLexemeHeuristically(QObject* caller, int languageid, QString lexem
 
 void edit::networkErrorFromGrammarProvider(QObject* caller, bool silent, QString s_failure_reason){
     if(caller != m_caller) return;
-    disconnect(m_grammarprovider,&grammarprovider::gotGrammarInfoForWord,this,&edit::gotGrammarInfoForWordFromGrammarProvider);
-    disconnect(m_grammarprovider,&grammarprovider::noGrammarInfoForWord,this,&edit::noGrammarInfoForWordFromGrammarProvider);
-    disconnect(m_grammarprovider,&grammarprovider::networkError, this, &edit::networkErrorFromGrammarProvider);
     emit addLexemeHeuristicallyResult(m_caller, "<b>Warning:</b> Network request failed with error \"" + s_failure_reason + "\" when trying to look up grammar information on en.wiktionary.org. Do we have internet access?");
     m_add_busy = false;
 }
@@ -782,9 +807,6 @@ void edit::noGrammarInfoForWordFromGrammarProvider(QObject* caller, bool silent)
     //qDebug() << __FILE__ << __FUNCTION__ << __LINE__;
     if(caller != m_caller) return;
     //qDebug() << __FILE__ << __FUNCTION__ << __LINE__;
-    disconnect(m_grammarprovider,&grammarprovider::gotGrammarInfoForWord,this,&edit::gotGrammarInfoForWordFromGrammarProvider);
-    disconnect(m_grammarprovider,&grammarprovider::noGrammarInfoForWord,this,&edit::noGrammarInfoForWordFromGrammarProvider);
-    disconnect(m_grammarprovider,&grammarprovider::networkError, this, &edit::networkErrorFromGrammarProvider);
     emit addLexemeHeuristicallyResult(m_caller, "<b>Warning:</b> Could not obtain grammar information for this word - could there be a spelling mistake or maybe the word is missing on en.wiktionary.org?");
     m_add_busy = false;
 }
@@ -792,30 +814,7 @@ void edit::noGrammarInfoForWordFromGrammarProvider(QObject* caller, bool silent)
 void edit::gotGrammarInfoForWordFromGrammarProvider(QObject* caller, int numberOfObjects, bool silent){
     //qDebug() << __FILE__ << __FUNCTION__ << __LINE__;
     //qDebug() << __FUNCTION__ << __LINE__ << "silent" << silent;
-    this->disconnect();
-    disconnect(m_grammarprovider,&grammarprovider::gotGrammarInfoForWord,this,&edit::gotGrammarInfoForWordFromGrammarProvider);
-    disconnect(m_grammarprovider,&grammarprovider::noGrammarInfoForWord,this,&edit::noGrammarInfoForWordFromGrammarProvider);
-    disconnect(m_grammarprovider,&grammarprovider::networkError, this, &edit::networkErrorFromGrammarProvider);
-    disconnect(m_grammarprovider,&grammarprovider::formObtained,this,&edit::formObtainedFromGrammarProvider);
-    disconnect(m_grammarprovider,&grammarprovider::compoundFormObtained,this,&edit::compoundFormObtainedFromGrammarProvider);
-    disconnect(m_grammarprovider,&grammarprovider::sentenceAvailable,this,&edit::sentenceAvailableFromGrammarProvider);
-    disconnect(m_grammarprovider,&grammarprovider::sentenceLookupForm,this,&edit::sentenceLookupFormFromGramarProvider);
-    disconnect(m_grammarprovider,&grammarprovider::sentenceLookupFormLexeme,this,&edit::sentenceLookupFormLexemeFromGrammarProvider);
-    disconnect(m_grammarprovider,&grammarprovider::sentenceAddAndUseForm,this,&edit::sentenceAddAndUseFormFromGrammarProvider);
-    disconnect(m_grammarprovider,&grammarprovider::sentenceAddAndIgnoreForm,this,&edit::sentenceAddAndIgnoreFormFromGrammerProvider);
-    disconnect(m_grammarprovider,&grammarprovider::sentenceComplete,this,&edit::sentenceCompleteFromGrammarProvider);
-    disconnect(m_grammarprovider,&grammarprovider::grammarInfoComplete,this,&edit::grammarInfoCompleteFromGrammarProvider);
-
     //qDebug() << "Obtained " << numberOfObjects << " forms";
-    connect(m_grammarprovider,&grammarprovider::formObtained,this,&edit::formObtainedFromGrammarProvider);
-    connect(m_grammarprovider,&grammarprovider::compoundFormObtained,this,&edit::compoundFormObtainedFromGrammarProvider);
-    connect(m_grammarprovider,&grammarprovider::sentenceAvailable,this,&edit::sentenceAvailableFromGrammarProvider);
-    connect(m_grammarprovider,&grammarprovider::sentenceLookupForm,this,&edit::sentenceLookupFormFromGramarProvider);
-    connect(m_grammarprovider,&grammarprovider::sentenceLookupFormLexeme,this,&edit::sentenceLookupFormLexemeFromGrammarProvider);
-    connect(m_grammarprovider,&grammarprovider::sentenceAddAndUseForm,this,&edit::sentenceAddAndUseFormFromGrammarProvider);
-    connect(m_grammarprovider,&grammarprovider::sentenceAddAndIgnoreForm,this,&edit::sentenceAddAndIgnoreFormFromGrammerProvider);
-    connect(m_grammarprovider,&grammarprovider::sentenceComplete,this,&edit::sentenceCompleteFromGrammarProvider);
-    connect(m_grammarprovider,&grammarprovider::grammarInfoComplete,this,&edit::grammarInfoCompleteFromGrammarProvider);
     m_grammarprovider->getNextGrammarObject(caller);
 }
 
@@ -919,16 +918,6 @@ void edit::sentenceCompleteFromGrammarProvider(QObject* caller, QList<QList<QStr
 void edit::grammarInfoCompleteFromGrammarProvider(QObject* caller, bool silent){
     static int numberofcalls = 0;
     numberofcalls++;
-    this->disconnect();
-    disconnect(m_grammarprovider,&grammarprovider::formObtained,this,&edit::formObtainedFromGrammarProvider);
-    disconnect(m_grammarprovider,&grammarprovider::compoundFormObtained,this,&edit::compoundFormObtainedFromGrammarProvider);
-    disconnect(m_grammarprovider,&grammarprovider::sentenceAvailable,this,&edit::sentenceAvailableFromGrammarProvider);
-    disconnect(m_grammarprovider,&grammarprovider::sentenceLookupForm,this,&edit::sentenceLookupFormFromGramarProvider);
-    disconnect(m_grammarprovider,&grammarprovider::sentenceLookupFormLexeme,this,&edit::sentenceLookupFormLexemeFromGrammarProvider);
-    disconnect(m_grammarprovider,&grammarprovider::sentenceAddAndUseForm,this,&edit::sentenceAddAndUseFormFromGrammarProvider);
-    disconnect(m_grammarprovider,&grammarprovider::sentenceAddAndIgnoreForm,this,&edit::sentenceAddAndIgnoreFormFromGrammerProvider);
-    disconnect(m_grammarprovider,&grammarprovider::sentenceComplete,this,&edit::sentenceCompleteFromGrammarProvider);
-    disconnect(m_grammarprovider,&grammarprovider::grammarInfoComplete,this,&edit::grammarInfoCompleteFromGrammarProvider);
 
     //qDebug() << __FUNCTION__ << __LINE__ << "silent" << silent << numberofcalls << "caller" << caller;
     //qDebug() << "Grammar info complete";
@@ -944,9 +933,6 @@ void edit::grammarInfoCompleteFromGrammarProvider(QObject* caller, bool silent){
         else
             emit currentPrettyStringUpdated(m_caller);
         m_current_pretty_lexeme.clear();
-    }
-    else {
-        connect(m_grammarprovider,&grammarprovider::gotGrammarInfoForWord,this,&edit::gotGrammarInfoForWordFromGrammarProvider);
     }
     m_add_busy = false;
     addScheduledLexemeHeuristically();
