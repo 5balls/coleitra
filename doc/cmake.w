@@ -110,6 +110,9 @@ set(LM_DBL_PREC 1 CACHE BOOL "Build double precision routines?")
 set(LM_SNGL_PREC 1 CACHE BOOL "Build single precision routines?")
 configure_file(${CMAKE_CURRENT_LIST_DIR}@1/levmar-2.6/levmar.h.in ${CMAKE_CURRENT_LIST_DIR}@1/levmar-2.6/levmar.h)
 
+find_package(nlohmann_json 3.2.0 REQUIRED)
+find_package(nlohmann_json_schema_validator REQUIRED)
+
 include_directories(${Qt5Widgets_INCLUDE_DIRS} ${QtQml_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR} ${CMAKE_CURRENT_LIST_DIR}@1 ${CMAKE_CURRENT_LIST_DIR}@1/levmar-2.6)
 add_definitions(${Qt5Widgets_DEFINITIONS} ${QtQml_DEFINITIONS} ${QtNetwork} ${${Qt5Quick_DEFINITIONS}})
 @}
@@ -148,7 +151,7 @@ endif()
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -ggdb")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -ggdb")
 
-target_link_libraries(coleitra PUBLIC ${QT_LIBS} ${LIBS})
+target_link_libraries(coleitra PUBLIC ${QT_LIBS} ${LIBS} nlohmann_json_schema_validator)
 @}
 
 In this step we finally can produce the APK file. For a new release we should probably increase the VERSION\_CODE.

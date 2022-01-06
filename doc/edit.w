@@ -257,7 +257,11 @@ edit::edit(QObject *parent) : QObject(parent), m_add_busy(false), m_current_sent
     connect(m_grammarprovider,&grammarprovider::sentenceComplete,this,&edit::sentenceCompleteFromGrammarProvider);
     connect(m_grammarprovider,&grammarprovider::grammarInfoComplete,this,&edit::grammarInfoCompleteFromGrammarProvider);
 }
+@}
 
+\todobug{Some disconnect in this destructor crashes the application. We should ensure the order of destruction of singleton classes in some way as m\_grammarprovider pointer is probably not valid anymore at this point (maybe we can send a signal in the grammarprovider destructor).}
+@O ../src/edit.cpp -d
+@{
 edit::~edit() {
     disconnect(m_grammarprovider,&grammarprovider::gotGrammarInfoForWord,this,&edit::gotGrammarInfoForWordFromGrammarProvider);
     disconnect(m_grammarprovider,&grammarprovider::noGrammarInfoForWord,this,&edit::noGrammarInfoForWordFromGrammarProvider);
@@ -274,7 +278,11 @@ edit::~edit() {
     disconnect(m_grammarprovider,&grammarprovider::sentenceComplete,this,&edit::sentenceCompleteFromGrammarProvider);
     disconnect(m_grammarprovider,&grammarprovider::grammarInfoComplete,this,&edit::grammarInfoCompleteFromGrammarProvider);
 }
+@}
 
+
+@O ../src/edit.cpp -d
+@{
 int edit::createGrammarFormId(int language, QList<QList<QString> > grammarexpressions){
     return m_database->grammarFormIdFromStrings(language,grammarexpressions);
 }

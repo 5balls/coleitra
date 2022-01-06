@@ -150,7 +150,17 @@ Install a lapack library package from your operating system, on debian one possi
 f2c
 ___
 
-Install the f2c package from your operating system, on debian the package name is "f2c".
+Install the f2c package from your operating system, on debian the package name is "f2c". (This might not be necessary. It may be needed by the original LAPACK version which was written in fortran.)
+
+nlohmann JSON
+_____________
+
+Install json parsing library from Niels Lohmann per source from https://github.com/nlohmann/json or as package your the distribution (Debian package is available).
+
+JSON schema validator
+_____________________
+
+Install the JSON schema validator library from Patrick Boettcher per source from https://github.com/pboettch/json-schema-validator or via package manager (I think there is no debian package yet) and install it somewhere where cmake can find it.
 
 coleitra
 ........

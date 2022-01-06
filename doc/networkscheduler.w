@@ -103,7 +103,7 @@ void networkscheduler::setTimeout(int timeout){
 @}
 
 \cprotect\subsection{\verb#processNetworkAnswer#}
-@O ../src/grammarprovider.cpp -d
+@O ../src/networkscheduler.cpp -d
 @{
 void networkscheduler::processNetworkAnswer(QNetworkReply* reply){
     QUrl url_request = reply->request().url();
@@ -126,7 +126,7 @@ void networkscheduler::processNetworkAnswer(QNetworkReply* reply){
 
 
 \cprotect\subsection{\verb#checkReplyAndRetryIfNecessary#}
-@O ../src/grammarprovider.cpp -d
+@O ../src/networkscheduler.cpp -d
 @{
 networkscheduler::networkRequestStatus networkscheduler::checkReplyAndRetryIfNecessary(QNetworkReply* reply, QString& s_reply){
     static int retrycount = 0;

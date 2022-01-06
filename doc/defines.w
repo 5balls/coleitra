@@ -64,6 +64,8 @@ literate={ä}{{\"a}}1 {ö}{{\"o}}1 {ü}{{\"u}}1 {é}{{\'e}}1 {—}{{-}}1,
 \newcommand\codeqrc{\lstset{language=XML,breaklines=true}}
 \newcommand\codecmake{\lstset{language=CMake,breaklines=true}}
 
+\newcounter{todobugcounter}
+\newcommand{\todobug}[1]{\stepcounter{todobugcounter}\todo[color=red!60]{Bug \thetodobugcounter: #1}}
 \newcounter{todoremovecounter}
 \newcommand{\todoremove}[1]{\stepcounter{todoremovecounter}\todo[color=red!40]{Remove \thetodoremovecounter: #1}}
 \newcounter{todorefactorcounter}

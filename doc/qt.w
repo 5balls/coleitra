@@ -97,6 +97,7 @@ Here are the files described, which are needed for compiling code for the Qt fra
         <file>databaseedit.qml</file>
         <file>settings.qml</file>
         <file>grammarprovider_schema.json</file>
+        <file>fi.json</file>
     </qresource>
 </RCC>
 @}

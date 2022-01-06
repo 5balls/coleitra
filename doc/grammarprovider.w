@@ -21,9 +21,8 @@ This is an implementation of a grammar provider querying information from the AP
 \section{Schema file}
 The definitions in the grammarprovider class are currently hardcoded. To make them better configurable and to give the user a possibility to extend the definitions (which is crucial) we define a JSON Schema file for configuration files.
 
-@o ../src/grammarprovider_schema.json
-@{
-{
+@O ../src/grammarprovider_schema.json
+@{{
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "http://coleitra.org/schemas/grammarprovider",
   "title": "coleitra grammarprovider file format",
@@ -56,7 +55,7 @@ The definitions in the grammarprovider class are currently hardcoded. To make th
             "type": "string"
           },
           "identifiers": {
-            "description": "Ídentifier for table required for obtaining it. In case of en.wiktionary.org this is the mediawiki template name of the inflection table.",
+            "description": "Identifier for table required for obtaining it. In case of en.wiktionary.org this is the mediawiki template name of the inflection table.",
             "type": "array",
             "items": {
               "type": "string"
@@ -355,6 +354,54 @@ The definitions in the grammarprovider class are currently hardcoded. To make th
       "additionalProperties": false
     }
   }
+}
+@}
+
+
+@O ../src/fi.json
+@{{
+  "version": "0.1",
+  "base_url": "https://en.wiktionary.org/w/api.php?",
+  "inflectiontables": [
+    {
+      "tablename": "Conjugation",
+      "identifiers": [
+        "fi-conj-sanoa",
+        "fi-conj-muistaa"
+      ],
+      "cells": [
+        {
+          "index": 1,
+          "row": 5,
+          "column": 3,
+          "grammarexpressions": {
+            "format": "coleitra",
+            "version": "0.1",
+            "tags": {
+              "Mood": "Indicative",
+              "Tense": "Present",
+              "Polarity": "Positive",
+              "Person": "First",
+              "Number": "Singular"
+            }
+          },
+          "content_type": "SENTENCE",
+          "process": [
+            {
+              "instruction": "LOOKUPFORM",
+              "grammarexpressions": {
+                "format": "coleitra",
+                "version": "0.1",
+                "tags": {
+                  "Part of speech": "Verb"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
 }
 @}
 
@@ -745,6 +792,11 @@ private:
 @O ../src/grammarprovider.cpp -d
 @{
 #include "grammarprovider.h"
+#include <nlohmann/json-schema.hpp>
+
+using nlohmann::json;
+using nlohmann::json_schema::json_validator;
+
 #include <sstream>
 #include <iostream>
 @}
@@ -754,6 +806,55 @@ private:
 @{
 grammarprovider::grammarprovider(QObject *parent) : QObject(parent), m_busy(false)
 {
+    json j_grammarProviderSchema;
+    QFile f_grammarProviderSchema(":/grammarprovider_schema.json");
+    if(f_grammarProviderSchema.open(QIODevice::ReadOnly)) {
+        j_grammarProviderSchema = json::parse(f_grammarProviderSchema.readAll().toStdString());
+        f_grammarProviderSchema.close();
+    }
+
+#ifdef Q_OS_ANDROID
+    QString gpFilePath = QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).at(1) + "/grammarprovider";
+#else
+    QString gpFilePath = QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0) + "/.coleitra/grammarprovider";
+#endif
+
+    {
+        if(!QDir(gpFilePath).exists()){
+            QDir().mkdir(gpFilePath);
+        }
+    }
+    json j_fi;
+    QFile f_fi(":/fi.json");
+
+    if(f_fi.open(QIODevice::ReadOnly)) {
+        j_fi = json::parse(f_fi.readAll().toStdString());
+        f_fi.close();
+    }
+
+    json_validator validator;
+    try {
+        validator.set_root_schema(j_grammarProviderSchema);
+    }
+    catch (const std::exception &e) {
+        qDebug() << "Validation of schema failed, here is why: " << e.what();
+        std::cout << j_grammarProviderSchema.dump();
+    }
+    catch (...){
+        qDebug() << "Validation of schema failed";
+    }
+
+    try {
+        validator.validate(j_fi);
+        std::cout << "Validation succeeded\n";
+    }
+    catch (const std::exception &e) {
+        qDebug() << "Validation failed, here is why: " << e.what();
+    }
+    catch (...) {
+        qDebug() << "Validation failed";
+    }
+
     s_baseurl = "https://en.wiktionary.org/w/api.php?";
     QQmlEngine* engine = qobject_cast<QQmlEngine*>(parent);
     m_settings = engine->singletonInstance<settings*>(qmlTypeId("SettingsLib", 1, 0, "Settings"));
