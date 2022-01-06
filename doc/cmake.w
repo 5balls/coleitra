@@ -89,6 +89,8 @@ We need to define all needed Qt5 components here:
 find_package(Qt5 COMPONENTS Quick QuickControls2 QuickWidgets Sql Svg Qml Widgets Network REQUIRED)
 set(QT_LIBS Qt5::Quick Qt5::QuickControls2 Qt5::QuickWidgets Qt5::Sql Qt5::Svg Qt5::Qml Qt5::Widgets Qt5::Network)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 if(ANDROID)
 set(ANDROID_EXTRA_LIBS
     /usr/local/lib/libcrypto_1_1.so
@@ -97,7 +99,10 @@ CACHE INTERNAL "")
 set(LIBS ${LIBS} android log)
 endif()
 
-set(HAVE_LAPACK 0 CACHE BOOL "Do we have LAPACK/BLAS?")
+set(LIBS ${LIBS} lapack blas)
+
+set(HAVE_LAPACK 1 CACHE BOOL "Do we have LAPACK/BLAS?")
+set(LAPACKBLAS_DIR "/usr/lib" CACHE PATH "Path to lapack/blas libraries")
 set(NEED_F2C 0 CACHE BOOL "Do we need either f2c or F77/I77?")
 set(HAVE_PLASMA 0 CACHE BOOL "Do we have PLASMA parallel linear algebra library?")
 set(LINSOLVERS_RETAIN_MEMORY 1 CACHE BOOL "Should linear solvers retain working memory between calls? (non-reentrant!)")

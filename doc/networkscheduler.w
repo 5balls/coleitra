@@ -118,7 +118,7 @@ void networkscheduler::processNetworkAnswer(QNetworkReply* reply){
             return;
     }
     m_request_list[url_request].s_answer = ms_network_answer;
-    qDebug() << QDateTime::currentMSecsSinceEpoch() - start_time << "ms for request";
+    //qDebug() << QDateTime::currentMSecsSinceEpoch() - start_time << "ms for request";
     emit processingStop();
     (m_request_list[url_request].f_callback)(ms_network_answer);
 }
