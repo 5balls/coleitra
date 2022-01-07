@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Create ticket for current milestone
+    about: Use this template to create a new ticket for the current milestone
+    url: https://github.com/5balls/coleitra/issues/new?template=milestone_feature.md&assignees=5balls&milestone=0.1
