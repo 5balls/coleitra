@@ -5,22 +5,24 @@ labels: ["bug"]
 assignees:
   - 5balls
 body:
+  - type: markdown
+    attributes:
+      value: "Thanks for considering contributing to coleitra! We need some information from you."
   - type: dropdown
     attributes:
       label: coleitra version
       description: What version of coleitra are you running?
       multiple: false
       options:
-        - label: 0.1
-        - label: unreleased
+        - 0.1
+        - unreleased
     validations:
       required: true
   - type: textarea
     attributes:
       label: Operating System
       description: What operating system are you using?
-      placeholder: Debian Linux 11, Windows 11, Android 9
-      value: operating system
+      value: something like Android 9, Debian Linux 11, Windows 11 
     validations:
       required: true
   - type: checkboxes
@@ -29,7 +31,7 @@ body:
       description: The Code of Conduct helps create a safe space for everyone. We require
         that everyone agrees to it.
       options:
-        - label: I agree to follow this coleiras's [Code of Conduct](blob/master/CODE_OF_CONDUCT.md)
+        - label: I agree to follow this coleiras's [Code of Conduct](https://github.com/5balls/coleitra/blob/master/CODE_OF_CONDUCT.md)
           required: true
   - type: markdown
     attributes:
