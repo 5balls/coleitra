@@ -8,9 +8,11 @@ body:
   - type: markdown
     attributes:
       value: |
-        # Thank you!
+        # Thank you for your bug report!
 
         Thank you for considering contributing to coleitra! To make the most of your and our time, we need some information from you. **You can find the following fields in the about screen in the coleitra program.**
+
+        Please only describe one bug in this form.
   - type: dropdown
     attributes:
       label: coleitra version
@@ -31,13 +33,27 @@ body:
     attributes:
       label: Git commit
       description: Filling out this value (maybe copying directly from the about screen of the program) can be very helpful to reproduce the bug.
+  - type: textarea
+      label: Description
+      description: How did the bug happen? Does it occur every time or only sometimes (rarely or frequently)? Under which circumstances does it appear?
+  - type: textarea
+      label: Steps to reproduce
+      description: Which exact steps lead to this bug?
+  - type: dropdown
+      label: Perceived severity by user
+      description: How severe would you - as a user - classify the bug?
+      options:
+        - Critical / Blocker
+        - High
+        - Medium
+        - Low
   - type: checkboxes
     attributes:
       label: Code of Conduct
       description: The Code of Conduct helps create a safe space for everyone. We require
         that everyone agrees to it.
       options:
-        - label: I agree to follow this coleiras's [Code of Conduct](https://github.com/5balls/coleitra/blob/master/CODE_OF_CONDUCT.md)
+        - label: I agree to follow coleitras's [Code of Conduct](https://github.com/5balls/coleitra/blob/master/CODE_OF_CONDUCT.md)
           required: true
   - type: markdown
     attributes:
