@@ -10,7 +10,11 @@ body:
       value: |
         # Thank you for your bug report!
 
-        Thank you for considering contributing to coleitra! To make the most of your and our time, we need some information from you. **You can find the following fields in the about screen in the coleitra program.**
+        Thank you for considering contributing to coleitra! To make the most of your and our time, we need some information from you.
+
+        Please start by filling out the title field above this text after "[Bug]: " (which should remain intact) with a short and concise description of the bug. Continue with the fields below.
+
+        **You can find the following fields in the about screen in the coleitra program.**
 
         Please only describe one bug in this form.
   - type: dropdown
@@ -50,6 +54,10 @@ body:
         - High
         - Medium
         - Low
+  - type: textarea
+    attributes:
+      label: Additional information
+      description: Anything else you want to tell us?
   - type: checkboxes
     attributes:
       label: Code of Conduct
@@ -60,4 +68,4 @@ body:
           required: true
   - type: markdown
     attributes:
-      value: "Thanks for contributing to coleitra!"
+      value: "**Thanks a lot for contributing to coleitra!**"
