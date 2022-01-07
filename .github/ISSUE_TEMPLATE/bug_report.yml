@@ -1,0 +1,36 @@
+name: coleitra Bug Report
+description: File a bug report for coleitra
+title: "[Bug]: "
+labels: ["bug"]
+assignees:
+  - 5balls
+body:
+  - type: dropdown
+    attributes:
+      label: coleitra version
+      description: What version of coleitra are you running?
+      multiple: false
+      options:
+        - label: 0.1
+        - label: unreleased
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Operating System
+      description: What operating system are you using?
+      placeholder: Example: Debian Linux 11, Windows 11, Android 9
+      value: operating system
+    validations:
+      required: true
+  - type: checkboxes
+    attributes:
+      label: Code of Conduct
+      description: The Code of Conduct helps create a safe space for everyone. We require
+        that everyone agrees to it.
+      options:
+        - label: I agree to follow this coleiras's [Code of Conduct](blob/master/CODE_OF_CONDUCT.md)
+          required: true
+  - type: markdown
+    attributes:
+      value: "Thanks for contributing to coleitra!"
