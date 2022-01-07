@@ -34,7 +34,7 @@ body:
       label: Git commit
       description: Filling out this value (maybe copying directly from the about screen of the program) can be very helpful to reproduce the bug.
   - type: textarea
-      label: Description
+      label: "Description"
       description: How did the bug happen? Does it occur every time or only sometimes (rarely or frequently)? Under which circumstances does it appear?
   - type: textarea
       label: Steps to reproduce
