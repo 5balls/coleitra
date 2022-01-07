@@ -1,4 +1,4 @@
-% Copyright 2020 Florian Pesth
+% Copyright 2020, 2021, 2022 Florian Pesth
 %
 % This file is part of coleitra.
 %
@@ -20,7 +20,7 @@ Here are the files described, which are needed for compiling code for the Qt fra
 
 \subsection{Ressources}
 \codeqrc
-@o ../src/qml.qrc
+@O ../src/qml.qrc
 @{
 <RCC>
     <qresource prefix="/">
@@ -33,11 +33,51 @@ Here are the files described, which are needed for compiling code for the Qt fra
         <file>ColeitraGridComboBox.qml</file>
         <file>ColeitraGridCheckBox.qml</file>
         <file>ColeitraGridButton.qml</file>
+        <file>ColeitraGridGreenButton.qml</file>
+        <file>ColeitraGridRedButton.qml</file>
         <file>ColeitraGridImageButton.qml</file>
-        <file>ColeitraWidgetEditGrammarForm.qml</file>
         <file>ColeitraWidgetEditLexeme.qml</file>
+        <file>ColeitraWidgetEditLexemePart.qml</file>
         <file>ColeitraWidgetEditGrammarExpression.qml</file>
-        <file>ColeitraWidgetEdit.qml</file>
+        <file>ColeitraWidgetEditTranslationPart.qml</file>
+        <file>ColeitraWidgetEditSentence.qml</file>
+        <file>ColeitraWidgetEditSentencePart.qml</file>
+        <file>ColeitraWidgetEditForm.qml</file>
+        <file>ColeitraWidgetEditCompoundForm.qml</file>
+        <file>ColeitraWidgetEditCompoundFormPart.qml</file>
+        <file>ColeitraWidgetEditGrammarForm.qml</file>
+        <file>ColeitraWidgetEditIdSelection.qml</file>
+        <file>ColeitraWidgetEditGrammarFormComponentList.qml</file>
+        <file>ColeitraWidgetEditSearchPopup.qml</file>
+        <file>ColeitraWidgetEditSearchTextPopup.qml</file>
+        <file>ColeitraWidgetEditPartList.qml</file>
+        <file>ColeitraWidgetEditPartStack.qml</file>
+        <file>ColeitraWidgetEditIdRadioButton.qml</file>
+        <file>ColeitraWidgetSimpleEditInput.qml</file>
+        <file>ColeitraWidgetDatabaseFormEdit.qml</file>
+        <file>ColeitraWidgetDatabaseLexemeEdit.qml</file>
+        <file>ColeitraWidgetDatabaseTranslationEdit.qml</file>
+        <file>ColeitraWidgetDatabaseTranslationPartLexemeEdit.qml</file>
+        <file>ColeitraWidgetDatabaseTranslationPartSentenceEdit.qml</file>
+        <file>ColeitraWidgetDatabaseTranslationPartFormEdit.qml</file>
+        <file>ColeitraWidgetDatabaseTranslationPartCompoundFormEdit.qml</file>
+        <file>ColeitraWidgetDatabaseTranslationPartGrammarFormEdit.qml</file>
+        <file>ColeitraWidgetDatabaseSentenceEdit.qml</file>
+        <file>ColeitraWidgetSearchPopupForm.qml</file>
+        <file>ColeitraWidgetSearchPopupLexeme.qml</file>
+        <file>ColeitraWidgetSearchPopupGrammar.qml</file>
+        <file>ColeitraWidgetLanguageComboBox.qml</file>
+        <file>ColeitraWidgetRoundedRectangle.qml</file>
+        <file>ColeitraWidgetRoundedGreenRectangle.qml</file>
+        <file>ColeitraWidgetRoundedRedRectangle.qml</file>
+        <file>ColeitraWidgetRoundedYellowRectangle.qml</file>
+        <file>ColeitraWidgetRoundedBlueRectangle.qml</file>
+        <file>ColeitraWidgetRoundedGreenRectangleButton.qml</file>
+        <file>ColeitraWidgetRoundedRedRectangleButton.qml</file>
+        <file>ColeitraWidgetRoundedYellowRectangleButton.qml</file>
+        <file>ColeitraWidgetRoundedBlueRectangleButton.qml</file>
+        <file>ColeitraWidgetLicenseSelectId.qml</file>
+        <file>ColeitraWidgetProgressPopup.qml</file>
         <file>main.qml</file>
         <file>settings.svg</file>
         <file>settings_pressed.svg</file>
@@ -49,10 +89,15 @@ Here are the files described, which are needed for compiling code for the Qt fra
         <file>www_pressed.svg</file>
         <file>minus.svg</file>
         <file>minus_pressed.svg</file>
+        <file>scrollprogress.svg</file>
         <file>about.qml</file>
         <file>train.qml</file>
         <file>edit.qml</file>
+        <file>simpleedit.qml</file>
+        <file>databaseedit.qml</file>
         <file>settings.qml</file>
+        <file>grammarprovider_schema.json</file>
+        <file>fi.json</file>
     </qresource>
 </RCC>
 @}

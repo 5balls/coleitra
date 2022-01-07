@@ -1,4 +1,4 @@
-% Copyright 2020 Florian Pesth
+% Copyright 2020, 2021, 2022 Florian Pesth
 %
 % This file is part of coleitra.
 %
@@ -26,8 +26,11 @@
 @i title.w
 
 \tableofcontents
+\listoffigures
 
 @i abstract.w
+
+@i version.w
 
 @i infrastructure.w
 
@@ -41,11 +44,19 @@
 
 @i edit.w
 
+@i databaseedit.w
+
 @i grammarprovider.w
+
+@i networkscheduler.w
 
 @i gui.w
 
+@i levenshteindistance.w
+
 @i qt.w
+
+@i unit.w
 
 \begin{appendix}
 \chapter{Code indices}
@@ -57,6 +68,8 @@
 
 \section{User identifiers}
 @u
+
+\todototoc\listoftodos
 
 \cleardoublepage\printindex
 \end{appendix}

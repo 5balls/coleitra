@@ -1,4 +1,4 @@
-% Copyright 2020 Florian Pesth
+% Copyright 2020, 2021, 2022 Florian Pesth
 %
 % This file is part of coleitra.
 %
@@ -23,6 +23,10 @@
 @i gui_train.w
 
 @i gui_edit.w
+
+@i gui_simpleedit.w
+
+@i gui_databaseedit.w
 
 @i gui_about.w
 
@@ -78,7 +82,6 @@ GridLayout {
 }
 @}
 
-
 \subsection{Grid Label}
 @o ../src/ColeitraGridLabel.qml
 @{
@@ -90,7 +93,9 @@ import QtQuick.Layouts 1.3
 Label {
     Layout.columnSpan: 6
     Layout.preferredWidth: parent.width / 2.0
-    Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+    Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+    leftPadding: 10
+    topPadding: 10
     wrapMode: Text.WordWrap
 }
 @}
@@ -153,6 +158,7 @@ CheckBox {
 @}
 
 \subsection{Grid button}
+
 @o ../src/ColeitraGridButton.qml
 @{
 import QtQuick 2.11
@@ -162,9 +168,37 @@ import QtQuick.Layouts 1.3
 Button {
     Layout.columnSpan: 6
     Layout.preferredWidth: parent.width / 2.0
-    @< Background rounded control@>
+    @<Background rounded control button @>
 }
 @}
+
+@o ../src/ColeitraGridGreenButton.qml
+@{
+import QtQuick 2.11
+import QtQuick.Controls 2.14
+import QtQuick.Layouts 1.3
+
+Button {
+    Layout.columnSpan: 6
+    Layout.preferredWidth: parent.width / 2.0
+    @<Background green rounded control button @>
+}
+@}
+
+@o ../src/ColeitraGridRedButton.qml
+@{
+import QtQuick 2.11
+import QtQuick.Controls 2.14
+import QtQuick.Layouts 1.3
+
+Button {
+    Layout.columnSpan: 6
+    Layout.preferredWidth: parent.width / 2.0
+    @<Background red rounded control button @>
+}
+@}
+
+
 
 \subsection{Grid image button}
 @o ../src/ColeitraGridImageButton.qml
@@ -179,6 +213,8 @@ Image {
     Layout.columnSpan: 2
     Layout.preferredHeight: 40
     Layout.preferredWidth: 40
+    height: 40
+    width: 40
     MouseArea {
         id: ma
         anchors.fill: parent
@@ -216,12 +252,56 @@ background: Rectangle {
 }
 @}
 
+@d Background rounded control button
+@{
+background: Rectangle {
+    border.color: "black"
+    border.width: 1
+    color: pressed? "#99FFFF" : "#DDFFFF"
+    radius: 4
+    implicitHeight: 40
+}
+@}
+
+@d Background green rounded control button
+@{
+background: Rectangle {
+    border.color: "black"
+    border.width: 1
+    color: enabled? (pressed? "#99FF99" : "#DDFFDD") : "#DDDDDD"
+    radius: 4
+    implicitHeight: 40
+}
+@}
+
+@d Background red rounded control button
+@{
+background: Rectangle {
+    border.color: "black"
+    border.width: 1
+    color: pressed? "#FF9999" : "#FFDDDD"
+    radius: 4
+    implicitHeight: 40
+}
+@}
+
 @d Background yellow rounded control
 @{
 background: Rectangle {
     border.color: "black"
     border.width: 1
     color: "#FFFFDD"
+    radius: 4
+    implicitHeight: 40
+}
+@}
+
+@d Background grey rounded control
+@{
+background: Rectangle {
+    border.color: "black"
+    border.width: 1
+    color: "#EEEEEE"
     radius: 4
     implicitHeight: 40
 }

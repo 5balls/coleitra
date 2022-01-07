@@ -1,4 +1,4 @@
-% Copyright 2020 Florian Pesth
+% Copyright 2020, 2021, 2022 Florian Pesth
 %
 % This file is part of coleitra.
 %
@@ -24,8 +24,9 @@ import QtQuick.Layouts 1.14
 import GrammarProviderLib 1.0
 import DatabaseLib 1.0
 
-ColeitraGridInGridLayout {
+Row {
     id: widget
+    height: 40
     property var gklabel: grammarkeylabel
     property var gvlabel: grammarvaluelabel
     property var pbutton: plusbutton
@@ -40,31 +41,27 @@ ColeitraGridInGridLayout {
     ColeitraGridComboBox {
         id: grammarkey
         model: Database.grammarkeys()
-        Layout.columnSpan: 4
-        Layout.preferredWidth: 100
+        width: (widget.width - 40)/2
     }
     ColeitraGridComboBox {
         id: grammarvalue
         model: Database.grammarvalues(grammarkey.currentText)
-        Layout.columnSpan: 4
-        Layout.preferredWidth: 100
+        width: (widget.width - 40)/2
     }
     ColeitraGridLabel {
         visible: false
         id: grammarkeylabel
         text: grammarkey.currentText
-        Layout.columnSpan: 4
-        Layout.preferredHeight: 40
-        Layout.preferredWidth: 100
+        width: (widget.width - 40)/2
+        height: 40
         @<Background yellow rounded control@>
     }
     ColeitraGridLabel {
         visible: false
         id: grammarvaluelabel
         text: grammarvalue.currentText
-        Layout.columnSpan: 4
-        Layout.preferredHeight: 40
-        Layout.preferredWidth: 100
+        width: (widget.width - 40)/2
+        height: 40
         @<Background yellow rounded control@>
     }
     ColeitraGridImageButton {
@@ -80,11 +77,161 @@ ColeitraGridInGridLayout {
             widget.parent.addAddRemoveGrammarExpression();
         }
     }
+}
+@}
+
+@o ../src/ColeitraWidgetEditSearchPopup.qml
+@{
+import QtQuick 2.14
+import QtQuick.Controls 2.14
+
+Popup {
+    property string popupSearchString: ""
+    property int selectedId: selectedId.value
+    property var okFunction: function() {};
+    property var searchFunction: function() {};
+    property string searchValue: popupSearchValue.text
+    property var popupIdList: idList
+    Column {
+        width: parent.width
+        ColeitraGridLabel {
+            text: popupSearchString
+        }
+        ColeitraGridTextInput {
+            id: popupSearchValue
+            width: parent.width
+        }
+        ButtonGroup {
+            buttons: idList.children
+        }
+        ScrollView {
+            height: idList.children.length<=3? 40*idList.children.length : 140
+            width: parent.width
+            clip: true
+            ColeitraWidgetEditPartList {
+                property int selectedIdFromIdList: 0
+                id: idList
+                startWithOneElement: false
+                partType: "ColeitraWidgetEditIdRadioButton"
+                width: parent.width
+                onSelectedIdFromIdListChanged: function(){
+                    selectedId.value = selectedIdFromIdList;
+                }
+            }
+        }
+        SpinBox {
+            id: selectedId
+            width: parent.width
+            editable: true
+            from: -9999
+            to: 9999
+        }
+        Row {
+            ColeitraGridButton {
+                id: searchButton
+                text: "Search"
+                onClicked: searchFunction()
+            }
+            Rectangle {
+                height: 1
+                width: parent.parent.width - searchButton.width - okButton.width
+            }
+            ColeitraGridButton {
+                id: okButton
+                text: "Ok"
+                onClicked: okFunction()
+            }
+        }
+    }
+    @<Background grey rounded control@>
+}
+@}
+
+@o ../src/ColeitraWidgetEditIdSelection.qml
+@{
+import QtQuick 2.14
+import QtQuick.Controls 2.14
+
+Row {
+    property bool existing: existingTranslation.checked
+    property var existingtranslation: existingTranslation
+    property string existingText: ""
+    property string searchText: ""
+    property string searchValue: searchPopup.searchValue
+    property var popupSearchFunction: function() {}
+    property int idValue: idSelection.value
+    property var idselection: idSelection
+    property int existingId: 0
+    property bool showImageButton: false
+    property string imageButtonId: "www"
+    property var imageButtonClicked: function() {}
+    property var idList: searchPopup.popupIdList
+    property bool popupEnabled: true
+    width: parent.width
+    ColeitraGridCheckBox {
+        id: existingTranslation
+        width: checked ? parent.width - idSelection.width : parent.width - idLabel.width - (showImageButton ? 40 : 0)
+        checked: false
+        text: existingText
+    }
+    SpinBox {
+        id: idSelection
+        visible: existingTranslation.checked
+        from: -9999
+        to: 9999
+    }
+    ColeitraGridImageButton {
+        id: plusButton
+        imageid: imageButtonId
+        visible: showImageButton && !existingTranslation.checked
+        clickhandler: imageButtonClicked
+    }
+    ColeitraGridLabel {
+        id: idLabel
+        visible: !existingTranslation.checked
+        text: existingId.toString()
+    }
+    ColeitraWidgetEditSearchPopup {
+        width: parent.width
+        id: searchPopup
+        popupSearchString: searchText
+        okFunction: function() {
+            idSelection.value = searchPopup.selectedId;
+            idSelection.enabled = false;
+            searchPopup.close();
+        }
+        searchFunction: popupSearchFunction
+    }
+    onExistingChanged: {
+        if(existing && popupEnabled){
+            searchPopup.open()
+        }
+    }
+}
+@}
+
+@o ../src/ColeitraWidgetEditGrammarFormComponentList.qml
+@{
+import QtQuick 2.14
+
+Column {
+    function addAddRemoveGrammarExpression(){
+        var component = Qt.createComponent("ColeitraWidgetEditGrammarExpression.qml");
+        if (component.status == Component.Ready) {
+            var newObject = component.createObject(this);
+	    newObject.width = Qt.binding(function() {return width});
+            var children_sum_height = 0;
+            for(var i=0; i<children.length; i++){
+                children_sum_height += children[i].height;
+            }
+            height = children_sum_height;
+        }
+        else {
+            console.log("Problem with creation of grammar expression edit widget");
+        }
+    }
     Component.onCompleted: {
-        grammarkey.Layout.preferredWidth = parent.width/2.0 - 20;
-        grammarkeylabel.Layout.preferredWidth = parent.width/2.0 - 20;
-        grammarvalue.Layout.preferredWidth = parent.width/2.0 - 20;
-        grammarvaluelabel.Layout.preferredWidth = parent.width/2.0 - 20;
+        addAddRemoveGrammarExpression();
     }
 }
 @}
@@ -92,198 +239,863 @@ ColeitraGridInGridLayout {
 @o ../src/ColeitraWidgetEditGrammarForm.qml
 @{
 import QtQuick 2.14
-import QtQuick.Layouts 1.14
-import GrammarProviderLib 1.0
+import EditLib 1.0
 import DatabaseLib 1.0
 
-ColeitraGridInGridLayout {
-    id: widget
-    property var language: 1
-    property var pbutton: plusbutton
-    property var lx: lexeme
-    ColeitraGridImageButton {
-        id: minusbutton
-        visible: false
-        imageid: "minus"
-        clickhandler: function() { 
-            widget.destroy();
+Column {
+    property var grammarformid: grammarFormId
+    property var grammarexpressionlist: grammarExpressionList
+    height: grammarFormId.height + (grammarExpressionList.visible ? grammarExpressionList.height : prettyText.height);
+    ColeitraWidgetEditIdSelection {
+        id: grammarFormId
+        existingText: "Grammarform exists"
+        searchText: "Search for grammarform"
+        existingId: Edit.grammarFormId
+    }
+    ColeitraWidgetEditGrammarFormComponentList {
+        id: grammarExpressionList
+        visible: !grammarFormId.existing
+        width: parent.width
+    }
+    ColeitraGridLabel {
+        id: prettyText
+        visible: grammarFormId.existing
+        text: Database.prettyPrintGrammarForm(grammarFormId.idValue);
+        width: parent.width
+    }
+}
+@}
+
+@o ../src/ColeitraWidgetEditCompoundFormPart.qml
+@{
+import QtQuick 2.14
+import QtQuick.Controls 2.14
+
+Row {
+    id: compoundFormPart
+    width: parent.width
+    ColeitraWidgetEditSearchPopup {
+        id: searchPopup
+        popupSearchString: "Search for form to add"
+        okFunction: function() {
+            searchPopup.close();
+            searchButton.destroy();
+            plusButton.destroy();
+            minusButton.visible = true;
+            idSelection.value = searchPopup.selectedId;
+            idSelection.visible = true;
+            idSelection.enabled = false;
+            spacerRectangle.visible = true;
+            searchPopup.destroy();
+            compoundFormPart.parent.addPart();
         }
     }
+    ColeitraGridButton {
+        id: searchButton
+        width: parent.width - 40
+        text: "Search / add form"
+        onClicked: searchPopup.open()
+    }
+    ColeitraGridImageButton {
+        id: plusButton
+        imageid: "plus"
+        clickhandler: function() {
+            searchPopup.open()
+        }
+    }
+    ColeitraGridImageButton {
+        id: minusButton
+        imageid: "minus"
+        visible: false
+        clickhandler: function() {
+            compoundFormPart.destroy();
+        }
+    }
+    Rectangle {
+        id: spacerRectangle
+        height: 1
+        visible: false
+        width: parent.width - idSelection.width - 40
+    }
+    SpinBox {
+        id: idSelection
+        visible: false
+        editable: true
+        from: -9999
+        to: 9999
+    }
+
+}
+@}
+
+@o ../src/ColeitraWidgetEditCompoundForm.qml
+@{
+import QtQuick 2.14
+import EditLib 1.0
+
+Column {
+    ColeitraWidgetEditIdSelection {
+        id: compoundFormId
+        existingText: "Compoundform exists"
+        searchText: "Search for compoundform:"
+        existingId: Edit.compoundFormId
+    }
+    ColeitraWidgetEditPartList {
+        partType: "ColeitraWidgetEditCompoundFormPart"
+        visible: !compoundFormId.existing
+        width: parent.width
+    }
+}
+@}
+
+@o ../src/ColeitraWidgetEditForm.qml
+@{
+import QtQuick 2.14
+import EditLib 1.0
+import DatabaseLib 1.0
+import EditLib 1.0
+
+Column {
+    property var form: formString
+    property var formid: formId.existingId
+    property var addgrammar: addGrammar
+    property var grammarform: grammarForm
+    property var popupenabled: true
+    ColeitraWidgetEditIdSelection {
+        id: formId
+        existingText: "Form exists"
+        searchText: "Search for form:"
+        popupEnabled: popupenabled
+        popupSearchFunction: function() {
+            var formIds = Database.searchForms(formId.searchValue);
+            for(var i = idList.children.length; i > 0; i--) {
+                idList.children[i-1].destroy()
+            }
+            var numberOfDestroyedChildren = idList.children.length;
+            for(var formid of formIds){
+                idList.addPart();
+                if(formid<0){
+                    var formstring = Edit.stringFromFormId(formid);
+                    var grammarid = Edit.grammarIdFromFormId(formid);
+                    idList.lastCreatedObject.text = Database.prettyPrintForm(formid, formstring, grammarid);
+                }
+                else {
+                    idList.lastCreatedObject.text = Database.prettyPrintForm(formid);
+                }
+                idList.lastCreatedObject.value = formid;
+            }
+            if(idList.children.length > numberOfDestroyedChildren){
+                idList.children[numberOfDestroyedChildren].checked = true;
+            }
+            else {
+                console.log("No children in idList!");
+            }
+        }
+        existingId: Edit.formId
+    }
     ColeitraGridTextInput {
-        id: lexeme
-        Layout.columnSpan: 6
-        Layout.preferredWidth: 120
-        Connections {
-            target: GrammarProvider
-            function onGrammarobtained(caller, expressions, grammarexpressions) {
-                if(widget != caller) return;
-                var current_lexeme = lexeme;
-                var j_max = expressions.length;
-                for(var j=0; j<j_max; j++){
-                    var item = expressions[j];
-                    current_lexeme.text = item;
-                    var grammartags = grammarexpressions[j];
-                    var i_max = grammartags.length;
-                    for(var i=0; i<i_max; i++){
-                        var current_grammarexpression = current_lexeme.parent.children[current_lexeme.parent.children.length-1];
-                        current_grammarexpression.gklabel.text = grammartags[i][0];
-                        current_grammarexpression.gvlabel.text = grammartags[i][1];
-                        current_grammarexpression.pbutton.clickhandler();
+        id: formString
+        visible: !formId.existing
+        width: parent.width
+    }
+    ColeitraGridCheckBox {
+        visible: !formId.existing
+        id: addGrammar
+        width: parent.width
+        checked: true
+        text: "Add grammar form"
+    }
+    ColeitraWidgetEditGrammarForm {
+        id: grammarForm
+        visible:  !formId.existing && addGrammar.checked
+        width: parent.width
+    }
+}
+@}
+
+@O ../src/ColeitraWidgetEditSentencePart.qml
+@{
+import QtQuick 2.14
+import QtQuick.Controls 2.14
+import DatabaseLib 1.0
+import EditLib 1.0
+
+Row {
+    id: sentencePart
+    property var selectedparttype: selectedPartType
+    property var capitalizedcheckbox: capitalizedCheckbox
+    property var idselection: idSelection
+    property var searchpopup: searchPopup
+    ColeitraGridImageButton {
+        id: minusButton
+        visible: false
+        imageid: "minus"
+        clickhandler: function () {
+            sentencePart.destroy();
+        }
+    }
+    ColeitraGridComboBox {
+        id: selectedPartType
+        model: ["Form", "Compoundform", "Grammarform", "Punctuation mark"]
+        width: idSelection.visible ? parent.width - capitalizedCheckbox.width - 40 - idSelection.width - prettyText.width : parent.width - capitalizedCheckbox.width - 40
+    }
+    ColeitraGridLabel {
+        visible: idSelection.visible
+        id: prettyText
+        text: ""
+    }
+    ColeitraGridCheckBox {
+        id: capitalizedCheckbox
+        text: "Capitalized"
+    }
+    ColeitraGridImageButton {
+        id: plusButton
+        imageid: "plus"
+        clickhandler: function() {
+            searchPopup.open();
+        }
+    }
+    SpinBox {
+        id: idSelection
+        visible: false
+        from: -9999
+        to: 9999
+        onValueChanged: {
+            switch(selectedPartType.currentIndex){
+                case 0:
+                    if(value<0){
+                        var formstring = Edit.stringFromFormId(value);
+                        var grammarid = Edit.grammarIdFromFormId(value);
+                        prettyText.text = Database.prettyPrintForm(value, formstring, grammarid);
                     }
-                    current_lexeme.parent.pbutton.clickhandler();
-                    current_lexeme = current_lexeme.parent.parent.children[current_lexeme.parent.parent.children.length-1].lx;
+                    else {
+                        prettyText.text = Database.prettyPrintForm(value);
+                    }
+                    break;
+                default:
+                    prettyText.text = "";
+                    break;
+            }
+        }
+    }
+    ColeitraWidgetEditSearchPopup {
+        id: searchPopup
+        popupSearchString: "Search for " + selectedPartType.currentText
+        okFunction: function() {
+            searchPopup.close();
+            selectedPartType.enabled = false;
+            capitalizedCheckbox.enabled = false;
+            minusButton.visible = true;
+            plusButton.destroy();
+            idSelection.value = searchPopup.selectedId;
+            idSelection.visible = true;
+            idSelection.enabled = false;
+            searchPopup.destroy();
+            sentencePart.parent.addPart();
+        }
+    }
+}
+@}
+
+@o ../src/ColeitraWidgetEditSentence.qml
+@{
+import QtQuick 2.14
+import EditLib 1.0
+
+Column {
+    property var sentenceid: sentenceId
+    property var sentencepartlist: sentencePartList
+    property var addgrammar: addGrammar
+    property var grammarform: grammarForm
+    property var sentenceidid: sentenceId.existingId
+    ColeitraWidgetEditIdSelection {
+        id: sentenceId
+        existingText: "Sentence exists"
+        searchText: "Search for sentence:"
+        existingId: Edit.sentenceId
+    }
+    ColeitraWidgetEditPartList {
+        id: sentencePartList
+        partType: "ColeitraWidgetEditSentencePart"
+        width: parent.width
+    }
+    ColeitraGridCheckBox {
+        id: addGrammar
+        width: parent.width
+        checked: true
+        text: "Add grammar form"
+    }
+    ColeitraWidgetEditGrammarForm {
+        id: grammarForm
+        visible:  !sentenceId.existing && addGrammar.checked
+        width: parent.width
+    }
+}
+@}
+
+@O ../src/ColeitraWidgetEditLexemePart.qml
+@{
+import QtQuick 2.14
+import QtQuick.Controls 2.14
+import EditLib 1.0
+
+Column {
+    id: lexeme
+    height: row.height + (editForm? (editForm.visible ? editForm.height : 0) : 0) + (editCompoundForm? (editCompoundForm.visible ? editCompoundForm.height : 0) : 0) + (editSentence? (editSentence.visible ? editSentence.height : 0) : 0)
+    property var selection: lexemeTypeSelection
+    property var form: editForm
+    property var compoundform: editCompoundForm
+    property var sentence: editSentence
+    property var pbutton: plusbutton
+    property var language: 1
+    property var lexemeid: 0
+    Row {
+        id: row
+        visible: !lexemeId.existing
+        width: parent.width
+        ColeitraGridImageButton {
+            id: minusbutton
+            visible: false
+            imageid: "minus"
+            clickhandler: function() {
+                lexeme.parent.childRemoved(lexeme);
+                lexeme.destroy();
+            }
+        }
+        TabBar {
+            id: lexemeTypeSelection
+            width: parent.width - 40
+            TabButton {
+                text: "Form"
+            }
+            TabButton {
+                text: "Compoundform"
+            }
+            TabButton {
+                text: "Sentence"
+            }
+        }
+        ColeitraGridLabel {
+            id: labelForm
+            visible: false
+            width: parent.width - 40
+            height: 40
+            text: "Form"
+            @<Background yellow rounded control@>
+        }
+        ColeitraGridLabel {
+            id: labelCompoundForm
+            visible: false
+            width: parent.width - 40
+            height: 40
+            text: "Compoundform"
+            @<Background yellow rounded control@>
+        }
+        ColeitraGridLabel {
+            id: labelSentence
+            visible: false
+            width: parent.width - 40
+            height: 40
+            text: "Sentence"
+            @<Background yellow rounded control@>
+        }
+        ColeitraGridImageButton {
+            id: plusbutton
+            imageid: "plus"
+            clickhandler: function() {
+                plusbutton.visible = false;
+                minusbutton.visible = true;
+                switch (lexemeTypeSelection.currentIndex) {
+                    case 0:
+                        editForm.enabled = false;
+                        editCompoundForm.destroy();
+                        labelCompoundForm.destroy();
+                        editSentence.destroy();
+                        labelSentence.destroy();
+                        lexemeTypeSelection.destroy();
+                        labelForm.visible = true;
+                        break;
+                    case 1:
+                        editCompoundForm.enabled = false;
+                        editForm.destroy();
+                        labelForm.destroy();
+                        editSentence.destroy();
+                        labelSentence.destroy();
+                        lexemeTypeSelection.destroy();
+                        labelCompoundForm.visible = true;
+                        break;
+                    case 2:
+                        editSentence.enabled = false;
+                        editForm.destroy();
+                        labelForm.destroy();
+                        editCompoundForm.destroy();
+                        labelCompoundForm.destroy();
+                        lexemeTypeSelection.destroy();
+                        labelSentence.visible = true;
+                        break;
+                }
+                lexeme.parent.addPart();
+            }
+        }
+    }
+    ColeitraWidgetEditForm {
+        id: editForm
+        width: parent.width
+        visible: !lexemeId.existing && ((lexemeTypeSelection == null) || (lexemeTypeSelection.currentIndex == 0))
+        onEnabledChanged: {
+            if(enabled==false){
+                var numberOfGrammarExpressions = grammarform.grammarexpressionlist.children.length;
+                var grammarexpressions = [];
+                for(var i=0; i<numberOfGrammarExpressions-1; i++){
+                    var key = grammarform.grammarexpressionlist.children[i].gklabel.text;
+                    var value = grammarform.grammarexpressionlist.children[i].gvlabel.text;
+                    grammarexpressions.push([key,value]);
+                }
+                var grammarformid = Edit.createGrammarFormId(language,grammarexpressions);
+                grammarform.grammarformid.idselection.value = grammarformid;
+                grammarform.grammarformid.popupEnabled = false;
+                grammarform.grammarformid.existingtranslation.checked = true;
+                Edit.addForm(lexemeid,editForm.formid,grammarformid,editForm.form.text,language,1);
+            }
+        }
+    }
+    ColeitraWidgetEditCompoundForm {
+        id: editCompoundForm
+        width: parent.width
+        visible: !lexemeId.existing && ((lexemeTypeSelection == null) || (lexemeTypeSelection.currentIndex == 1))
+    }
+    ColeitraWidgetEditSentence {
+        id: editSentence
+        width: parent.width
+        visible: !lexemeId.existing && ((lexemeTypeSelection == null) || (lexemeTypeSelection.currentIndex == 2))
+        onEnabledChanged: {
+            if(enabled==false){
+                var numberOfGrammarExpressions = grammarform.grammarexpressionlist.children.length;
+                var grammarexpressions = [];
+                for(var i=0; i<numberOfGrammarExpressions-1; i++){
+                    var key = grammarform.grammarexpressionlist.children[i].gklabel.text;
+                    var value = grammarform.grammarexpressionlist.children[i].gvlabel.text;
+                    grammarexpressions.push([key,value]);
+                }
+                var grammarformid = Edit.createGrammarFormId(language,grammarexpressions);
+                grammarform.grammarformid.idselection.value = grammarformid;
+                grammarform.grammarformid.popupEnabled = false;
+                grammarform.grammarformid.existingtranslation.checked = true;
+
+                var numberOfSentenceParts = sentencepartlist.children.length;
+                var sentenceparts = [];
+                for(var i=0; i<numberOfSentenceParts-1; i++){
+                    var currentSentencePart = sentencepartlist.children[i];
+                    var id = currentSentencePart.idselection.value;
+                    var type = currentSentencePart.selectedparttype.currentIndex;
+                    var capitalized = currentSentencePart.capitalizedcheckbox.checked;
+                    sentenceparts.push([id,type,capitalized]);
+                }
+                Edit.addSentence(lexemeid,editSentence.sentenceidid,grammarformid,sentenceparts,language,1);
+            }
+        }
+    }
+    onHeightChanged: {
+        parent.height = height;
+    }
+}
+@}
+
+@o ../src/ColeitraWidgetEditPartList.qml
+@{
+import QtQuick 2.14
+
+Column {
+    property string partType: ""
+    property bool startWithOneElement: true
+    property var lastCreatedObject: null
+    property var afterCreation: function(){}
+    function addPart(){
+        var component = Qt.createComponent(partType + ".qml");
+        if (component.status == Component.Ready) {
+            var newObject = component.createObject(this);
+            newObject.width = Qt.binding(function() {return width});
+            lastCreatedObject = newObject;
+            afterCreation();
+        }
+        else {
+            console.log("Problem with creation of " + partType);
+        }
+    }
+    Component.onCompleted: {
+        if(startWithOneElement) addPart();
+    }
+}
+@}
+
+@O ../src/ColeitraWidgetEditPartStack.qml
+@{
+import QtQuick 2.14
+import QtQuick.Controls 2.14
+Column {
+
+    property string partType: ""
+    property bool startWithOneElement: true
+    property var lastCreatedObject: null
+    property var stackElements: new Array();
+    property var numberOfElements: 0
+    property var stack: columnLayout
+    property var onCreation: function(createdObject) {};
+    Row {
+        width: parent.width
+        ColeitraGridLabel {
+            id: lexemePartLabel
+            text: "Lexeme part " + selectedLexemePart.value.toString() + " / " + numberOfElements
+        }
+        Rectangle {
+            height: 1
+            width: parent.width - lexemePartLabel.width - selectedLexemePart.width
+        }
+        SpinBox {
+            id: selectedLexemePart
+            from: 1
+            to: numberOfElements
+            onValueChanged: {
+                if(stackElements.length>=value){
+                    if(columnLayout.currentItem){
+                        columnLayout.currentItem.visible = false;
+                    }
+                    stackElements[value-1].visible = true;
+                    columnLayout.replace(stackElements[value-1]);
                 }
             }
         }
     }
-    ColeitraGridImageButton {
-        imageid: "www"
-        clickhandler: function() { 
-            GrammarProvider.language = language;
-            GrammarProvider.word = lexeme.text;
-            GrammarProvider.getWiktionarySections(widget)
+    StackView {
+        id: columnLayout
+        width: parent.width
+        function addPart(){
+            var component = Qt.createComponent(partType + ".qml");
+            if (component.status == Component.Ready) {
+                var newObject = component.createObject(columnLayout);
+                newObject.width = Qt.binding(function() {return width});
+                lastCreatedObject = newObject;
+                stackElements.push(newObject);
+                numberOfElements++;
+                //columnLayout.replace(newObject);
+                selectedLexemePart.value = stackElements.indexOf(newObject) + 1;
+                onCreation(newObject);
+            }
+            else {
+                console.log("Problem with creation of " + partType);
+            }
         }
-    }
-    ColeitraGridImageButton {
-        id: plusbutton
-        imageid: "plus"
-        clickhandler: function() { 
-            plusbutton.visible = false;
-            minusbutton.visible = true;
-            parent.parent.addAddRemoveGrammarForm();
+        function childRemoved(child){
+            selectedLexemePart.value++;
+            stackElements.splice(stackElements.indexOf(child),1);
+            numberOfElements--;
+            selectedLexemePart.value--;
         }
-    }
-    function addAddRemoveGrammarExpression(){
-        var component = Qt.createComponent("ColeitraWidgetEditGrammarExpression.qml");
-        if (component.status == Component.Ready) {
-            var newObject = component.createObject(this);
-        }
-        else {
-            console.log("Problem with creation of grammar expression edit widget");
-        }
-    }
-    Component.onCompleted: {
-        width = parent.width;
-        Layout.preferredWidth = parent.width;
-        lexeme.Layout.preferredWidth = parent.width - 80;
-        addAddRemoveGrammarExpression();
-    }
 
+        Component.onCompleted: {
+            if(startWithOneElement) columnLayout.addPart();
+        }
+    }
 }
 @}
 
-@o ../src/ColeitraWidgetEditLexeme.qml
+@o ../src/ColeitraWidgetEditIdRadioButton.qml
 @{
-import DatabaseLib 1.0
-import QtQuick 2.14
-import QtQuick.Layouts 1.14
+import QtQuick.Controls 2.14
 
-ColeitraGridInGridLayout {
-    property var lexeme_language: 1
-    id: widget
-    function addAddRemoveGrammarForm(){
-        var component = Qt.createComponent("ColeitraWidgetEditGrammarForm.qml");
-        if (component.status == Component.Ready) {
-            var newObject = component.createObject(this, {language: lexeme_language});
-        }
-        else {
-            console.log("Problem with creation of grammar form edit widget");
-        }
+RadioButton {
+    property int value: 0
+    text: "Id"
+    onCheckedChanged: function() {
+        parent.selectedIdFromIdList = value;
     }
-    Component.onCompleted: {
-        width = parent.width;
-        Layout.preferredWidth = parent.width;
-        addAddRemoveGrammarForm();
-    }
-
 }
 @}
 
-
-@o ../src/ColeitraWidgetEdit.qml
+@o ../src/ColeitraWidgetEditSearchTextPopup.qml
 @{
-import DatabaseLib 1.0
 import QtQuick 2.14
 import QtQuick.Controls 2.14
 import QtQuick.Layouts 1.14
 
-ColeitraGridInGridLayout {
-    property var edit_language: 1
-    id: widget
+Popup {
+    property string popupSearchString: ""
+    property string popupSearchText: searchText.text
+    property var cancelFunction: function() {}
+    property var okFunction: function() {}
+    property bool okEnabled: false
+    property var searchFunction: function() {}
+    Column {
+        ColeitraGridLabel {
+            text: popupSearchString
+        }
+        ColeitraGridTextInput {
+            id: searchText
+            width: parent.width
+        }
+        Row {
+            ColeitraGridButton {
+                id: searchButton
+                text: "Search"
+                onClicked: searchFunction()
+            }
+            Rectangle {
+                height: 1
+                width: parent.parent.width - searchButton.width - cancelButton.width - okButton.width
+            }
+            ColeitraGridButton {
+                id: cancelButton
+                text: "Cancel"
+                onClicked: cancelFunction()
+            }
+            ColeitraGridButton {
+                id: okButton
+                text: "Ok"
+                enabled: okEnabled
+                onClicked: okFunction()
+            }
+        }
+    }
+    @<Background grey rounded control@>
+}
+@}
+
+@O ../src/ColeitraWidgetEditLexeme.qml
+@{
+import QtQuick 2.14
+import QtQuick.Controls 2.14
+import QtQuick.Layouts 1.14
+import QtGraphicalEffects 1.14
+import EditLib 1.0
+import DatabaseLib 1.0
+import GrammarProviderLib 1.0
+
+Column {
+    property int languageId: 1
+    property var receivedExpressions: null
+    property var receivedGrammarExpressions: null
+    ColeitraWidgetEditIdSelection {
+        id: lexemeId
+        existingText: "Lexeme exists"
+        searchText: "Search for lexeme:"
+	popupSearchFunction: function() {
+            var lexemeIds = Database.searchLexemes(lexemeId.searchValue);
+            for(var i = idList.children.length; i > 0; i--) {
+                idList.children[i-1].destroy()
+            }
+            var numberOfDestroyedChildren = idList.children.length;
+            for(var lexemeid of lexemeIds){
+                idList.addPart();
+                idList.lastCreatedObject.text = Database.prettyPrintLexeme(lexemeid);
+                idList.lastCreatedObject.value = lexemeid;
+            }
+            if(idList.children.length > numberOfDestroyedChildren){
+                idList.children[numberOfDestroyedChildren].checked = true;
+            }
+            else {
+                console.log("No children in idList!");
+            }
+
+	}
+        existingId: Edit.lexemeId
+        showImageButton: true
+        imageButtonClicked: function() {
+            searchPopup.open();
+        }
+    }
+    ColeitraGridComboBox {
+        visible: !lexemeId.existing
+        width: parent.width
+        model: Database.languagenames();
+        currentIndex: Database.alphabeticidfromlanguageid(languageId);
+    }
+    ColeitraWidgetEditPartStack {
+        id: lexemePartList
+        partType: "ColeitraWidgetEditLexemePart"
+        width: parent.width
+        onCreation: function(createdLexemePart){
+            createdLexemePart.language = languageId;
+            createdLexemePart.lexemeid = lexemeId.existingId;
+        }
+    }
+    onLanguageIdChanged: {
+        var lexemeParts = lexemePartList.stack.children;
+        for(var i=0; i<lexemeParts.length; i++){
+            lexemeParts[i].language = languageId;
+        }
+    }
+    ColeitraWidgetEditSearchTextPopup {
+        id: searchPopup
+        popupSearchString: "Search en.wiktionary.org:"
+        searchFunction: function() {
+            GrammarProvider.getGrammarInfoForWord(searchPopup, languageId, searchPopup.popupSearchText);
+        }
+        cancelFunction: function() {
+            searchPopup.close();
+        }
+        okFunction: function() {
+            searchPopup.close();
+            GrammarProvider.getNextGrammarObject(searchPopup);
+        }
+        Connections {
+            target: GrammarProvider
+            property var silentLexemeId: 0
+            property var silentSentenceId: 0
+            property var silentSentenceParts: []
+            function onGrammarInfoAvailable(caller, grammarforms_size, silent){
+                if(searchPopup != caller) return;
+                if(silent){
+                    silentLexemeId = Edit.lexemeId;
+                    GrammarProvider.getNextGrammarObject(searchPopup);
+                }
+		else{
+                    searchPopup.okEnabled = true;
+		}
+            }
+            function onFormObtained(caller, formstring, grammarexpressions, silent, compoundforms){
+                if(searchPopup != caller) return;
+                if(silent){
+                    var formid = Edit.formId;
+                    var grammarformid = Edit.createGrammarFormId(languageId,grammarexpressions);
+                    Edit.addForm(silentLexemeId,formid,grammarformid,formstring,languageId);
+                }
+                else{
+                    var currentLexemePart = lexemePartList.stack.currentItem;
+                    currentLexemePart.selection.currentIndex = 0;
+                    currentLexemePart.form.form.text = formstring;
+                    currentLexemePart.form.addgrammar.checked = true;
+                    currentLexemePart.form.grammarform.grammarformid.existingtranslation.checked = false;
+                    for(var i=0; i<grammarexpressions.length; i++){
+                        var currentGrammarExpression = currentLexemePart.form.grammarform.grammarexpressionlist.children[currentLexemePart.form.grammarform.grammarexpressionlist.children.length-1];
+                        currentGrammarExpression.gklabel.text = grammarexpressions[i][0];
+                        currentGrammarExpression.gvlabel.text = grammarexpressions[i][1];
+                        currentGrammarExpression.pbutton.clickhandler();
+                    }
+                    currentLexemePart.pbutton.clickhandler();
+                }
+                GrammarProvider.getNextGrammarObject(searchPopup);
+            }
+            function onSentenceAvailable(caller, parts, silent){
+                if(searchPopup != caller) return;
+                if(silent){
+                    silentSentenceId = Edit.sentenceId;
+                }
+                else{
+                    var currentLexemePart = lexemePartList.stack.currentItem;
+                    currentLexemePart.selection.currentIndex = 2;
+                }
+                GrammarProvider.getNextSentencePart(searchPopup);
+            }
+            function onSentenceLookupForm(caller,sentencepart,grammarexpressions,silent){
+                if(searchPopup != caller) return;
+                if(silent){
+                    var formId = Edit.lookupForm(languageId, silentLexemeId, sentencepart, grammarexpressions);
+                    silentSentenceParts.push([formId,0,false]);
+                }
+                else{
+                    var formId = Edit.lookupForm(languageId, lexemeId.existingId, sentencepart, grammarexpressions);
+                    var currentLexemePart = lexemePartList.stack.currentItem;
+                    var currentSentencePart = currentLexemePart.sentence.sentencepartlist.children[currentLexemePart.sentence.sentencepartlist.children.length-1];
+                    currentSentencePart.selectedparttype.currentIndex = 0;
+                    currentSentencePart.capitalizedcheckbox.checked = false;
+                    currentSentencePart.searchpopup.okFunction();
+                    currentSentencePart.idselection.value = formId;
+                }
+                GrammarProvider.getNextSentencePart(searchPopup);
+            }
+            function onSentenceLookupFormLexeme(caller,sentencepart,grammarexpressions,silent){
+                if(searchPopup != caller) return;
+                if(silent){
+                    var formId = Edit.lookupFormLexeme(languageId, silentLexemeId, sentencepart, grammarexpressions);
+                    silentSentenceParts.push([formId,0,false]);
+                }
+                else{
+                    var formId = Edit.lookupFormLexeme(languageId, lexemeId.existingId, sentencepart, grammarexpressions);
+                    var currentLexemePart = lexemePartList.stack.currentItem;
+                    var currentSentencePart = currentLexemePart.sentence.sentencepartlist.children[currentLexemePart.sentence.sentencepartlist.children.length-1];
+                    currentSentencePart.selectedparttype.currentIndex = 0;
+                    currentSentencePart.capitalizedcheckbox.checked = false;
+                    currentSentencePart.searchpopup.okFunction();
+                    currentSentencePart.idselection.value = formId;
+                }
+                GrammarProvider.getNextSentencePart(searchPopup);
+
+            }
+            function onSentenceComplete(caller,grammarexpressions,silent){
+                if(searchPopup != caller) return;
+                if(silent){
+                    var grammarid = Edit.createGrammarFormId(languageId, grammarexpressions);
+                    Edit.addSentence(silentLexemeId,silentSentenceId,grammarid,silentSentenceParts, languageId);
+                    silentSentenceParts = [];
+                }
+                else{
+                    var currentLexemePart = lexemePartList.stack.currentItem;
+                    currentLexemePart.sentence.addgrammar.checked = true;
+                    currentLexemePart.sentence.grammarform.grammarformid.existingtranslation.checked = false;
+                    for(var i=0; i<grammarexpressions.length; i++){
+                        var currentGrammarExpression = currentLexemePart.sentence.grammarform.grammarexpressionlist.children[currentLexemePart.sentence.grammarform.grammarexpressionlist.children.length-1];
+                        currentGrammarExpression.gklabel.text = grammarexpressions[i][0];
+                        currentGrammarExpression.gvlabel.text = grammarexpressions[i][1];
+                        currentGrammarExpression.pbutton.clickhandler();
+                    }
+                    currentLexemePart.pbutton.clickhandler();
+                }
+                GrammarProvider.getNextGrammarObject(searchPopup);
+            }
+        }
+    }
+}
+@}
+
+@o ../src/ColeitraWidgetEditTranslationPart.qml
+@{
+import QtQuick 2.14
+import QtQuick.Layouts 1.14
+import QtQuick.Controls 2.14
+import EditLib 1.0
+
+Column {
+    property int translationLanguageId: 1
+    property int translationId: 0
     Layout.columnSpan: 12
-    ColeitraGridLabel {
-        Layout.columnSpan: 12
-        text: Database.languagenamefromid(edit_language) + ":"
-    }
-    ColeitraGridImageButton {
-        id: minusbutton
-        visible: false
-        imageid: "minus"
-        clickhandler: function() {
-            widget.destroy();
+    Column {
+        width: parent.width
+        ColeitraGridComboBox {
+            id: translationPartType
+            width: parent.width
+            model: ["Lexeme", "Sentence", "Form", "Compoundform", "Grammarform"]
         }
-    }
-    TabBar {
-        id: editselection
-        Layout.columnSpan: 8
-        TabButton {
-            text: qsTr("Lexeme")
-        }
-        TabButton {
-            text: qsTr("Sentence")
-        }
-        TabButton {
-            text: qsTr("Form")
-        }
-        TabButton {
-            text: qsTr("Grammarform")
-        }
-    }
-    ColeitraGridImageButton {
-        id: plusbutton
-        imageid: "plus"
-        clickhandler: function() {
-            plusbutton.visible = false;
-            minusbutton.visible = true;
-            parent.parent.addAddRemoveEdit(edit_language);
-        }
-    }
-    StackLayout {
-        id: editfield
-        Layout.columnSpan: 12
-        currentIndex: editselection.currentIndex
         ColeitraWidgetEditLexeme {
-            lexeme_language: edit_language
-            Layout.preferredWidth: parent.width
+            languageId: translationLanguageId
+            width: parent.width
+            visible: translationPartType.currentIndex == 0
         }
-        ColeitraGridLabel {
-            text: "Sentence"
+        ColeitraWidgetEditSentence {
+            width: parent.width
+            visible: translationPartType.currentIndex == 1
         }
-        ColeitraGridLabel {
-            text: "Form"
+        ColeitraWidgetEditForm {
+            width: parent.width
+            visible: translationPartType.currentIndex == 2
         }
-        ColeitraGridLabel {
-            text: "Grammarform"
+        ColeitraWidgetEditCompoundForm {
+            width: parent.width
+            visible: translationPartType.currentIndex == 3
         }
-    }
-
-    Component.onCompleted: {
-        width = parent.width;
-        Layout.preferredWidth = parent.width;
-        editselection.width = width - 40;
-        editselection.Layout.preferredWidth = width - 40;
-        editfield.Layout.preferredWidth = width;
-        editfield.width = width;
+        ColeitraWidgetEditGrammarForm {
+            width: parent.width
+            visible: translationPartType.currentIndex == 4
+        }
     }
 }
-
 @}
 
-@o ../src/edit.qml
+@O ../src/edit.qml
 @{
 import QtQuick 2.14
 import QtQuick.Layouts 1.14
 import QtQuick.Controls 2.14
+import QtQuick.Controls.impl 2.14
 import QtQml 2.14
 import EditLib 1.0
 import SettingsLib 1.0
@@ -292,59 +1104,153 @@ import GrammarProviderLib 1.0
 
 ColeitraPage {
     title: "Edit translation"
+    property int translationid: Edit.translationId
+    property string popupString: ""
     ScrollView {
         anchors.fill: parent
-        ColeitraGridLayout {
-            width: Math.max(implicitWidth, parent.availableWidth)
+        Connections {
+            target: GrammarProvider
+            function onProcessingStart(waitingString){
+                popupString = waitingString;
+                waitpopup.open();
+            }
+            function onProcessingStop(){
+                waitpopup.close();
+            }
+        }
+        Connections {
+            target: Edit
+            function onProcessingStart(waitingString){
+                popupString = waitingString;
+                waitpopup.open();
+            }
+            function onProcessingStop(){
+                waitpopup.close();
+            }
+        }
+
+        Popup {
+            id: waitpopup
+            width: parent.width
             Column {
-                /*ColeitraWidgetEdit {
-                    edit_language: Settings.learninglanguage
+                width: parent.width
+                ColeitraGridLabel {
                     width: parent.width
+                    text: popupString
+                }
+                ProgressBar {
+                    id: pgcontrol
+                    width: parent.width
+                    indeterminate: true
+                    from: 0
+                    to: 1
+                    @<Background yellow rounded control@>
+                    contentItem: Item {
+                        Rectangle {
+                            implicitHeight: pgcontrol.height
+                            implicitWidth: parent.width / 3.0
+                            color: "#DDFFDD"
+                            radius: 4
+                            border.color: "black"
+                            border.width: 1
+                            SequentialAnimation on x {
+                                loops: Animation.Infinite
+                                PropertyAnimation {
+                                    duration: 1000
+                                    to: parent? parent.x + parent.width - parent.width / 3.0 : 0
+                                }
+                                PropertyAnimation {
+                                    duration: 1000
+                                    to: parent? parent.x : 0
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            @<Background grey rounded control@>
+        }
+        Column {
+            width: parent.width
+            Row {
+                width: parent.width
+                Image {
+                    source: "scrollprogress.svg"
+                    height: learningTranslationPartList.height
+                    width: 40
+                }
+                ColeitraWidgetEditPartList {
+                    id: learningTranslationPartList
+                    partType: "ColeitraWidgetEditTranslationPart"
+                    width: parent.width - 40
+                    afterCreation: function() {
+                        learningTranslationPartList.lastCreatedObject.translationLanguageId = Settings.learninglanguage;
+                        learningTranslationPartList.lastCreatedObject.translationId = translationid;
+                    }
+                }
+
+               /* ColeitraWidgetEditTranslationPart {
+                    id: learningTranslationPart
+                    translationLanguageId: Settings.learninglanguage
+                    translationId: translationid
+                    width: parent.width - 40
                 }*/
-                width: parent.width
-                Layout.columnSpan: 12
-                function addAddRemoveEdit(language){
-                    var component = Qt.createComponent("ColeitraWidgetEdit.qml");
-                    if (component.status == Component.Ready) {
-                        var newObject = component.createObject(this, {edit_language: language});
-                    }
-                    else {
-                        console.log("Problem with creation of lexeme edit widget");
-                    }
-                }
-                Component.onCompleted: {
-                    addAddRemoveEdit(Settings.learninglanguage);
-                }
             }
-            Rectangle {
-                width: 0
-                height: 40
-                Layout.columnSpan: 12
-            }
-            Column {
+            Row {
                 width: parent.width
-                Layout.columnSpan: 12
-                function addAddRemoveEdit(language){
-                    var component = Qt.createComponent("ColeitraWidgetEdit.qml");
-                    if (component.status == Component.Ready) {
-                        var newObject = component.createObject(this, {edit_language: language});
-                    }
-                    else {
-                        console.log("Problem with creation of lexeme edit widget");
-                    }
+                Image {
+                    source: "scrollprogress.svg"
+                    height: nativeTranslationPartList.height
+                    width: 40
                 }
-                Component.onCompleted: {
-                    addAddRemoveEdit(Settings.nativelanguage);
+                ColeitraWidgetEditPartList {
+                    id: nativeTranslationPartList
+                    partType: "ColeitraWidgetEditTranslationPart"
+                    width: parent.width - 40
+                    afterCreation: function() {
+                        nativeTranslationPartList.lastCreatedObject.translationLanguageId = Settings.nativelanguage;
+                        nativeTranslationPartList.lastCreatedObject.translationId = translationid;
+                    }
                 }
 
-
+                /*ColeitraWidgetEditTranslationPart {
+                    id: nativeTranslationPart
+                    translationLanguageId: Settings.nativelanguage
+                    translationId: translationid
+                    width: parent.width - 40
+                }*/
             }
         }
     }
-        
-    footer: ColeitraGridLayout {
+    footer: Column {
+       width: parent.width
+        Row {
+            width: parent.width
+            ColeitraGridRedButton {
+                text: "Reset"
+                width: parent.width / 2
+                height: 80
+                onClicked: {
+                    Edit.resetEverything();
+                    learningTranslationPartList.lastCreatedObject.destroy();
+                    learningTranslationPartList.addPart();
+                    nativeTranslationPartList.lastCreatedObject.destroy();
+                    nativeTranslationPartList.addPart();
+                }
+            }
+            ColeitraGridGreenButton {
+                text: "Save"
+                width: parent.width / 2
+                height: 80
+                onClicked: {
+                    Edit.saveToDatabase();
+                }
+            }
+        }
+        Item {
+            height: 20
+            width: parent.width
+        }
     }
 }
 @}
-
-

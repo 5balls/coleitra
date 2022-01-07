@@ -15,21 +15,11 @@
 % You should have received a copy of the GNU Affero General Public License
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-\documentclass[a4paper]{book}
-\usepackage{listings}
-\usepackage{imakeidx}
-\usepackage[margin=3cm]{geometry}
-\usepackage[nottoc]{tocbibind}
-\usepackage{longtable}
-\usepackage{cprotect}
-\usepackage{verbatim}
-\usepackage{pgf-umlsd}
-\usepackage{tikz}
-\usepackage[textsize=tiny, textwidth=2.7cm, colorinlistoftodos]{todonotes}
-\usepackage{etoolbox}% http://ctan.org/pkg/etoolbox
-\makeatletter
-\patchcmd{\@@makechapterhead}{\vspace*{50\p@@}}{}{}{}% Removes space above \chapter head
-\patchcmd{\@@makeschapterhead}{\vspace*{50\p@@}}{}{}{}% Removes space above \chapter* head
-\makeatother
-\usepackage[colorlinks=true]{hyperref}
-\makeindex
+\chapter*{Document info}
+\begin{description}
+\item[GIT commit]
+\verbatiminput{\string"| git describe --always --tags\string"}
+\item[Clean?]
+\item[pdflatex version]
+\verbatiminput{\string"| pdflatex -version\string"}
+\end{description}

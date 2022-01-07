@@ -1,4 +1,4 @@
-% Copyright 2020 Florian Pesth
+% Copyright 2020, 2021, 2022 Florian Pesth
 %
 % This file is part of coleitra.
 %
@@ -26,28 +26,40 @@ databasefield.h
 main.h
 train.h
 edit.h
-grammarprovider.h @}
+grammarprovider.h
+databaseedit.h
+levenshteindistance.h
+networkscheduler.h @}
 
 \subsection{C++ files}
-@d C++ files
-@{settings.cpp
-about.cpp
-main.cpp
-database.cpp
-databasetable.cpp
-databasefield.cpp
-train.cpp
-edit.cpp
-grammarprovider.cpp 
-levmar-2.6/lm.c
-levmar-2.6/Axb.c
-levmar-2.6/misc.c
-levmar-2.6/lmlec.c
-levmar-2.6/lmbc.c
-levmar-2.6/lmblec.c
-levmar-2.6/lmbleic.c
+@d C++ files without main
+@{@<C++ files without main in path @'@'@>@}
+
+@d C++ files without main in path @'path@'
+@{@1settings.cpp
+@1about.cpp
+@1database.cpp
+@1databasetable.cpp
+@1databasefield.cpp
+@1train.cpp
+@1edit.cpp
+@1grammarprovider.cpp 
+@1databaseedit.cpp
+@1levenshteindistance.cpp
+@1networkscheduler.cpp
+@1levmar-2.6/lm.c
+@1levmar-2.6/Axb.c
+@1levmar-2.6/misc.c
+@1levmar-2.6/lmlec.c
+@1levmar-2.6/lmbc.c
+@1levmar-2.6/lmblec.c
+@1levmar-2.6/lmbleic.c
 @}
 
+@d C++ files
+@{@<C++ files without main@>
+main.cpp
+@}
 \subsection{Ressource files}
 @d Ressource files
 @{qml.qrc @}

@@ -1,4 +1,4 @@
-% Copyright 2020 Florian Pesth
+% Copyright 2020, 2021, 2022 Florian Pesth
 %
 % This file is part of coleitra.
 %
@@ -18,7 +18,7 @@
 \section{Main}
 
 \codecpp
-@o ../src/main.h -d
+@O ../src/main.h -d
 @{
 @<Start of @'MAIN@' header@>
 #include <QtGlobal>
@@ -26,21 +26,43 @@
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 12, 0))
     #pragma message "Compiling for Qt version " QT_VERSION_STR 
 #else
-    #pragma message "Tried to compiling for to old Qt version " QT_VERSION_STR 
-    #error "Version of Qt5 >= 5.12.0 is required"
+    #pragma message "Trying to compile for too old Qt version " QT_VERSION_STR 
+    #error "Version of Qt >= 5.12.0 is required"
 #endif
 
+#ifdef QT_NO_SSL
+    #pragma message "Qt was compiled without OpenSSL support"
+    #error "OpenSSL support required!"
+#else
+    #pragma message "Qt was compiled with OpenSSL support"
+#endif
 
 #include <QApplication>
 #include <QQmlApplicationEngine>
 #include <QSslSocket>
+
+#ifdef QSSLSOCKET_H
+    #pragma message "QSslSocket included"
+#else
+    #pragma message "QSslSocket not included"
+#endif
+
+#ifdef QT_BUILD_NETWORK_LIB
+    #pragma message "QT_BUILD_NETWORK_LIB defined"
+#else
+    #pragma message "QT_BUILD_NETWORK_LIB not defined"
+#endif
+
+
 #include "about.h"
 #include "settings.h"
 #include "database.h"
 #include "edit.h"
 #include "train.h"
 #include "grammarprovider.h"
-
+#include "databaseedit.h"
+#include "levenshteindistance.h"
+#include "networkscheduler.h"
 
 #ifdef Q_OS_ANDROID
 #include <android/log.h>
@@ -61,7 +83,7 @@ qmlRegisterSingletonType<@2>("@1Lib", @3, @4, "@1", [](
 
 
 \codecpp
-@o ../src/main.cpp -d
+@O ../src/main.cpp -d
 @{
 #include "main.h"
 
@@ -101,14 +123,20 @@ int main(int argc, char *argv[])
     @<Register singleton @'Database@' class @'database@' version @'1@' @'0@' @>
     @<Register singleton @'Edit@' class @'edit@' version @'1@' @'0@' @>
     @<Register singleton @'GrammarProvider@' class @'grammarprovider@' version @'1@' @'0@' @>
+    @<Register singleton @'DatabaseEdit@' class @'databaseedit@' version @'1@' @'0@' @>
+    @<Register singleton @'LevenshteinDistance@' class @'levenshteindistance@' version @'1@' @'0@' @>
+    @<Register singleton @'NetworkScheduler@' class @'networkscheduler@' version @'1@' @'0@' @>
+
+    levenshteindistance test;
 
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QCoreApplication::setApplicationName("coleitra");
     QCoreApplication::setOrganizationName("coleitra");
-    QCoreApplication::setOrganizationDomain("https://icoleitra.org");
+    QCoreApplication::setOrganizationDomain("https://coleitra.org");
     //qputenv("QT_ANDROID_VOLUME_KEYS", "1");
 
     QApplication app(argc, argv);
+    
     qDebug() << "Device supports OpenSSL: " << QSslSocket::supportsSsl();
 
     QQmlApplicationEngine engine;

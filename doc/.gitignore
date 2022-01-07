@@ -10,4 +10,8 @@
 *.ilg
 *.ind
 *.json
+*.cpt
+*.vim
+*.lof
+*.tdo
 tags

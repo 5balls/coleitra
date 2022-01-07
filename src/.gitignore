@@ -5,6 +5,9 @@
 *.qrc
 *.stash
 *.swp
+*.json
+.cache
 CMakeLists.txt
 Makefile
 tags
+compile_commands.json

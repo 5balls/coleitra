@@ -1,4 +1,4 @@
-% Copyright 2020 Florian Pesth
+% Copyright 2020, 2021, 2022 Florian Pesth
 %
 % This file is part of coleitra.
 %
@@ -28,7 +28,7 @@ ApplicationWindow {
     id: window
     visible: true
     visibility: Window.FullScreen
-    title: qsTr("Stack")
+    title: qsTr("coleitra")
     //useSafeArea: false
 
     @<Main header@>
@@ -104,7 +104,9 @@ Drawer {
 
     Column {
         anchors.fill: parent
-        @<Side menu screen option @'Edit@' defined in @'edit.qml@' @>
+        @<Side menu screen option @'Simple enter@' defined in @'simpleedit.qml@' @>
+        @<Side menu screen option @'Expert enter@' defined in @'edit.qml@' @>
+        @<Side menu screen option @'Database edit@' defined in @'databaseedit.qml@' @>
         @<Side menu screen option @'Settings@' defined in @'settings.qml@' @>
         @<Side menu screen option @'About@' defined in @'about.qml@' @>
         ItemDelegate {

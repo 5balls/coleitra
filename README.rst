@@ -1,5 +1,5 @@
 ..
-   Copyright 2020 Florian Pesth
+   Copyright 2020, 2021, 2022 Florian Pesth
 
 ..
    This file is part of coleitra.
@@ -72,7 +72,10 @@ You should follow the instructions of Qt - either on their webpage or in the sou
    -android-ndk ~/src/foreign/android-sdk/ndk-bundle \
    -android-sdk ~/src/foreign/android-sdk \
    -no-warnings-are-errors \
-   -prefix ~/src/foreign/qt5-android-install-20201121
+   -openssl-runtime \
+   -optimize-size \
+   -I ~/src/foreign/openssl-1.1.1i/include \
+   -prefix ~/src/foreign/qt5-android-install-20201222
    make
    su
    make install
@@ -81,6 +84,24 @@ You should follow the instructions of Qt - either on their webpage or in the sou
 Choose the open source license and accept the LGPLv3 offer. It may take quite some time to compile Qt as it is a large library (expect several hours of compile time depending on your setup) to speed up the process you can make use of multiple cores by adding -j4 to the make commnd (in the case of four cores for example). If compiling the desktop version on linux the -xcb switch seems to be needed or at least the required dependencies to be able to add this option, maybe it is automatically compiled when the dependencies are fullfilled.
 
 It might help to pass also the `-ltcg` flag to configure to enable link time optimization and make the resulting binary smaller but I could not make it work yet.
+
+Qt5 Debian package installation
+_______________________________
+
+
+Tested on debian version 11.2 (bullseye); might not be complete:
+
+For compiling:
+
+.. code-block:: bash
+   
+   apt-get install qtbase5-dev qtdeclarative5-dev libqt5svg5-dev
+
+
+.. code-block:: bash
+   
+   apt-get install qml-module-qtquick2 qml-module-qtquick-controls qml-module-qtquick-controls2
+
 
 Android SDK and NDK
 ___________________
@@ -129,7 +150,17 @@ Install a lapack library package from your operating system, on debian one possi
 f2c
 ___
 
-Install the f2c package from your operating system, on debian the package name is "f2c".
+Install the f2c package from your operating system, on debian the package name is "f2c". (This might not be necessary. It may be needed by the original LAPACK version which was written in fortran.)
+
+nlohmann JSON
+_____________
+
+Install json parsing library from Niels Lohmann per source from https://github.com/nlohmann/json or as package your the distribution (Debian package is available).
+
+JSON schema validator
+_____________________
+
+Install the JSON schema validator library from Patrick Boettcher per source from https://github.com/pboettch/json-schema-validator or via package manager (I think there is no debian package yet) and install it somewhere where cmake can find it.
 
 coleitra
 ........
@@ -160,14 +191,14 @@ Run the following code in your shell (the command line tools git and tr are expe
    cmake ../../src
    make
 
-If you have compiled Qt5 at a nonstandard location or in addition to your system libraries (which is not a problem) you have to pass the correct path to the file `Qt5Config.cmake`, for example (don't forget `..` at the end):
+If you have compiled Qt5 at a nonstandard location or in addition to your system libraries (which is not a problem) you have to pass the correct path cmake, using `CMAKE_PREFIX_PATH`, for example:
 
 .. code-block:: bash
 
    cd build/x64
    rm -r *
-   cmake -DQt5_DIR=~/src/foreign/qt5-shadow-build/qtbase/lib/cmake/Qt5/ \
-   ../../src
+   export CMAKE_PREFIX_PATH=/home/flo/src/foreign/qt5-install-20201127
+   cmake ../../src
    make
 
 Compile android version of coleitra
@@ -185,9 +216,10 @@ This requires a local installation of the android ndk and sdk. You can download 
    cmake -DANDROID_PLATFORM=21 \
    -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH \
    -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake \
-   -DCMAKE_PREFIX_PATH=~/src/foreign/qt5-android-install-20201022/ \
+   -DCMAKE_PREFIX_PATH=~/src/foreign/qt5-android-install-20201222/ \
    ../../src
+   cp ~/src/foreign/qt5-android-install-20201222/jar/QtAndroidNetwork.jar coleitra-armeabi-v7a/libs
    make
 
-You might not need to set `CMAKE_PREFIX_PATH` and `CMAKE_FIND_ROOT_PATH_MODE_PACKAGE` if you have installed thq Qt5 libraries for cross compiling for android system wide. Also this might download quite some android stuff on the first run. Subsequent runs should be faster.
+That the jar file is not copied seems to be a bug in recent Qt versions, there is probably a more elegant way to do this. You might not need to set `CMAKE_PREFIX_PATH` and `CMAKE_FIND_ROOT_PATH_MODE_PACKAGE` if you have installed the Qt5 libraries for cross compiling for android system wide. Also this might download quite some android stuff on the first run. Subsequent runs should be faster.
 
