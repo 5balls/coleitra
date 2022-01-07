@@ -19,7 +19,7 @@ body:
     attributes:
       label: Operating System
       description: What operating system are you using?
-      placeholder: Example: Debian Linux 11, Windows 11, Android 9
+      placeholder: Debian Linux 11, Windows 11, Android 9
       value: operating system
     validations:
       required: true
