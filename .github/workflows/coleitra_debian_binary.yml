@@ -1,0 +1,22 @@
+name: Create debian binary
+
+on:
+  workflow_dispatch
+
+jobs:
+
+  build_doc:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Build the Docker image
+      run: DOCKER_BUILDKIT=1 docker build -f build/dockerfiles/coleitra_debian_binary.Dockerfile -t coleitra_debian_binary:latest --output . .
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: "Debian binary"
+        path: coleitra
+
