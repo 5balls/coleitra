@@ -18,3 +18,4 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: coleitra.pdf
+      tag_name: documentation
