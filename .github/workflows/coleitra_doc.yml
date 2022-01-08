@@ -1,0 +1,19 @@
+name: Create developer documentation for coleitra
+
+on:
+  workflow_dispatch
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile DOCKER_BUILDKIT=1 docker build -f build/dockerfiles/coleitra_doc.Dockerfile -tag coleitra_doc:$(date +%s) --output . .
+    - uses: actions/upload-artifact@v2
+      with:
+        path: doc/coleitra_$(date +%s).pdf
