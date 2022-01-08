@@ -12,9 +12,9 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
-    - name: Build the Docker image
+    - name: Build the Docker image to create the documentation
       run: DOCKER_BUILDKIT=1 docker build -f build/dockerfiles/coleitra_doc.Dockerfile -t coleitra_doc:$(date +%s) --output . .
-    - uses: actions/upload-artifact@v2
+    - name: Release documentation
+      uses: softprops/action-gh-release@v1
       with:
-        name: coleitra_$(date +%s)
-        path: coleitra.pdf
+        files: coleitra.pdf
