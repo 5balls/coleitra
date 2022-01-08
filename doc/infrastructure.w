@@ -16,6 +16,9 @@
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 \chapter{Program infrastructure}
+
+@i docker.w
+
 @i filelists.w
 
 @i main.w

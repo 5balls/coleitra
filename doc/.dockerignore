@@ -1,0 +1,17 @@
+*.tex
+*.pdf
+*.aux
+*.log
+*.out
+*.toc
+*.swp
+*.dvi
+*.idx
+*.ilg
+*.ind
+*.json
+*.cpt
+*.vim
+*.lof
+*.tdo
+tags
