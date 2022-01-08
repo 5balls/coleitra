@@ -31,7 +31,7 @@ RUN ../nuweb -lr coleitra.w \
   && pdflatex coleitra.tex \
   && makeindex coleitra.idx \
   && pdflatex coleitra.tex \
-  && ../nuweb -lr coleitra.w
+  && pdflatex coleitra.tex
 
 FROM scratch AS export
 COPY --from=pdf /home/coleitra/doc/coleitra.pdf /

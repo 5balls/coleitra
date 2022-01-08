@@ -5,7 +5,7 @@ on:
 
 jobs:
 
-  build:
+  build_doc:
 
     runs-on: ubuntu-latest
 
@@ -14,7 +14,8 @@ jobs:
       uses: actions/checkout@v2
     - name: Build the Docker image
       run: DOCKER_BUILDKIT=1 docker build -f build/dockerfiles/coleitra_doc.Dockerfile -t coleitra_doc:$(date +%s) --output . .
-    - uses: actions/upload-artifact@v2
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2
       with:
         name: "Documentation for developers"
         path: coleitra.pdf

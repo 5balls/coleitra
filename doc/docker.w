@@ -21,6 +21,13 @@ Docker is not required to build the application at all. It is just used here to 
 
 \subsection{Documentation}
 
+\lstset{language=bash}
+\begin{lstlisting}
+DOCKER_BUILDKIT=1 docker build\
+  -f build/dockerfiles/coleitra_doc.Dockerfile\
+  -t coleitra_doc:$(date +%s) --output . .
+\end{lstlisting}
+
 @O ../build/dockerfiles/coleitra_doc.Dockerfile
 @{
 FROM debian:11.2 AS nuweb
@@ -55,7 +62,7 @@ RUN ../nuweb -lr coleitra.w \
   && pdflatex coleitra.tex \
   && makeindex coleitra.idx \
   && pdflatex coleitra.tex \
-  && ../nuweb -lr coleitra.w
+  && pdflatex coleitra.tex
 
 FROM scratch AS export
 COPY --from=pdf /home/coleitra/doc/coleitra.pdf /
