@@ -5,7 +5,7 @@ on:
 
 jobs:
 
-  build_doc:
+  build_debian_binary:
 
     runs-on: ubuntu-latest
 
