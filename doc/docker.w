@@ -268,29 +268,3 @@ RUN make
 
 CMD bash
 @}
-
-@O ../create_cmake.sh
-@{
-#!/bin/bash
-#DOCKER_BUILDKIT=1\
-#  --output .\
-  docker build\
-  -f build/dockerfiles/coleitra_cmake.Dockerfile\
-  -t coleitra_cmake:latest .
-@}
-
-
-@O ../build/dockerfiles/coleitra_cmake.Dockerfile
-@{
-FROM arm32v7/debian:11.2
-@<Get compiler dependencies for debian in docker@>
-@<Add and become user @'coleitra@' in docker@>
-WORKDIR /home/coleitra
-RUN wget https://github.com/Kitware/CMake/releases/download/v3.22.1/cmake-3.22.1.tar.gz
-RUN tar xfz cmake-3.22.1.tar.gz
-WORKDIR /home/coleitra/cmake-3.22.1
-RUN ./bootstrap
-RUN make
-
-CMD bash
-@}
