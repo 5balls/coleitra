@@ -56,6 +56,7 @@ RUN apt-get update && apt-get install -y \
   clang \
   cmake \
   git \
+  libssl-dev \
   wget
 @}
 
@@ -157,7 +158,7 @@ CMD bash
 
 This is more as a practice for the following image, the android compile.
 
-@O ../build/dockerfiles/compile_debian_binary.sh
+@O ../compile_debian_binary.sh
 @{
 #!/bin/bash
 DOCKER_BUILDKIT=1 docker build\
@@ -187,6 +188,109 @@ RUN make
 
 FROM scratch AS export
 COPY --from=build /home/coleitra/build/x64/coleitra /
+
+CMD bash
+@}
+
+\subsection{}
+
+@O ../create_android_apk.sh
+@{
+#!/bin/bash
+#DOCKER_BUILDKIT=1\
+#  --output .\
+  docker build\
+  -f build/dockerfiles/coleitra_apk.Dockerfile\
+  -t coleitra_apk:latest .
+@}
+
+This docker image requires android command line tools to be downloaded already.
+
+@O ../build/dockerfiles/coleitra_apk.Dockerfile
+@{
+FROM arm32v7/debian:11.2 AS nuweb
+RUN apt-get update && apt-get install -y \
+  clang \
+  wget \
+  tar \
+  make
+@<Add and become user @'coleitra@' in docker@>
+WORKDIR /home/coleitra
+RUN wget -O nuweb.tar.gz https://sourceforge.net/projects/nuweb/files/nuweb-1.61.tar.gz/download \
+  && tar xfvz nuweb.tar.gz
+WORKDIR /home/coleitra/nuweb-1.61
+RUN make nuweb
+
+
+FROM arm32v7/debian:11.2 AS build
+@<Get compiler dependencies for debian in docker@>
+@<Get Qt5 dependencies for debian in docker@>
+@<Get Json dependencies for debian in docker@>
+@<Get LAPACK dependencies for debian in docker@>
+RUN apt-get update && apt-get install -y \
+  file \
+  unzip \
+  openjdk-11-jdk-headless
+@<Add and become user @'coleitra@' in docker@>
+WORKDIR /home/coleitra
+RUN wget https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip
+RUN mkdir -p /home/coleitra/src/android-sdk/cmdline-tools
+RUN unzip commandlinetools-linux-7583922_latest.zip
+RUN mv cmdline-tools /home/coleitra/src/android-sdk/cmdline-tools/tools
+ENV PATH="${PATH}:/home/coleitra/src/android-sdk/cmdline-tools/tools/bin"
+ENV ANDROID_SDK_ROOT=/home/coleitra/src/android-sdk
+RUN yes | sdkmanager "ndk;23.0.7599858"
+RUN yes | sdkmanager "platform-tools"
+RUN yes | sdkmanager "platforms;android-28"
+@<Set up documentation files for user @'coleitra@' in docker@>
+@<Set up source files for user @'coleitra@' in docker@>
+RUN wget https://github.com/Kitware/CMake/releases/download/v3.22.1/cmake-3.22.1.tar.gz
+RUN tar xfz cmake-3.22.1.tar.gz
+WORKDIR /home/coleitra/cmake-3.22.1
+RUN ./bootstrap
+RUN make
+WORKDIR /home/coleitra/doc
+RUN ../nuweb -lr coleitra.w
+RUN mkdir -p ../build/android
+COPY --chown=coleitra:coleitra .git ../.git
+WORKDIR /home/coleitra/build/android
+ENV ANDROID_SDK=/home/coleitra/android-sdk
+ENV ANDROID_NDK=/home/coleitra/src/android-sdk/ndk/23.0.7599858
+ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-armhf
+RUN ../../coleitra-3.22.1/cmake -DANDROID_PLATFORM=21 \
+   -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH \
+   -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake \
+   ../../src
+RUN make
+
+#FROM scratch AS export
+#COPY --from=build /home/coleitra/build/x64/coleitra /
+
+CMD bash
+@}
+
+@O ../create_cmake.sh
+@{
+#!/bin/bash
+#DOCKER_BUILDKIT=1\
+#  --output .\
+  docker build\
+  -f build/dockerfiles/coleitra_cmake.Dockerfile\
+  -t coleitra_cmake:latest .
+@}
+
+
+@O ../build/dockerfiles/coleitra_cmake.Dockerfile
+@{
+FROM arm32v7/debian:11.2
+@<Get compiler dependencies for debian in docker@>
+@<Add and become user @'coleitra@' in docker@>
+WORKDIR /home/coleitra
+RUN wget https://github.com/Kitware/CMake/releases/download/v3.22.1/cmake-3.22.1.tar.gz
+RUN tar xfz cmake-3.22.1.tar.gz
+WORKDIR /home/coleitra/cmake-3.22.1
+RUN ./bootstrap
+RUN make
 
 CMD bash
 @}
