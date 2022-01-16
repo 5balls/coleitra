@@ -29,6 +29,7 @@ This is a generic class for scheduling network requests.
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QDateTime>
+#include <QDebug>
 
 @<Start of class @'networkscheduler@'@>
 public:

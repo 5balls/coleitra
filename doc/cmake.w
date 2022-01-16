@@ -99,10 +99,14 @@ CACHE INTERNAL "")
 set(LIBS ${LIBS} android log)
 endif()
 
-set(LIBS ${LIBS} lapack blas)
 
+if(ANDROID)
+set(HAVE_LAPACK 0 CACHE BOOL "Do we have LAPACK/BLAS?")
+else()
+set(LIBS ${LIBS} lapack blas)
 set(HAVE_LAPACK 1 CACHE BOOL "Do we have LAPACK/BLAS?")
 set(LAPACKBLAS_DIR "/usr/lib" CACHE PATH "Path to lapack/blas libraries")
+endif()
 set(NEED_F2C 0 CACHE BOOL "Do we need either f2c or F77/I77?")
 set(HAVE_PLASMA 0 CACHE BOOL "Do we have PLASMA parallel linear algebra library?")
 set(LINSOLVERS_RETAIN_MEMORY 1 CACHE BOOL "Should linear solvers retain working memory between calls? (non-reentrant!)")
@@ -110,8 +114,14 @@ set(LM_DBL_PREC 1 CACHE BOOL "Build double precision routines?")
 set(LM_SNGL_PREC 1 CACHE BOOL "Build single precision routines?")
 configure_file(${CMAKE_CURRENT_LIST_DIR}@1/levmar-2.6/levmar.h.in ${CMAKE_CURRENT_LIST_DIR}@1/levmar-2.6/levmar.h)
 
+if(ANDROID)
+add_subdirectory("json")
+add_subdirectory("json-schema-validator-2.1.0")
+add_subdirectory("OpenBLAS-0.3.17")
+else()
 find_package(nlohmann_json 3.2.0 REQUIRED)
 find_package(nlohmann_json_schema_validator REQUIRED)
+endif()
 
 include_directories(${Qt5Widgets_INCLUDE_DIRS} ${QtQml_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR} ${CMAKE_CURRENT_LIST_DIR}@1 ${CMAKE_CURRENT_LIST_DIR}@1/levmar-2.6)
 add_definitions(${Qt5Widgets_DEFINITIONS} ${QtQml_DEFINITIONS} ${QtNetwork} ${${Qt5Quick_DEFINITIONS}})
@@ -166,7 +176,7 @@ if(ANDROID)
         PACKAGE_NAME "org.coleitra.coleitra"
         DEPENDS
         ${ANDROID_EXTRA_LIBS}
-        INSTALL
+#        INSTALL
     )
 endif()
 @}
