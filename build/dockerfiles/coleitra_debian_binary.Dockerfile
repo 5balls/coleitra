@@ -23,6 +23,7 @@ RUN apt-get update && apt-get install -y \
   clang \
   cmake \
   git \
+  libssl-dev \
   wget
 
 
