@@ -97,6 +97,8 @@ get_examples("Template:" + str(sys.argv[1]))
 @O ../src/grammarprovider.h -d
 @{
 @<Start of @'GRAMMARPROVIDER@' header@>
+#include <sstream>
+#include <iostream>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
@@ -109,10 +111,14 @@ get_examples("Template:" + str(sys.argv[1]))
 #include <QEventLoop>
 #include <QTime>
 #include <QMetaMethod>
+#include <nlohmann/json-schema.hpp>
 #include "settings.h"
 #include "database.h"
 #include "levenshteindistance.h"
 #include "networkscheduler.h"
+
+using nlohmann::json;
+using nlohmann::json_schema::json_validator;
 
 @<Start of class @'grammarprovider@'@>
     Q_PROPERTY(int language MEMBER m_language)
@@ -211,11 +217,64 @@ public:
         int m_languageid;
         QString m_word;
     };
+    struct t_grammarConfigurationInflectionTableCell {
+        // "row", "column" and "grammarexpressions" required by schema
+        t_grammarConfigurationInflectionTableCell(json j_ini):
+            i_row(j_ini["row"]),
+            i_column(j_ini["column"])
+        {
+        }
+        int i_row;
+        int i_column;
+    };
+    struct t_grammarConfigurationInflectionTable {
+        // "tablename", "identifiers" and "cells" required by schema:
+        t_grammarConfigurationInflectionTable(json j_ini):
+            s_tablename(QString::fromStdString(j_ini["tablename"])){
+                // We don't strictly need to check for existance here but do it anyway for robustness:
+                if(j_ini.contains("identifiers") && j_ini["identifiers"].is_array()){
+                    for(auto& j_identifier: j_ini["identifiers"]){
+                        if(j_identifier.is_string()){
+                            QString s_identifier = QString::fromStdString(j_identifier);
+                            l_identifiers.push_back(s_identifier);
+                        }
+                    }
+                }
+                // We don't strictly need to check for existance here but do it anyway for robustness:
+                if(j_ini.contains("cells") && j_ini["cells"].is_array()){
+                    for(auto& j_cell: j_ini["cells"]){
+                        t_grammarConfigurationInflectionTableCell t_cell = j_cell;
+                        l_grammar_cells.push_back(t_cell);
+                    }
+                }
+            }
+        QString s_tablename;
+        QList<QString> l_identifiers;
+        QList<t_grammarConfigurationInflectionTableCell> l_grammar_cells;
+    };
+    struct t_grammarConfiguration {
+        // "version" and "base_url" required by schema:
+        t_grammarConfiguration(json j_ini):
+            s_version(QString::fromStdString(j_ini["version"])),
+            s_base_url(QString::fromStdString(j_ini["base_url"])){
+                // Fill inflection tables if they are given:
+                if(j_ini.contains("inflectiontables") && j_ini.is_array()){
+                    for(auto& j_inflectiontable: j_ini["inflectiontables"]){
+                        t_grammarConfigurationInflectionTable t_inflectiontable = j_inflectiontable;
+                        l_inflection_tables.push_back(t_inflectiontable);
+                    }
+                }
+            }
+        QString s_version;
+        QString s_base_url;
+        QList<t_grammarConfigurationInflectionTable> l_inflection_tables;
+    };
 public slots:
     Q_INVOKABLE void getGrammarInfoForWord(QObject* caller, int languageid, QString word);
     Q_INVOKABLE void getNextGrammarObject(QObject* caller);
     Q_INVOKABLE void getNextSentencePart(QObject* caller);
 private slots:
+    bool readGrammarConfiguration(QString s_fileName, t_grammarConfiguration& t_config);
     QList<grammarprovider::compoundPart> getGrammarCompoundFormParts(QString compoundword, QList<QString> compoundstrings, int id_language);
     void getWiktionarySections(QObject *caller);
     void getWiktionarySection(QString reply, QObject* caller);
@@ -259,6 +318,8 @@ signals:
     //void grammarobtained(QObject* caller, QStringList expressions, QList<QList<QList<QString> > > grammarexpressions);
 public:
 private:
+    json j_grammarProviderSchema;
+    QString s_gpFilePath;
     int m_language;
     bool m_silent;
     bool m_busy;
@@ -320,13 +381,8 @@ private:
 @O ../src/grammarprovider.cpp -d
 @{
 #include "grammarprovider.h"
-#include <nlohmann/json-schema.hpp>
 
-using nlohmann::json;
-using nlohmann::json_schema::json_validator;
 
-#include <sstream>
-#include <iostream>
 @}
 
 \cprotect[om]\subsection[grammarprovider]{\verb#grammarprovider#}
@@ -334,7 +390,6 @@ using nlohmann::json_schema::json_validator;
 @{
 grammarprovider::grammarprovider(QObject *parent) : QObject(parent), m_busy(false)
 {
-    json j_grammarProviderSchema;
     QFile f_grammarProviderSchema(":/grammarprovider_schema.json");
     if(f_grammarProviderSchema.open(QIODevice::ReadOnly)) {
         j_grammarProviderSchema = json::parse(f_grammarProviderSchema.readAll().toStdString());
@@ -342,45 +397,15 @@ grammarprovider::grammarprovider(QObject *parent) : QObject(parent), m_busy(fals
     }
 
 #ifdef Q_OS_ANDROID
-    QString gpFilePath = QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).at(1) + "/grammarprovider";
+    s_gpFilePath = QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).at(1) + "/grammarprovider";
 #else
-    QString gpFilePath = QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0) + "/.coleitra/grammarprovider";
+    s_gpFilePath = QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0) + "/.coleitra/grammarprovider";
 #endif
 
     {
-        if(!QDir(gpFilePath).exists()){
-            QDir().mkdir(gpFilePath);
+        if(!QDir(s_gpFilePath).exists()){
+            QDir().mkdir(s_gpFilePath);
         }
-    }
-    json j_fi;
-    QFile f_fi(":/fi.json");
-
-    if(f_fi.open(QIODevice::ReadOnly)) {
-        j_fi = json::parse(f_fi.readAll().toStdString());
-        f_fi.close();
-    }
-
-    json_validator validator;
-    try {
-        validator.set_root_schema(j_grammarProviderSchema);
-    }
-    catch (const std::exception &e) {
-        qDebug() << "Validation of schema failed, here is why: " << e.what();
-        std::cout << j_grammarProviderSchema.dump();
-    }
-    catch (...){
-        qDebug() << "Validation of schema failed";
-    }
-
-    try {
-        validator.validate(j_fi);
-        std::cout << "Validation succeeded\n";
-    }
-    catch (const std::exception &e) {
-        qDebug() << "Validation failed, here is why: " << e.what();
-    }
-    catch (...) {
-        qDebug() << "Validation failed";
     }
 
     s_baseurl = "https://en.wiktionary.org/w/api.php?";
@@ -483,6 +508,49 @@ grammarprovider::grammarprovider(QObject *parent) : QObject(parent), m_busy(fals
 @O ../src/grammarprovider.cpp -d
 @{
 grammarprovider::~grammarprovider() {
+}
+@}
+
+\cprotect\subsection{\verb#readGrammarConfiguration#}
+@O ../src/grammarprovider.cpp -d
+@{
+bool grammarprovider::readGrammarConfiguration(QString s_fileName, t_grammarConfiguration& t_config)
+{
+    json j_language;
+    QFile f_language(s_fileName);
+
+    if(f_language.open(QIODevice::ReadOnly)) {
+        j_language = json::parse(f_language.readAll().toStdString());
+        f_language.close();
+    }
+
+    json_validator validator;
+    try {
+        validator.set_root_schema(j_grammarProviderSchema);
+    }
+    catch (const std::exception &e) {
+        qDebug() << "Setting the root schema failed, here is why: " << e.what();
+        std::cout << j_grammarProviderSchema.dump();
+        return false;
+    }
+    catch (...){
+        qDebug() << "Setting the root schema failed.";
+    }
+
+    try {
+        validator.validate(j_language);
+        std::cout << "Validation succeeded\n";
+        return false;
+    }
+    catch (const std::exception &e) {
+        qDebug() << "Validation failed, here is why: " << e.what();
+        return false;
+    }
+    catch (...) {
+        qDebug() << "Validation failed.";
+        return false;
+    }
+    t_config = j_language;
 }
 @}
 
