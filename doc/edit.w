@@ -280,13 +280,17 @@ edit::~edit() {
 }
 @}
 
-
+\cprotect\subsection{\verb#createGrammarFormId#}
 @O ../src/edit.cpp -d
 @{
 int edit::createGrammarFormId(int language, QList<QList<QString> > grammarexpressions){
     return m_database->grammarFormIdFromStrings(language,grammarexpressions);
 }
+@}
 
+\cprotect\subsection{\verb#addForm#}
+@O ../src/edit.cpp -d
+@{
 void edit::addForm(int lexemeid, int formid, int grammarform, grammarprovider::grammarform m_form, int languageid, int translationid){
     //qDebug() << "addForm" << lexemeid << formid << grammarform << languageid << translationid;
     form newForm = {formid,0,grammarform,m_form};
@@ -294,7 +298,11 @@ void edit::addForm(int lexemeid, int formid, int grammarform, grammarprovider::g
     lexeme& currentLexeme = getCreateLexeme(lexemeid, languageid, translationid);
     currentLexeme.forms.push_back(newForm);
 }
+@}
 
+\cprotect\subsection{\verb#getCreateLexeme#}
+@O ../src/edit.cpp -d
+@{
 edit::lexeme& edit::getCreateLexeme(int lexemeid, int languageid, int translationid){
     QList<lexeme>* lexemes;
     if(translationid==0)
@@ -314,7 +322,11 @@ edit::lexeme& edit::getCreateLexeme(int lexemeid, int languageid, int translatio
     addLexeme(lexemeid, languageid, translationid);
     return (*lexemes)[lexemes->size()-1];
 }
+@}
 
+\cprotect\subsection{\verb#addSentence#}
+@O ../src/edit.cpp -d
+@{
 void edit::addSentence(int lexemeid, int sentenceid, int grammarform, QList<QList<int> > parts, int languageid, int translationid){
     QList<int> part;
     QList<sentencepart> sparts;
@@ -338,7 +350,11 @@ void edit::addSentence(int lexemeid, int sentenceid, int grammarform, QList<QLis
     lexeme& currentLexeme = getCreateLexeme(lexemeid, languageid, translationid);
     currentLexeme.sentences.push_back(newSentence);
 }
+@}
 
+\cprotect\subsection{\verb#lookupFormStringFromId#}
+@O ../src/edit.cpp -d
+@{
 QString edit::lookupFormStringFromId(int formid){
     // First search the cued forms:
     QList<lexeme>* lexemes;
@@ -358,7 +374,11 @@ QString edit::lookupFormStringFromId(int formid){
     }
     return m_database->stringFromFormId(formid);
 }
+@}
 
+\cprotect\subsection{\verb#lookupForm#}
+@O ../src/edit.cpp -d
+@{
 int edit::lookupForm(int language, int lexemeid, QString string, QList<QList<QString> > grammarexpressions){
     int grammarid = 0;
     if(grammarexpressions.size() > 0){
@@ -397,7 +417,11 @@ int edit::lookupForm(int language, int lexemeid, QString string, QList<QList<QSt
     }
     return 0;
 }
+@}
 
+\cprotect\subsection{\verb#placeOfLexeme#}
+@O ../src/edit.cpp -d
+@{
 int edit::placeOfLexeme(int lexemeid){
     /* Return values:
        0 not found
@@ -425,7 +449,11 @@ int edit::placeOfLexeme(int lexemeid){
     if(found_lang_id != 0) return 3;
     return 0;
 }
+@}
 
+\cprotect\subsection{\verb#lookupLexeme#}
+@O ../src/edit.cpp -d
+@{
 int edit::lookupLexeme(int formid){
     // First search the cued forms:
     QList<lexeme>* lexemes;
@@ -446,7 +474,11 @@ int edit::lookupLexeme(int formid){
     // Let's check the database:
     return m_database->lexemeFromFormId(formid);
 }
+@}
 
+\cprotect\subsection{\verb#prettyPrintLexeme#}
+@O ../src/edit.cpp -d
+@{
 QString edit::prettyPrintLexeme(int lexeme_id){
     QString pretty_string;
     if(lexeme_id == 0) qDebug() << "Error, can't pretty print lexeme with id 0!";
@@ -490,7 +522,11 @@ QString edit::prettyPrintLexeme(int lexeme_id){
     }
     return m_database->prettyPrintLexeme(lexeme_id);
 }
+@}
 
+\cprotect\subsection{\verb#formIdToNewId#}
+@O ../src/edit.cpp -d
+@{
 int edit::formIdToNewId(int id){
     QList<lexeme>* lexemes;
     for(int i=0; i<2; i++){
@@ -509,7 +545,11 @@ int edit::formIdToNewId(int id){
     }
     return 0;
 }
+@}
 
+\cprotect\subsection{\verb#stringFromFormId#}
+@O ../src/edit.cpp -d
+@{
 QString edit::stringFromFormId(int formid){
     QList<lexeme>* lexemes;
     for(int i=0; i<2; i++){
@@ -528,7 +568,11 @@ QString edit::stringFromFormId(int formid){
     }
     return "";
 }
+@}
 
+\cprotect\subsection{\verb#grammarIdFromFormId#}
+@O ../src/edit.cpp -d
+@{
 int edit::grammarIdFromFormId(int formid){
     QList<lexeme>* lexemes;
     for(int i=0; i<2; i++){
@@ -547,7 +591,11 @@ int edit::grammarIdFromFormId(int formid){
     }
     return 0;
 }
+@}
 
+\cprotect\subsection{\verb#lookupFormLexeme#}
+@O ../src/edit.cpp -d
+@{
 int edit::lookupFormLexeme(int language, int lexemeid, QString string, QList<QList<QString> > grammarexpressions){
     int grammarid = 0;
     if(grammarexpressions.size() > 0){
@@ -588,7 +636,11 @@ int edit::lookupFormLexeme(int language, int lexemeid, QString string, QList<QLi
     qDebug() << "FAILED lookupFormLexeme" << language << lexemeid << string << grammarexpressions;
     return 0;
 }
+@}
 
+\cprotect\subsection{\verb#addLexeme#}
+@O ../src/edit.cpp -d
+@{
 void edit::addLexeme(int lexemeid, int languageid, int translationid){
     QList<lexeme>* lexemes;
     if(translationid==0)
@@ -599,7 +651,11 @@ void edit::addLexeme(int lexemeid, int languageid, int translationid){
     lexeme newLexeme = {lexemeid,0,languageid,{}};
     lexemes->push_back(newLexeme);
 }
+@}
 
+\cprotect\subsection{\verb#removeLexeme#}
+@O ../src/edit.cpp -d
+@{
 bool edit::removeLexeme(int lexemeid){
     QList<lexeme>* lexemes;
     for(int i=0; i<2; i++){
@@ -622,7 +678,11 @@ bool edit::removeLexeme(int lexemeid){
     }
     return false;
 }
+@}
 
+\cprotect\subsection{\verb#getLexeme#}
+@O ../src/edit.cpp -d
+@{
 edit::lexeme edit::getLexeme(int lexeme_id){
     QList<lexeme>* lexemes;
     for(int i=0; i<2; i++){
@@ -644,7 +704,11 @@ edit::lexeme edit::getLexeme(int lexeme_id){
     // Could not find lexeme_id, so return empty lexeme
     return lexeme();
 }
+@}
 
+\cprotect\subsection{\verb#addScheduledLexemeHeuristically#}
+@O ../src/edit.cpp -d
+@{
 void edit::addScheduledLexemeHeuristically(void){
     if(!m_scheduled_adds.isEmpty()){
         scheduled_add scha = m_scheduled_adds.first();
@@ -658,7 +722,11 @@ void edit::addScheduledLexemeHeuristically(void){
         m_add_busy = false;
     }
 }
+@}
 
+\cprotect\subsection{\verb#debugStatusCuedLexemes#}
+@O ../src/edit.cpp -d
+@{
 void edit::debugStatusCuedLexemes(){
     QList<lexeme>* lexemes;
     for(int i=0; i<2; i++){
@@ -676,7 +744,11 @@ void edit::debugStatusCuedLexemes(){
             qDebug() << "  " << m_lexeme.id << m_database->languagenamefromid(m_lexeme.languageid) << m_lexeme.forms.size() << prettyPrintLexeme(m_lexeme.id);
     }
 }
+@}
 
+\cprotect\subsection{\verb#moveLexemeOutOfTranslation#}
+@O ../src/edit.cpp -d
+@{
 void edit::moveLexemeOutOfTranslation(int language, QString text){
     //qDebug() << __FILE__ << __FUNCTION__ << __LINE__ << language << text;
     int form_id = lookupForm(language, 0, text, {});
@@ -699,7 +771,11 @@ void edit::moveLexemeOutOfTranslation(int language, QString text){
         i++;
     }
 }
+@}
 
+\cprotect\subsection{\verb#addLexemeHeuristically#}
+@O ../src/edit.cpp -d
+@{
 void edit::addLexemeHeuristically(QObject* caller, int languageid, QString lexemestring, int translationid, bool delayresult){
     m_delayresult = delayresult;
     if(lexemestring.isEmpty()){
@@ -807,13 +883,21 @@ void edit::addLexemeHeuristically(QObject* caller, int languageid, QString lexem
         }
     }
 }
+@}
 
+\cprotect\subsection{\verb#networkErrorFromGrammarProvider#}
+@O ../src/edit.cpp -d
+@{
 void edit::networkErrorFromGrammarProvider(QObject* caller, bool silent, QString s_failure_reason){
     if(caller != m_caller) return;
     emit addLexemeHeuristicallyResult(m_caller, "<b>Warning:</b> Network request failed with error \"" + s_failure_reason + "\" when trying to look up grammar information on en.wiktionary.org. Do we have internet access?");
     m_add_busy = false;
 }
+@}
 
+\cprotect\subsection{\verb#noGrammarInfoForWordFromGrammarProvider#}
+@O ../src/edit.cpp -d
+@{
 void edit::noGrammarInfoForWordFromGrammarProvider(QObject* caller, bool silent){
     //qDebug() << __FILE__ << __FUNCTION__ << __LINE__;
     if(caller != m_caller) return;
@@ -821,14 +905,22 @@ void edit::noGrammarInfoForWordFromGrammarProvider(QObject* caller, bool silent)
     emit addLexemeHeuristicallyResult(m_caller, "<b>Warning:</b> Could not obtain grammar information for this word - could there be a spelling mistake or maybe the word is missing on en.wiktionary.org?");
     m_add_busy = false;
 }
+@}
 
+\cprotect\subsection{\verb#gotGrammarInfoForWordFromGrammarProvider#}
+@O ../src/edit.cpp -d
+@{
 void edit::gotGrammarInfoForWordFromGrammarProvider(QObject* caller, int numberOfObjects, bool silent){
     //qDebug() << __FILE__ << __FUNCTION__ << __LINE__;
     //qDebug() << __FUNCTION__ << __LINE__ << "silent" << silent;
     //qDebug() << "Obtained " << numberOfObjects << " forms";
     m_grammarprovider->getNextGrammarObject(caller);
 }
+@}
 
+\cprotect\subsection{\verb#formObtainedFromGrammarProvider#}
+@O ../src/edit.cpp -d
+@{
 void edit::formObtainedFromGrammarProvider(QObject* caller, bool silent, grammarprovider::grammarform form){
     // qDebug() << __FUNCTION__ << __LINE__ << "silent" << silent;
     int grammar_id = createGrammarFormId(m_current_language_id, form.grammarexpressions);
@@ -862,19 +954,31 @@ void edit::formObtainedFromGrammarProvider(QObject* caller, bool silent, grammar
     }
     m_grammarprovider->getNextGrammarObject(caller);
 }
+@}
 
+\cprotect\subsection{\verb#compoundFormObtainedFromGrammarProvider#}
+@O ../src/edit.cpp -d
+@{
 void edit::compoundFormObtainedFromGrammarProvider(QObject* caller, QString form, bool silent){
     //qDebug() << __FUNCTION__ << __LINE__ << "silent" << silent;
     // Not implemented in grammar provider yet
 }
+@}
 
+\cprotect\subsection{\verb#sentenceAvailableFromGrammarProvider#}
+@O ../src/edit.cpp -d
+@{
 void edit::sentenceAvailableFromGrammarProvider(QObject* caller, int parts, bool silent){
     //qDebug() << __FUNCTION__ << __LINE__ << "silent" << silent;
     m_current_sentence_id = sentenceId();
     //qDebug() << "Obtained " << parts << "sentence parts for sentence" << m_current_sentence_id;
     m_grammarprovider->getNextSentencePart(caller);
 }
+@}
 
+\cprotect\subsection{\verb#sentenceLookupFormFromGramarProvider#}
+@O ../src/edit.cpp -d
+@{
 void edit::sentenceLookupFormFromGramarProvider(QObject* caller, QString form, QList<QList<QString> > grammarexpressions, bool silent){
     //qDebug() << __FUNCTION__ << __LINE__ << "silent" << silent;
     int form_id = lookupForm(m_current_language_id, m_current_lexeme_id, form, grammarexpressions);
@@ -884,7 +988,11 @@ void edit::sentenceLookupFormFromGramarProvider(QObject* caller, QString form, Q
     m_current_sentence_parts.push_back({form_id,0,false});
     m_grammarprovider->getNextSentencePart(caller);
 }
+@}
 
+\cprotect\subsection{\verb#sentenceLookupFormLexemeFromGrammarProvider#}
+@O ../src/edit.cpp -d
+@{
 void edit::sentenceLookupFormLexemeFromGrammarProvider(QObject* caller, QString form, QList<QList<QString> > grammarexpressions, bool silent){
     //qDebug() << __FUNCTION__ << __LINE__ << "silent" << silent;
     int form_id = lookupFormLexeme(m_current_language_id, m_current_lexeme_id, form, grammarexpressions);
@@ -894,7 +1002,11 @@ void edit::sentenceLookupFormLexemeFromGrammarProvider(QObject* caller, QString 
     m_current_sentence_parts.push_back({form_id,0,false});
     m_grammarprovider->getNextSentencePart(caller);
 }
+@}
 
+\cprotect\subsection{\verb#sentenceAddAndUseFormFromGrammarProvider#}
+@O ../src/edit.cpp -d
+@{
 void edit::sentenceAddAndUseFormFromGrammarProvider(QObject* caller, QString form, QList<QList<QString> > grammarexpressions, bool silent){
     //qDebug() << __FUNCTION__ << __LINE__ << "silent" << silent;
     // FIXME Currently not used by any grammar, should be implemented
@@ -902,14 +1014,22 @@ void edit::sentenceAddAndUseFormFromGrammarProvider(QObject* caller, QString for
 
     m_grammarprovider->getNextSentencePart(caller);
 }
+@}
 
+\cprotect\subsection{\verb#sentenceAddAndIgnoreFormFromGrammerProvider#}
+@O ../src/edit.cpp -d
+@{
 void edit::sentenceAddAndIgnoreFormFromGrammerProvider(QObject* caller, QString form, QList<QList<QString> > grammarexpressions, bool silent){
     //qDebug() << __FUNCTION__ << __LINE__ << "silent" << silent;
     // FIXME Currently not used by any grammar, should be implemented
     //qDebug() << "sentenceAddAndIgnoreFormFromGrammerProvider not implemented yet!";
     m_grammarprovider->getNextSentencePart(caller);
 }
+@}
 
+\cprotect\subsection{\verb#sentenceCompleteFromGrammarProvider#}
+@O ../src/edit.cpp -d
+@{
 void edit::sentenceCompleteFromGrammarProvider(QObject* caller, QList<QList<QString> > grammarexpressions, bool silent){
     //qDebug() << __FUNCTION__ << __LINE__ << "silent" << silent;
     int grammar_id = createGrammarFormId(m_current_language_id, grammarexpressions);
@@ -925,7 +1045,11 @@ void edit::sentenceCompleteFromGrammarProvider(QObject* caller, QList<QList<QStr
     m_current_sentence_parts.clear();
     m_grammarprovider->getNextGrammarObject(caller);
 }
+@}
 
+\cprotect\subsection{\verb#grammarInfoCompleteFromGrammarProvider#}
+@O ../src/edit.cpp -d
+@{
 void edit::grammarInfoCompleteFromGrammarProvider(QObject* caller, bool silent){
     static int numberofcalls = 0;
     numberofcalls++;
@@ -948,7 +1072,11 @@ void edit::grammarInfoCompleteFromGrammarProvider(QObject* caller, bool silent){
     m_add_busy = false;
     addScheduledLexemeHeuristically();
 }
+@}
 
+\cprotect\subsection{\verb#resetEverything#}
+@O ../src/edit.cpp -d
+@{
 void edit::resetEverything(void){
     m_current_translation->lexemes.clear();
     m_lexemes.clear();
@@ -958,7 +1086,11 @@ void edit::resetEverything(void){
     m_grammarFormId = -1;
     m_grammarFormComponentId = -1;
 }
+@}
 
+\cprotect\subsection{\verb#isReadyToSave#}
+@O ../src/edit.cpp -d
+@{
 bool edit::isReadyToSave(void){
     if(m_translations.size() < 1) return false;
     /* There may be multiple entries for one language in the translation,
@@ -971,7 +1103,11 @@ bool edit::isReadyToSave(void){
                     return true;
     return false;
 }
+@}
 
+\cprotect\subsection{\verb#saveToDatabase#}
+@O ../src/edit.cpp -d
+@{
 void edit::saveToDatabase(void){
     emit processingStart("Saving to database...");
     QList<lexeme>* lexemes;
