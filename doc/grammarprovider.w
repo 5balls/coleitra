@@ -221,9 +221,30 @@ public:
         // "row", "column" and "grammarexpressions" required by schema
         t_grammarConfigurationInflectionTableCell(json j_ini):
             i_row(j_ini["row"]),
-            i_column(j_ini["column"])
-        {
-        }
+            i_column(j_ini["column"]){
+                // "index", "content_type" and "process" are optional
+                if(j_ini.contains("index") && j_ini["index"].is_number()){
+                    i_index = j_ini["index"];
+                }
+                if(j_ini.contains("grammarexpressions") && j_ini["grammarexpressions"].is_object()){
+                    if(j_ini["grammarexpressions"].contains("format")
+                            && j_ini["grammarexpressions"]["format"].is_string()
+                            && j_ini["grammarexpressions"].contains("version")
+                            && j_ini["grammarexpressions"]["version"].is_string()){
+                        QString s_format = QString::fromStdString(j_ini["grammarexpressions"]["format"]);
+                        QString s_version = QString::fromStdString(j_ini["grammarexpressions"]["version"]);
+                        if(j_ini["grammarexpressions"].contains("tags")
+                                && j_ini["grammarexpressions"]["tags"].is_object()){
+
+                        }
+                    }
+                }
+                if(j_ini.contains("content_type")){
+                }
+                if(j_ini.contains("process")){
+                }
+            }
+        int i_index;
         int i_row;
         int i_column;
     };

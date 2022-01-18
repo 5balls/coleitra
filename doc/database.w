@@ -771,21 +771,43 @@ multiple word lexeme in a different language.
                 fc("categoryselection",QVariant::Int,{c_fk(categoryselectiontable,"id")}),
                 fc("licensereference",QVariant::Int,{c_fk(licensereferencetable,"id")}),
                 fc("language",QVariant::Int,{c_fk(languagetable,"id")})});
-
-        databasetable* grammarkeytable = d("grammarkey",
+        
+        databasetable* grammartagformattable = d("grammartagformat",
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
                 fc("categoryselection",QVariant::Int,{c_fk(categoryselectiontable,"id")}),
                 fc("licensereference",QVariant::Int,{c_fk(licensereferencetable,"id")}),
-                f("string",QVariant::String)});
+                f("format",QVariant::String),
+                f("version",QVariant::String)});
 
+        databasetable* grammarkeytable = d("grammarkey",
+                {fc("id",QVariant::Int,{c_pk(),c_nn()}),
+                fc("tagformat",QVariant::Int,{c_fk(grammartagformattable,"id")}),
+                fc("categoryselection",QVariant::Int,{c_fk(categoryselectiontable,"id")}),
+                fc("licensereference",QVariant::Int,{c_fk(licensereferencetable,"id")}),
+                f("string",QVariant::String)});
         databasetable* grammarexpressiontable = d("grammarexpression",
                 {fc("id",QVariant::Int,{c_pk(),c_nn()}),
+                fc("tagformat",QVariant::Int,{c_fk(grammartagformattable,"id")}),
                 fc("categoryselection",QVariant::Int,{c_fk(categoryselectiontable,"id")}),
                 fc("licensereference",QVariant::Int,{c_fk(licensereferencetable,"id")}),
                 fc("key",QVariant::Int,{c_fk(grammarkeytable,"id")}),
                 f("value",QVariant::String)});
 
         if(database_is_empty){
+            QList<QPair<QString,QString> > grammartags = {
+                {"coleitra", "0.1"},
+                {"Universal Dependencies", "2.9"}
+            };
+            QPair<QString,QString> grammartag;
+            QMap<QString,QVariant> add_gt;
+            int i_tagformat_coleitra = 0;
+            foreach(grammartag, grammartags){
+                add_gt["format"] = grammartag.first;
+                add_gt["version"] = grammartag.second;
+                int i_tagformat_id = grammartagformattable->insertRecord(add_gt);
+                if(add_gt["format"] == "coleitra")
+                    i_tagformat_coleitra = i_tagformat_id;
+            }
             QList<QList<QString> > grammarexpressions = {
                 // Case
                 {"Case", "Ablative", "Accusative", "Abessive", "Adessive", "Allative", "Causal-final", "Comitative", "Dative", "Delative", "Elative", "Essive", "Genitive", "Illative", "Inessive", "Infinitive", "Instructive", "Instrumental", "Locative", "Nominative", "Partitive", "Possessive", "Prolative", "Sociative", "Sublative", "Superessive", "Terminative", "Translative", "Vocative"},
@@ -818,10 +840,12 @@ multiple word lexeme in a different language.
                 current_key_id = 0;
                 foreach(const QString& grammarvalue, grammarexpression){
                     if(current_key_id == 0){
+                        add_gk["tagformat"] = i_tagformat_coleitra;
                         add_gk["string"] = grammarvalue;
                         current_key_id = grammarkeytable->insertRecord(add_gk);
                     }
                     else{
+                        add_ge["tagformat"] = i_tagformat_coleitra;
                         add_ge["key"] = current_key_id;
                         add_ge["value"] = grammarvalue;
                         grammarexpressiontable->insertRecord(add_ge);
