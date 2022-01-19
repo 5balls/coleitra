@@ -117,7 +117,7 @@ RUN cmake -DANDROID_PLATFORM=21 \
    ../../src
 RUN make
 
-#FROM scratch AS export
-#COPY --from=build /home/coleitra/build/x64/coleitra /
+FROM scratch AS export
+COPY --from=build /home/coleitra/build/android/coleitra-armeabi-v7a/build/outputs/apk/debug/coleitra-armeabi-v7a-debug.apk /
 
 CMD bash
