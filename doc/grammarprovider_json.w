@@ -19,7 +19,7 @@
 \subsection{Schema}
 The definitions in the grammarprovider class are currently hardcoded. To make them better configurable and to give the user a possibility to extend the definitions (which is crucial) we define a JSON Schema file for configuration files.
 
-@O ../src/grammarprovider_schema.json
+@O ../src/android/assets/grammarprovider/schemas/main.json
 @{{
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "http://coleitra.org/schemas/grammarprovider",
@@ -34,6 +34,64 @@ The definitions in the grammarprovider class are currently hardcoded. To make th
       "enum": [
         "0.1"
       ]
+    },
+    "language": {
+        "description": "Language name in english",
+        "type": "string",
+        "enum": [
+            "English",
+            "Mandarin Chinese",
+            "Hindi",
+            "Spanish",
+            "French",
+            "Standard Arabic",
+            "Bengali",
+            "Russian",
+            "Portuguese",
+            "Indonesian",
+            "Urdu",
+            "German",
+            "Japanese",
+            "Swahili",
+            "Marathi",
+            "Telugu",
+            "Turkish",
+            "Yue Chinese",
+            "Tamil",
+            "Punjabi",
+            "Wu Chinese",
+            "Korean",
+            "Vietnamese",
+            "Hausa",
+            "Javanese",
+            "Egyptian Arabic",
+            "Italian",
+            "Thai",
+            "Gujarati",
+            "Kannada",
+            "Persian",
+            "Bhojpuri",
+            "Southern Min",
+            "Filipino",
+            "Dutch",
+            "Danish",
+            "Greek",
+            "Finnish",
+            "Swedish",
+            "Czech",
+            "Estonian",
+            "Hungarian",
+            "Latvian",
+            "Lithuanian",
+            "Maltese",
+            "Polish",
+            "Slovak",
+            "Slovene",
+            "Bulgarian",
+            "Irish",
+            "Romanian",
+            "Croatian"
+        ]
     },
     "base_url": {
       "description": "URL to base queries on",
@@ -142,6 +200,7 @@ The definitions in the grammarprovider class are currently hardcoded. To make th
   },
   "required": [
     "version",
+    "language",
     "base_url"
   ],
   "$defs": {
@@ -357,9 +416,10 @@ The definitions in the grammarprovider class are currently hardcoded. To make th
 
 \subsection{Language specific files}
 \subsubsection{Finnish}
-@O ../src/fi.json
+@O ../src/android/assets/grammarprovider/configurations/fi.json
 @{{
   "version": "0.1",
+  "language": "Finnish",
   "base_url": "https://en.wiktionary.org/w/api.php?",
   "inflectiontables": [
     {

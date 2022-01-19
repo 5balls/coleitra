@@ -219,10 +219,11 @@ public:
     };
     struct t_grammarConfigurationInflectionTableCell {
         // "row", "column" and "grammarexpressions" required by schema
-        t_grammarConfigurationInflectionTableCell(json j_ini, database* lp_database):
+        t_grammarConfigurationInflectionTableCell(json j_ini, database* lp_database, int li_language_id):
             i_row(j_ini["row"]),
             i_column(j_ini["column"]),
-            p_database(lp_database){
+            p_database(lp_database),
+            i_language_id(li_language_id){
                 // "index", "content_type" and "process" are optional
                 if(j_ini.contains("index") && j_ini["index"].is_number()){
                     i_index = j_ini["index"];
@@ -240,9 +241,7 @@ public:
                             for(auto& [j_key, j_value] : j_ini["grammarexpressions"]["tags"].items())
                                 if(j_value.is_string())
                                     lls_grammarform.push_back({QString::fromStdString(j_key),QString::fromStdString(j_value)});
-                            // FIXME Language
-                            i_grammarid = p_database->grammarFormIdFromStrings(0,lls_grammarform);
-
+                            i_grammarid = p_database->grammarFormIdFromStrings(i_language_id,lls_grammarform);
                         }
                     }
                 }
@@ -252,6 +251,7 @@ public:
                 }
             }
         database* p_database;
+        int i_language_id;
         int i_index;
         int i_row;
         int i_column;
@@ -259,9 +259,10 @@ public:
     };
     struct t_grammarConfigurationInflectionTable {
         // "tablename", "identifiers" and "cells" required by schema:
-        t_grammarConfigurationInflectionTable(json j_ini, database* lp_database):
+        t_grammarConfigurationInflectionTable(json j_ini, database* lp_database, int li_language_id):
             s_tablename(QString::fromStdString(j_ini["tablename"])),
-            p_database(lp_database){
+            p_database(lp_database),
+            i_language_id(li_language_id){
                 // We don't strictly need to check for existance here but do it anyway for robustness:
                 if(j_ini.contains("identifiers") && j_ini["identifiers"].is_array()){
                     for(auto& j_identifier: j_ini["identifiers"]){
@@ -274,12 +275,13 @@ public:
                 // We don't strictly need to check for existance here but do it anyway for robustness:
                 if(j_ini.contains("cells") && j_ini["cells"].is_array()){
                     for(auto& j_cell: j_ini["cells"]){
-                        t_grammarConfigurationInflectionTableCell t_cell(j_cell,p_database);
+                        t_grammarConfigurationInflectionTableCell t_cell(j_cell,p_database,i_language_id);
                         l_grammar_cells.push_back(t_cell);
                     }
                 }
             }
         database* p_database;
+        int i_language_id;
         QString s_tablename;
         QList<QString> l_identifiers;
         QList<t_grammarConfigurationInflectionTableCell> l_grammar_cells;
@@ -290,15 +292,19 @@ public:
             s_version(QString::fromStdString(j_ini["version"])),
             s_base_url(QString::fromStdString(j_ini["base_url"])),
             p_database(lp_database){
+                if(j_ini.contains("language") && j_ini["language"].is_string())
+                    i_language_id = p_database->idfromlanguagename(QString::fromStdString(j_ini["language"]));
                 // Fill inflection tables if they are given:
                 if(j_ini.contains("inflectiontables") && j_ini.is_array()){
                     for(auto& j_inflectiontable: j_ini["inflectiontables"]){
-                        t_grammarConfigurationInflectionTable t_inflectiontable(j_inflectiontable,p_database);
+                        t_grammarConfigurationInflectionTable t_inflectiontable(j_inflectiontable,p_database,i_language_id);
                         l_inflection_tables.push_back(t_inflectiontable);
                     }
                 }
+                
             }
         database* p_database;
+        int i_language_id;
         QString s_version;
         QString s_base_url;
         QList<t_grammarConfigurationInflectionTable> l_inflection_tables;
@@ -424,11 +430,6 @@ private:
 @{
 grammarprovider::grammarprovider(QObject *parent) : QObject(parent), m_busy(false)
 {
-    QFile f_grammarProviderSchema(":/grammarprovider_schema.json");
-    if(f_grammarProviderSchema.open(QIODevice::ReadOnly)) {
-        j_grammarProviderSchema = json::parse(f_grammarProviderSchema.readAll().toStdString());
-        f_grammarProviderSchema.close();
-    }
 
 #ifdef Q_OS_ANDROID
     s_gpFilePath = QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).at(1) + "/grammarprovider";
@@ -442,6 +443,12 @@ grammarprovider::grammarprovider(QObject *parent) : QObject(parent), m_busy(fals
         }
     }
 
+    QFile f_grammarProviderSchema(s_gpFilePath + "/schemas/main.json");
+    if(f_grammarProviderSchema.open(QIODevice::ReadOnly)) {
+        j_grammarProviderSchema = json::parse(f_grammarProviderSchema.readAll().toStdString());
+        f_grammarProviderSchema.close();
+    }
+    
     s_baseurl = "https://en.wiktionary.org/w/api.php?";
     QQmlEngine* engine = qobject_cast<QQmlEngine*>(parent);
     m_settings = engine->singletonInstance<settings*>(qmlTypeId("SettingsLib", 1, 0, "Settings"));
