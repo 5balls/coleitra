@@ -183,6 +183,8 @@ if(ANDROID)
         NAME "coleitra"
         VERSION_CODE 0010
         PACKAGE_NAME "org.coleitra.coleitra"
+# FIXME Check if the following line works
+        PACKAGE_SRC_DIR ${PROJECT_SOURCE_DIR}/android/assets
         DEPENDS
         ${ANDROID_EXTRA_LIBS}
 #        INSTALL
