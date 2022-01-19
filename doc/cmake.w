@@ -97,6 +97,7 @@ set(ANDROID_EXTRA_LIBS
     /usr/local/lib/libssl_1_1.so
 CACHE INTERNAL "")
 set(LIBS ${LIBS} android log)
+set(ANDROID_PACKAGE_SOURCE_DIR ${PROJECT_SOURCE_DIR}/android CACHE INTERNAL "")
 endif()
 
 set(LIBS ${LIBS} lapack blas)
@@ -152,6 +153,14 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -ggdb")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -ggdb")
 
 target_link_libraries(coleitra PUBLIC ${QT_LIBS} ${LIBS} nlohmann_json_schema_validator)
+
+if(ANDROID)
+# No install target for android yet
+else()
+# Currently only local install target for coleitra
+install(TARGETS coleitra DESTINATION $ENV{HOME}/bin)
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/android/assets/ DESTINATION $ENV{HOME}/.coleitra)
+endif()
 @}
 
 In this step we finally can produce the APK file. For a new release we should probably increase the VERSION\_CODE.
