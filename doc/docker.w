@@ -197,9 +197,9 @@ CMD bash
 @O ../create_android_apk.sh
 @{
 #!/bin/bash
-#DOCKER_BUILDKIT=1\
-#  --output .\
+DOCKER_BUILDKIT=1\
   docker build\
+  --output .\
   -f build/dockerfiles/coleitra_apk.Dockerfile\
   -t coleitra_apk:latest .
 @}
@@ -261,7 +261,7 @@ RUN md5sum -c md5sum.txt
 RUN tar xfz 2.1.0.tar.gz
 RUN mv json-schema-validator-2.1.0 src
 RUN wget https://github.com/nlohmann/json/releases/download/v3.10.5/json-3.10.5.tar.xz
-RUN echo "3a2f6a51df913f8d16f531844c232051  json-3.10.5.tar.xz" > md5sum.txt
+#RUN echo "3a2f6a51df913f8d16f531844c232051  json-3.10.5.tar.xz" > md5sum.txt
 RUN md5sum -c md5sum.txt
 RUN mkdir -p /home/coleitra/json
 RUN tar xf json-3.10.5.tar.xz -C json
