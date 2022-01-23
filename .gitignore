@@ -1,4 +1,7 @@
 *.swp
 *.pdf
 *.sh
+*.apk
+*.tar
+*.tar.xz
 coleitra
