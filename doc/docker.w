@@ -363,6 +363,8 @@ keytool -genkey -v -keystore coleitra.keystore -alias alias_name -keyalg RSA -ke
 
 \subsubsection{Debugging on device}
 
+The port should be free, but otherwise does not matter. Here we choose 2828. We forward the port over adb but we could use the IP adress of the android device as well if we are in a reachable network. The activity name is given in the android manifest in \verb#src/qt-android-cmake/AndroidManifest.xml.in#.
+
 @O ../install_gdbserver_apk_and_start.sh
 @{
 adb uninstall org.coleitra.coleitra
@@ -371,8 +373,19 @@ adb forward tcp:2828 tcp:2828
 adb shell "am start org.coleitra.coleitra/org.qtproject.qt5.android.bindings.QtActivity"
 @}
 
+We copied the gdbserver executable to the lib directory before. This is available in the \verb#data/data# directory which we enter when we call the \verb#run-as# command.
+
 @O ../start_gdbserver.sh
 @{
 adb shell "run-as org.coleitra.coleitra lib/gdbserver :2828 --attach \$(pidof org.coleitra.coleitra)"
 @}
 
+To connect with the gdb server make sure, that the gdb of the ndk located in \verb#<ndk-directory>/21.3.6528147/prebuilt/linux-x86_64/bin/gdb# is the preferred one (check with \verb#which gdb#), if not set the \verb#PATH# variable so that the NDK bin path is first. Vim's \verb#:Termdebug# command will use whichever gdb it finds in the first path and debugging only works with the ndk version of the gdb.
+
+Once you have started, issue the following command in the gdb shell:
+
+\begin{verbatim}
+target remote :2828
+\end{verbatim}
+
+This will try to load a lot of libraries when you start it. Almost all of them don't have any debug symbols, but that is fine. We want to debug only the coleitra code and for this it should load the debug symbols if you have followed the steps in the previous section.
