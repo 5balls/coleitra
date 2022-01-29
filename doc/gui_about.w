@@ -41,8 +41,11 @@ ColeitraPage {
             @<Coleitra label @'"GIT commit:"@' with value @'About.gitVersion@'@>
             @<Coleitra label @'"Clean repository?"@' with value @'About.gitClean@'@>
             @<Coleitra label @'"Last commit message:"@' with value @'About.gitLastCommitMessage@'@>
-            @<Coleitra label @'"Qt version"@' with value @'About.qtVersion@'@>
             @<Coleitra label @'"DB version"@' with value @'Database.version@'@>
+            @<Coleitra label @'"Qt version"@' with value @'About.qtVersion@'@>
+            @<Coleitra label @'"levmar version"@' with value @'About.levmarVersion@'@>
+            @<Coleitra label @'"nlohmann json version"@' with value @'About.nlohmannVersion@'@>
+            @<Coleitra label @'"json schema parser version"@' with value @'About.nlohmannSchemaVersion@'@>
         }
     }
     footer: ColeitraGridLayout {

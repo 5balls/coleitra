@@ -24,6 +24,9 @@
 #include <QSettings>
 #include <QDebug>
 #include <QtGlobal>
+#include "levmar.h"
+#include <nlohmann/json.hpp>
+#include <nlohmann/json-schema.hpp>
 
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)
@@ -57,6 +60,9 @@ about::about(QObject *parent) : QObject(parent)
 @<Qt readonly property @'gitClean@' @>
 @<Qt readonly property @'gitLastCommitMessage@' @>
 @<Qt readonly property @'coleitraVersion@' @>
+@<Qt readonly property @'levmarVersion@' @>
+@<Qt readonly property @'nlohmannVersion@' @>
+@<Qt readonly property @'nlohmannSchemaVersion@' @>
 @}
 
 \codecpp
@@ -66,6 +72,9 @@ about::about(QObject *parent) : QObject(parent)
 @<Function @'gitClean@' return string @'TOSTRING(GIT_CLEAN)@' @>
 @<Function @'gitLastCommitMessage@' return string @'TOSTRING(GIT_LAST_COMMIT_MESSAGE)@' @>
 @<Function @'coleitraVersion@' return string @'TOSTRING(COLEITRA_VERSION)@' @>
+@<Function @'levmarVersion@' return string @'TOSTRING(LM_VERSION)@' @>
+@<Function @'nlohmannVersion@' return string @'TOSTRING(NLOHMANN_JSON_VERSION_MAJOR.NLOHMANN_JSON_VERSION_MINOR.NLOHMANN_JSON_VERSION_PATCH)@' @>
+@<Function @'nlohmannSchemaVersion@' return string @'TOSTRING(NLOHMANN_SCHEMA_VERSION)@' @>
 @}
 
 \subsection{Compile environment}

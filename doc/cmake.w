@@ -122,12 +122,15 @@ configure_file(${CMAKE_CURRENT_LIST_DIR}@1/levmar-2.6/levmar.h.in ${CMAKE_CURREN
 if(ANDROID)
 add_subdirectory("json")
 add_subdirectory("json-schema-validator-2.1.0")
+set(nlohmann_json_schema_validator_VERSION "2.1.0")
 add_subdirectory("OpenBLAS-0.3.17")
 else()
 find_package(nlohmann_json 3.2.0 REQUIRED)
 find_package(nlohmann_json_schema_validator REQUIRED)
 endif()
-
+add_definitions(
+    -DNLOHMANN_SCHEMA_VERSION=${nlohmann_json_schema_validator_VERSION}
+)
 include_directories(${Qt5Widgets_INCLUDE_DIRS} ${QtQml_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR} ${CMAKE_CURRENT_LIST_DIR}@1 ${CMAKE_CURRENT_LIST_DIR}@1/levmar-2.6)
 add_definitions(${Qt5Widgets_DEFINITIONS} ${QtQml_DEFINITIONS} ${QtNetwork} ${${Qt5Quick_DEFINITIONS}})
 @}
