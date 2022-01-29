@@ -114,10 +114,12 @@ RUN cmake -DANDROID_PLATFORM=21 \
    -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH \
    -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake \
    -DCMAKE_PREFIX_PATH=/home/coleitra/qt5-android \
+   -DCMAKE_BUILD_TYPE=Debug \
    ../../src
 RUN make
 
 FROM scratch AS export
 COPY --from=build /home/coleitra/build/android/coleitra-armeabi-v7a/build/outputs/apk/debug/coleitra-armeabi-v7a-debug.apk /
+COPY --from=build /home/coleitra/build/android/ /build/android
 
 CMD bash

@@ -4,4 +4,5 @@
 *.apk
 *.tar
 *.tar.xz
+*.keystore
 coleitra

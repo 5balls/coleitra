@@ -111,11 +111,15 @@ get_examples("Template:" + str(sys.argv[1]))
 #include <QEventLoop>
 #include <QTime>
 #include <QMetaMethod>
+#include <QDirIterator>
 #include <nlohmann/json-schema.hpp>
 #include "settings.h"
 #include "database.h"
 #include "levenshteindistance.h"
 #include "networkscheduler.h"
+
+#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY(x)
 
 using nlohmann::json;
 using nlohmann::json_schema::json_validator;
@@ -442,6 +446,35 @@ grammarprovider::grammarprovider(QObject *parent) : QObject(parent), m_busy(fals
             QDir().mkdir(s_gpFilePath);
         }
     }
+
+#ifdef Q_OS_ANDROID
+    // In case of android copy over files from assets to directory:
+    QDirIterator it_assetFiles("assets:/grammarprovider",QDirIterator::Subdirectories);
+    while(it_assetFiles.hasNext()){
+        QFile f_currentFile(it_assetFiles.next());
+        QFileInfo fi_currentFile(f_currentFile);
+        if(!fi_currentFile.filePath().isEmpty()){
+            QString s_relativePath = fi_currentFile.filePath().remove("assets:/grammarprovider");
+            QString s_gpDFilePath = s_gpFilePath + "/" + s_relativePath;
+            if(fi_currentFile.isDir()){
+                if(!QDir(s_gpDFilePath).exists()){
+                    QDir().mkdir(s_gpDFilePath);
+                }
+            }
+            else{
+                if(!QFile(s_gpDFilePath).exists()){
+                    f_currentFile.copy(s_gpDFilePath);
+                }
+                else{
+                    s_gpDFilePath = s_gpFilePath + "/" + fi_currentFile.dir().path().remove("assets:/grammarprovider") + "/" + fi_currentFile.baseName() + ".coleitra." + QString::fromStdString(TOSTRING(COLEITRA_VERSION)) + "." + fi_currentFile.completeSuffix();
+                    if(!QFile(s_gpDFilePath).exists()){
+                        f_currentFile.copy(s_gpDFilePath);
+                    }
+                }
+            }
+        }
+    }
+#endif
 
     QFile f_grammarProviderSchema(s_gpFilePath + "/schemas/main.json");
     if(f_grammarProviderSchema.open(QIODevice::ReadOnly)) {

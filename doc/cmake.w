@@ -33,7 +33,7 @@ endif()
 
 include(CMakePrintHelpers)
 
-project(coleitra)
+project(coleitra VERSION 0.1.0)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
@@ -73,6 +73,10 @@ add_definitions(
     -DGIT_VERSION=${GIT_VERSION}
     -DGIT_CLEAN=${GIT_CLEAN}
     -DGIT_LAST_COMMIT_MESSAGE=${GIT_LAST_COMMIT_MESSAGE}
+    -DCOLEITRA_VERSION=${PROJECT_VERSION}
+    -DCOLEITRA_VERSION_MAJOR=${PROJECT_VERSION_MAJOR}
+    -DCOLEITRA_VERSION_MINOR=${PROJECT_VERSION_MINOR}
+    -DCOLEITRA_VERSION_PATCH=${PROJECT_VERSION_PATCH}
 )
 @}
 
@@ -181,9 +185,8 @@ if(ANDROID)
     include(${CMAKE_CURRENT_LIST_DIR}/qt-android-cmake/AddQtAndroidApk.cmake)
     add_qt_android_apk(coleitra.apk coleitra
         NAME "coleitra"
-        VERSION_CODE 0010
+        VERSION_CODE 0001
         PACKAGE_NAME "org.coleitra.coleitra"
-# FIXME Check if the following line works
         PACKAGE_SOURCES ${PROJECT_SOURCE_DIR}/android
         DEPENDS
         ${ANDROID_EXTRA_LIBS}

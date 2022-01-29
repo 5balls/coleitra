@@ -192,7 +192,7 @@ COPY --from=build /home/coleitra/build/x64/coleitra /
 CMD bash
 @}
 
-\subsection{}
+\subsection{Android APK}
 
 @O ../create_android_apk.sh
 @{
@@ -299,11 +299,80 @@ RUN cmake -DANDROID_PLATFORM=21 \
    -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH \
    -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake \
    -DCMAKE_PREFIX_PATH=/home/coleitra/qt5-android \
+   -DCMAKE_BUILD_TYPE=Debug \
    ../../src
 RUN make
 
 FROM scratch AS export
 COPY --from=build /home/coleitra/build/android/coleitra-armeabi-v7a/build/outputs/apk/debug/coleitra-armeabi-v7a-debug.apk /
+COPY --from=build /home/coleitra/build/android/ /build/android
 
 CMD bash
 @}
+
+\subsection{Debugging with gdb on android}
+
+\subsubsection{Setting up modified APK}
+Unfortunately funtionality which made this easier has been removed from the androiddeployqt binary. We need to modify the APK after it has been created therefore.
+
+APK files are technically just zip files, so we can unzip it.
+
+@O ../add_gdbserver_to_apk.sh
+@{
+mkdir apkdir
+cd apkdir
+unzip ../coleitra-armeabi-v7a-debug.apk 
+@}
+
+First the gdbserver must be placed in the APK file to be able to run it as the same user as coleitra. Android programs run each with a seperate users and we have to start gdbserver with the same user as coleitra to be able to attach to it.
+
+@O ../add_gdbserver_to_apk.sh
+@{
+cp ~/lib/sdk/ndk/21.3.6528147/prebuilt/android-arm/gdbserver/gdbserver lib/armeabi-v7a/
+@}
+
+Next we will replace the stripped version of our library with debug symbols in the APK:
+@O ../add_gdbserver_to_apk.sh
+@{
+cp ../build/android/android-build/libs/armeabi-v7a/libcoleitra_armeabi-v7a.so lib/armeabi-v7a
+@}
+
+
+We need to remove the old invalidated signature (because we used some signature from Qt or android - not sure, but it also does not matter for debugging).
+
+@O ../add_gdbserver_to_apk.sh
+@{
+rm -r META-INF
+zip -r ../coleitra-armeabi-v7a-debug-gdbserver.apk *
+cd ..
+rm -r apkdir
+@}
+
+Now we need to sign the new apk (android does not like to install unsigned apk's).
+@O ../add_gdbserver_to_apk.sh
+@{
+jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore coleitra.keystore coleitra-armeabi-v7a-debug-gdbserver.apk alias_name
+@}
+
+You should generate the key before with keytool.
+
+@O ../create_keystore_signature.sh
+@{
+keytool -genkey -v -keystore coleitra.keystore -alias alias_name -keyalg RSA -keysize 2048 -validity 10000
+@}
+
+\subsubsection{Debugging on device}
+
+@O ../install_gdbserver_apk_and_start.sh
+@{
+adb uninstall org.coleitra.coleitra
+adb install coleitra-armeabi-v7a-debug-gdbserver.apk 
+adb forward tcp:2828 tcp:2828
+adb shell "am start org.coleitra.coleitra/org.qtproject.qt5.android.bindings.QtActivity"
+@}
+
+@O ../start_gdbserver.sh
+@{
+adb shell "run-as org.coleitra.coleitra lib/gdbserver :2828 --attach \$(pidof org.coleitra.coleitra)"
+@}
+
