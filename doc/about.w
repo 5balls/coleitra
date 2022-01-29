@@ -56,6 +56,7 @@ about::about(QObject *parent) : QObject(parent)
 @<Qt readonly property @'gitVersion@' @>
 @<Qt readonly property @'gitClean@' @>
 @<Qt readonly property @'gitLastCommitMessage@' @>
+@<Qt readonly property @'coleitraVersion@' @>
 @}
 
 \codecpp
@@ -64,6 +65,7 @@ about::about(QObject *parent) : QObject(parent)
 @<Function @'gitVersion@' return string @'TOSTRING(GIT_VERSION)@' @>
 @<Function @'gitClean@' return string @'TOSTRING(GIT_CLEAN)@' @>
 @<Function @'gitLastCommitMessage@' return string @'TOSTRING(GIT_LAST_COMMIT_MESSAGE)@' @>
+@<Function @'coleitraVersion@' return string @'TOSTRING(COLEITRA_VERSION)@' @>
 @}
 
 \subsection{Compile environment}

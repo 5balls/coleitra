@@ -93,7 +93,7 @@ import QtQuick.Layouts 1.3
 Label {
     Layout.columnSpan: 6
     Layout.preferredWidth: parent.width / 2.0
-    Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+    Layout.alignment: Qt.AlignLeft | Qt.AlignTop
     leftPadding: 10
     topPadding: 10
     wrapMode: Text.WordWrap
@@ -229,15 +229,41 @@ Image {
 }
 @}
 
+\subsection{Coleitra widget label value}
+@o ../src/ColeitraWidgetLabelValue.qml
+@{
+import QtQuick 2.0
+import QtQuick.Controls 2.0
+import QtQuick.Layouts 1.1
+
+Row {
+    width: parent.width
+    id: root
+    property alias label: myLabel
+    property alias value: myValue
+    Layout.columnSpan: 12
+
+    Label {
+        id: myLabel
+        width: parent.width / 2.0
+    }
+
+    Label {
+        id: myValue
+        width: parent.width / 2.0
+        wrapMode: Text.WordWrap
+    }
+}
+@}
+
 \subsection{GUI fragments}
 \subsubsection{Label and text}
 @d Coleitra label @'name@' with value @'value@'
 @{
-ColeitraGridLabel {
-    text: @1
-}
-ColeitraGridValueText {
-    text: @2
+ColeitraWidgetLabelValue {
+    label.text: @1
+    value.text: @2
+    width: parent.width
 }
 @}
 
