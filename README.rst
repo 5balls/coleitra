@@ -27,6 +27,10 @@ coleitra
 .. attention:: Unfinished software!
    This software is not in a usable state yet. Please wait for the first release!
 
+.. image:: src/android/res/drawable/logo_large.png
+   :alt: coleitra logo image (stack of flashcards in rainbow colors, the top one has the text coleitra written on it)
+
+
 .. contents::
 
 coleitra is an open source (AGPL-3.0-only) vocable and grammar trainer using spaced repetition algorithms. It's intended usage is on a mobile phone with an android operating system but it can be compiled for the desktop as well. This is the source code repository of the program, for more information about the program itself check the `coleitra webpage <https://coleitra.org>`_.
