@@ -80,7 +80,12 @@ Here are the files described, which are needed for compiling code for the Qt fra
         <file>ColeitraWidgetProgressPopup.qml</file>
         <file>ColeitraWidgetLabelValue.qml</file>
         <file>main.qml</file>
-        <file>logo.svg</file>
+        <file>splash.qml</file>
+        <file alias="logo.png">android/res/drawable/logo_large.png</file>
+        <file alias="splash_start.png">android/res/drawable/logo_start.png</file>
+        <file alias="splash_database.png">android/res/drawable/logo_database.png</file>
+        <file alias="splash_grammar.png">android/res/drawable/logo_grammar.png</file>
+        <file alias="splash_done.png">android/res/drawable/logo.png</file>
         <file>settings.svg</file>
         <file>settings_pressed.svg</file>
         <file>back.svg</file>

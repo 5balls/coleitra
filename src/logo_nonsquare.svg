@@ -1,0 +1,741 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+
+ Copyright 2020, 2021, 2022 Florian Pesth
+
+ This file is part of coleitra.
+
+ coleitra is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Affero General Public License as
+ published by the Free Software Foundation version 3 of the
+ License.
+
+ coleitra is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Affero General Public License for more details.
+
+ You should have received a copy of the GNU Affero General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+
+<svg
+   width="180.30373mm"
+   height="150.24901mm"
+   viewBox="0 0 180.30373 150.24901"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.1.1 (3bf5ae0d25, 2021-09-20)"
+   sodipodi:docname="logo_nonsquare.svg"
+   inkscape:export-filename="/home/flo/src/own/coleitra/src/android/res/drawable/logo_start.png"
+   inkscape:export-xdpi="70.49498"
+   inkscape:export-ydpi="70.49498"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="mm"
+     showgrid="false"
+     showguides="true"
+     inkscape:guide-bbox="true"
+     inkscape:zoom="0.77593294"
+     inkscape:cx="377.60995"
+     inkscape:cy="169.47341"
+     inkscape:window-width="1920"
+     inkscape:window-height="1056"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer16"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
+     width="160mm" />
+  <defs
+     id="defs2">
+    <filter
+       style="color-interpolation-filters:sRGB"
+       inkscape:label="Drop Shadow"
+       id="filter20083"
+       x="-0.1620912"
+       y="-0.22692768"
+       width="1.3813252"
+       height="1.5338554">
+      <feFlood
+         flood-opacity="0.498039"
+         flood-color="rgb(0,0,0)"
+         result="flood"
+         id="feFlood20073" />
+      <feComposite
+         in="flood"
+         in2="SourceGraphic"
+         operator="in"
+         result="composite1"
+         id="feComposite20075" />
+      <feGaussianBlur
+         in="composite1"
+         stdDeviation="7.09149"
+         result="blur"
+         id="feGaussianBlur20077" />
+      <feOffset
+         dx="6"
+         dy="6"
+         result="offset"
+         id="feOffset20079" />
+      <feComposite
+         in="SourceGraphic"
+         in2="offset"
+         operator="over"
+         result="composite2"
+         id="feComposite20081" />
+    </filter>
+    <filter
+       style="color-interpolation-filters:sRGB"
+       inkscape:label="Drop Shadow"
+       id="filter20083-5"
+       x="-0.1620912"
+       y="-0.22692768"
+       width="1.3813252"
+       height="1.5338554">
+      <feFlood
+         flood-opacity="0.498039"
+         flood-color="rgb(0,0,0)"
+         result="flood"
+         id="feFlood20073-3" />
+      <feComposite
+         in="flood"
+         in2="SourceGraphic"
+         operator="in"
+         result="composite1"
+         id="feComposite20075-5" />
+      <feGaussianBlur
+         in="composite1"
+         stdDeviation="7.09149"
+         result="blur"
+         id="feGaussianBlur20077-6" />
+      <feOffset
+         dx="6"
+         dy="6"
+         result="offset"
+         id="feOffset20079-2" />
+      <feComposite
+         in="SourceGraphic"
+         in2="offset"
+         operator="over"
+         result="composite2"
+         id="feComposite20081-9" />
+    </filter>
+  </defs>
+  <g
+     inkscape:groupmode="layer"
+     id="layer9"
+     inkscape:label="8 Red Card"
+     style="display:inline">
+    <g
+       id="g5743"
+       style="filter:url(#filter20083)"
+       transform="translate(17.019576,17.019575)">
+      <path
+         id="rect31"
+         style="fill:#e6261f;fill-opacity:1;fill-rule:evenodd;stroke-width:0.264583"
+         d="M 0,7.7928821e-7 H 105 L 104.8189,16.570528 105,75 H 0 L 0.147184,16.570528 Z"
+         sodipodi:nodetypes="ccccccc" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 0,20.000001 H 105"
+         id="path1980"
+         sodipodi:nodetypes="cc" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 0,35.000001 H 105"
+         id="path2064"
+         sodipodi:nodetypes="cc" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 0,65.000001 H 105"
+         id="path2146"
+         sodipodi:nodetypes="cc" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 0,50.000001 H 105"
+         id="path2148"
+         sodipodi:nodetypes="cc" />
+    </g>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer24"
+     inkscape:label="8 Red Cardtext"
+     style="display:none">
+    <text
+       xml:space="preserve"
+       style="font-size:12.3472px;line-height:1.25;font-family:FreeSerif;-inkscape-font-specification:FreeSerif;letter-spacing:0px;display:inline;stroke-width:0.264583"
+       x="19.980791"
+       y="47.974846"
+       id="text20895"><tspan
+         sodipodi:role="line"
+         style="font-size:12.3472px;stroke-width:0.264583"
+         x="19.980791"
+         y="47.974846"
+         id="tspan20891">Lore</tspan><tspan
+         sodipodi:role="line"
+         style="font-size:12.3472px;stroke-width:0.264583"
+         x="19.980791"
+         y="63.408848"
+         id="tspan20893">Ipsum...</tspan></text>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer25"
+     inkscape:label="8 Red Logotext"
+     style="display:none">
+    <text
+       xml:space="preserve"
+       style="font-size:25.4px;line-height:1.25;font-family:FreeSerif;-inkscape-font-specification:FreeSerif;display:inline;stroke-width:0.264583"
+       x="32.214001"
+       y="35.543201"
+       id="text20833"><tspan
+         sodipodi:role="line"
+         id="tspan20831"
+         style="font-size:25.4px;stroke-width:0.264583"
+         x="32.214001"
+         y="35.543201">coleitra</tspan></text>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer8"
+     inkscape:label="7 Orange Card"
+     style="display:inline">
+    <g
+       id="g5774"
+       transform="translate(22.019576,22.019575)"
+       style="fill:#eb7532;fill-opacity:1;filter:url(#filter20083)">
+      <path
+         id="path5764"
+         style="fill:#eb7532;fill-opacity:1;fill-rule:evenodd;stroke-width:0.264583"
+         d="M 0,7.7928821e-7 H 105 L 104.8189,16.570528 105,75 H 0 L 0.147184,16.570528 Z"
+         sodipodi:nodetypes="ccccccc" />
+      <path
+         style="fill:#eb7532;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 0,20.000001 H 105"
+         id="path5766"
+         sodipodi:nodetypes="cc" />
+      <path
+         style="fill:#eb7532;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 0,35.000001 H 105"
+         id="path5768"
+         sodipodi:nodetypes="cc" />
+      <path
+         style="fill:#eb7532;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 0,65.000001 H 105"
+         id="path5770"
+         sodipodi:nodetypes="cc" />
+      <path
+         style="fill:#eb7532;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 0,50.000001 H 105"
+         id="path5772"
+         sodipodi:nodetypes="cc" />
+    </g>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer22"
+     inkscape:label="7 Orange Cardtext"
+     style="display:none">
+    <text
+       xml:space="preserve"
+       style="font-size:12.3472px;line-height:1.25;font-family:FreeSerif;-inkscape-font-specification:FreeSerif;letter-spacing:0px;display:inline;stroke-width:0.264583"
+       x="24.980791"
+       y="52.974846"
+       id="text20886"><tspan
+         sodipodi:role="line"
+         style="font-size:12.3472px;stroke-width:0.264583"
+         x="24.980791"
+         y="52.974846"
+         id="tspan20882">Lore</tspan><tspan
+         sodipodi:role="line"
+         style="font-size:12.3472px;stroke-width:0.264583"
+         x="24.980791"
+         y="68.408844"
+         id="tspan20884">Ipsum...</tspan></text>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer23"
+     inkscape:label="7 Orange Logotext"
+     style="display:none">
+    <text
+       xml:space="preserve"
+       style="font-size:25.4px;line-height:1.25;font-family:FreeSerif;-inkscape-font-specification:FreeSerif;display:inline;stroke-width:0.264583"
+       x="37.214001"
+       y="40.543201"
+       id="text20827"><tspan
+         sodipodi:role="line"
+         id="tspan20825"
+         style="font-size:25.4px;stroke-width:0.264583"
+         x="37.214001"
+         y="40.543201">coleitra</tspan></text>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer7"
+     inkscape:label="6 Yellow Card"
+     style="display:inline">
+    <g
+       id="g5892"
+       transform="translate(27.019575,27.019575)"
+       style="fill:#f7d038;fill-opacity:1;filter:url(#filter20083)">
+      <path
+         id="path5882"
+         style="fill:#f7d038;fill-opacity:1;fill-rule:evenodd;stroke-width:0.264583"
+         d="M 0,7.7928821e-7 H 105 L 104.8189,16.570528 105,75 H 0 L 0.147184,16.570528 Z"
+         sodipodi:nodetypes="ccccccc" />
+      <path
+         style="fill:#f7d038;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 0,20.000001 H 105"
+         id="path5884"
+         sodipodi:nodetypes="cc" />
+      <path
+         style="fill:#f7d038;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 0,35.000001 H 105"
+         id="path5886"
+         sodipodi:nodetypes="cc" />
+      <path
+         style="fill:#f7d038;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 0,65.000001 H 105"
+         id="path5888"
+         sodipodi:nodetypes="cc" />
+      <path
+         style="fill:#f7d038;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 0,50.000001 H 105"
+         id="path5890"
+         sodipodi:nodetypes="cc" />
+    </g>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer20"
+     inkscape:label="6 Yellow Cardtext"
+     style="display:none">
+    <text
+       xml:space="preserve"
+       style="font-size:12.3472px;line-height:1.25;font-family:FreeSerif;-inkscape-font-specification:FreeSerif;letter-spacing:0px;display:inline;stroke-width:0.264583"
+       x="29.980791"
+       y="57.974846"
+       id="text20877"><tspan
+         sodipodi:role="line"
+         style="font-size:12.3472px;stroke-width:0.264583"
+         x="29.980791"
+         y="57.974846"
+         id="tspan20873">Lore</tspan><tspan
+         sodipodi:role="line"
+         style="font-size:12.3472px;stroke-width:0.264583"
+         x="29.980791"
+         y="73.408844"
+         id="tspan20875">Ipsum...</tspan></text>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer21"
+     inkscape:label="6 Yellow Logotext"
+     style="display:none">
+    <text
+       xml:space="preserve"
+       style="font-size:25.4px;line-height:1.25;font-family:FreeSerif;-inkscape-font-specification:FreeSerif;display:inline;stroke-width:0.264583"
+       x="42.214001"
+       y="45.543201"
+       id="text20821"><tspan
+         sodipodi:role="line"
+         id="tspan20819"
+         style="font-size:25.4px;stroke-width:0.264583"
+         x="42.214001"
+         y="45.543201">coleitra</tspan></text>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer6"
+     inkscape:label="5 Yellow green Card"
+     style="display:inline">
+    <g
+       id="g5922"
+       transform="translate(32.019576,32.019576)"
+       style="fill:#a3e048;fill-opacity:1;filter:url(#filter20083)">
+      <path
+         id="path5912"
+         style="fill:#a3e048;fill-opacity:1;fill-rule:evenodd;stroke-width:0.264583"
+         d="M 0,7.7928821e-7 H 105 L 104.8189,16.570528 105,75 H 0 L 0.147184,16.570528 Z"
+         sodipodi:nodetypes="ccccccc" />
+      <path
+         style="fill:#a3e048;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 0,20.000001 H 105"
+         id="path5914"
+         sodipodi:nodetypes="cc" />
+      <path
+         style="fill:#a3e048;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 0,35.000001 H 105"
+         id="path5916"
+         sodipodi:nodetypes="cc" />
+      <path
+         style="fill:#a3e048;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 0,65.000001 H 105"
+         id="path5918"
+         sodipodi:nodetypes="cc" />
+      <path
+         style="fill:#a3e048;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 0,50.000001 H 105"
+         id="path5920"
+         sodipodi:nodetypes="cc" />
+    </g>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer18"
+     inkscape:label="5 Yellow green Cardtext"
+     style="display:none">
+    <text
+       xml:space="preserve"
+       style="font-size:12.3472px;line-height:1.25;font-family:FreeSerif;-inkscape-font-specification:FreeSerif;letter-spacing:0px;display:inline;stroke-width:0.264583"
+       x="34.980793"
+       y="62.974846"
+       id="text20868"><tspan
+         sodipodi:role="line"
+         style="font-size:12.3472px;stroke-width:0.264583"
+         x="34.980793"
+         y="62.974846"
+         id="tspan20864">Lore</tspan><tspan
+         sodipodi:role="line"
+         style="font-size:12.3472px;stroke-width:0.264583"
+         x="34.980793"
+         y="78.408844"
+         id="tspan20866">Ipsum...</tspan></text>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer19"
+     inkscape:label="5 Yellow green Logotext"
+     style="display:none">
+    <text
+       xml:space="preserve"
+       style="font-size:25.4px;line-height:1.25;font-family:FreeSerif;-inkscape-font-specification:FreeSerif;display:inline;stroke-width:0.264583"
+       x="47.214001"
+       y="50.543201"
+       id="text20815"><tspan
+         sodipodi:role="line"
+         id="tspan20813"
+         style="font-size:25.4px;stroke-width:0.264583"
+         x="47.214001"
+         y="50.543201">coleitra</tspan></text>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer5"
+     inkscape:label="4 Green Card"
+     style="display:inline">
+    <g
+       id="g5952"
+       transform="translate(37.019577,37.019574)"
+       style="fill:#49da9a;fill-opacity:1;filter:url(#filter20083)">
+      <path
+         id="path5942"
+         style="fill:#49da9a;fill-opacity:1;fill-rule:evenodd;stroke-width:0.264583"
+         d="M 0,7.7928821e-7 H 105 L 104.8189,16.570528 105,75 H 0 L 0.147184,16.570528 Z"
+         sodipodi:nodetypes="ccccccc" />
+      <path
+         style="fill:#49da9a;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 0,20.000001 H 105"
+         id="path5944"
+         sodipodi:nodetypes="cc" />
+      <path
+         style="fill:#49da9a;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 0,35.000001 H 105"
+         id="path5946"
+         sodipodi:nodetypes="cc" />
+      <path
+         style="fill:#49da9a;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 0,65.000001 H 105"
+         id="path5948"
+         sodipodi:nodetypes="cc" />
+      <path
+         style="fill:#49da9a;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 0,50.000001 H 105"
+         id="path5950"
+         sodipodi:nodetypes="cc" />
+    </g>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer16"
+     inkscape:label="4 Green Cardtext"
+     style="display:none">
+    <text
+       xml:space="preserve"
+       style="font-size:12.3472px;line-height:1.25;font-family:FreeSerif;-inkscape-font-specification:FreeSerif;letter-spacing:0px;display:inline;stroke-width:0.264583"
+       x="39.980793"
+       y="67.974846"
+       id="text20859"><tspan
+         sodipodi:role="line"
+         style="font-size:12.3472px;stroke-width:0.264583"
+         x="39.980793"
+         y="67.974846"
+         id="tspan20855">Lore</tspan><tspan
+         sodipodi:role="line"
+         style="font-size:12.3472px;stroke-width:0.264583"
+         x="39.980793"
+         y="83.408844"
+         id="tspan20857">Ipsum...</tspan></text>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer17"
+     inkscape:label="4 Green Logotext"
+     style="display:none">
+    <text
+       xml:space="preserve"
+       style="font-size:25.4px;line-height:1.25;font-family:FreeSerif;-inkscape-font-specification:FreeSerif;display:inline;stroke-width:0.264583"
+       x="52.214001"
+       y="55.543201"
+       id="text20809"><tspan
+         sodipodi:role="line"
+         id="tspan20807"
+         style="font-size:25.4px;stroke-width:0.264583"
+         x="52.214001"
+         y="55.543201">coleitra</tspan></text>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer4"
+     inkscape:label="3 Light blue Card"
+     style="display:inline">
+    <g
+       id="g5982"
+       transform="translate(42.019577,42.019575)"
+       style="fill:#34bbe6;fill-opacity:1;filter:url(#filter20083)">
+      <path
+         id="path5972"
+         style="fill:#34bbe6;fill-opacity:1;fill-rule:evenodd;stroke-width:0.264583"
+         d="M 0,7.7928821e-7 H 105 L 104.8189,16.570528 105,75 H 0 L 0.147184,16.570528 Z"
+         sodipodi:nodetypes="ccccccc" />
+      <path
+         style="fill:#34bbe6;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 0,20.000001 H 105"
+         id="path5974"
+         sodipodi:nodetypes="cc" />
+      <path
+         style="fill:#34bbe6;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 0,35.000001 H 105"
+         id="path5976"
+         sodipodi:nodetypes="cc" />
+      <path
+         style="fill:#34bbe6;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 0,65.000001 H 105"
+         id="path5978"
+         sodipodi:nodetypes="cc" />
+      <path
+         style="fill:#34bbe6;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 0,50.000001 H 105"
+         id="path5980"
+         sodipodi:nodetypes="cc" />
+    </g>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer14"
+     inkscape:label="3 Light blue Cardtext"
+     style="display:none">
+    <text
+       xml:space="preserve"
+       style="font-size:12.3472px;line-height:1.25;font-family:FreeSerif;-inkscape-font-specification:FreeSerif;letter-spacing:0px;display:inline;stroke-width:0.264583"
+       x="44.980793"
+       y="72.974846"
+       id="text20850"><tspan
+         sodipodi:role="line"
+         style="font-size:12.3472px;stroke-width:0.264583"
+         x="44.980793"
+         y="72.974846"
+         id="tspan20846">Lore</tspan><tspan
+         sodipodi:role="line"
+         style="font-size:12.3472px;stroke-width:0.264583"
+         x="44.980793"
+         y="88.408844"
+         id="tspan20848">Ipsum...</tspan></text>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer15"
+     inkscape:label="3 Light blue Logotext"
+     style="display:none">
+    <text
+       xml:space="preserve"
+       style="font-size:25.4px;line-height:1.25;font-family:FreeSerif;-inkscape-font-specification:FreeSerif;display:inline;stroke-width:0.264583"
+       x="57.214001"
+       y="60.543201"
+       id="text20803"><tspan
+         sodipodi:role="line"
+         id="tspan20801"
+         style="font-size:25.4px;stroke-width:0.264583"
+         x="57.214001"
+         y="60.543201">coleitra</tspan></text>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer3"
+     inkscape:label="2 Dark blue Card"
+     style="display:inline">
+    <g
+       id="g6012"
+       transform="translate(47.019575,47.019575)"
+       style="fill:#4355db;fill-opacity:1;filter:url(#filter20083)">
+      <path
+         id="path6002"
+         style="fill:#4355db;fill-opacity:1;fill-rule:evenodd;stroke-width:0.264583"
+         d="M 0,7.7928821e-7 H 105 L 104.8189,16.570528 105,75 H 0 L 0.147184,16.570528 Z"
+         sodipodi:nodetypes="ccccccc" />
+      <path
+         style="fill:#4355db;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 0,20.000001 H 105"
+         id="path6004"
+         sodipodi:nodetypes="cc" />
+      <path
+         style="fill:#4355db;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 0,35.000001 H 105"
+         id="path6006"
+         sodipodi:nodetypes="cc" />
+      <path
+         style="fill:#4355db;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 0,65.000001 H 105"
+         id="path6008"
+         sodipodi:nodetypes="cc" />
+      <path
+         style="fill:#4355db;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 0,50.000001 H 105"
+         id="path6010"
+         sodipodi:nodetypes="cc" />
+    </g>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer12"
+     inkscape:label="2 Dark blue Cardtext"
+     style="display:none">
+    <text
+       xml:space="preserve"
+       style="font-size:12.3472px;line-height:1.25;font-family:FreeSerif;-inkscape-font-specification:FreeSerif;letter-spacing:0px;display:inline;stroke-width:0.264583"
+       x="49.980793"
+       y="77.974846"
+       id="text20841"><tspan
+         sodipodi:role="line"
+         style="font-size:12.3472px;stroke-width:0.264583"
+         x="49.980793"
+         y="77.974846"
+         id="tspan20837">Lore</tspan><tspan
+         sodipodi:role="line"
+         style="font-size:12.3472px;stroke-width:0.264583"
+         x="49.980793"
+         y="93.408844"
+         id="tspan20839">Ipsum...</tspan></text>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer13"
+     inkscape:label="2 Dark blue Logotext"
+     style="display:none">
+    <text
+       xml:space="preserve"
+       style="font-size:25.4px;line-height:1.25;font-family:FreeSerif;-inkscape-font-specification:FreeSerif;display:inline;stroke-width:0.264583"
+       x="62.214001"
+       y="65.543198"
+       id="text20797"><tspan
+         sodipodi:role="line"
+         id="tspan20795"
+         style="font-size:25.4px;stroke-width:0.264583"
+         x="62.214001"
+         y="65.543198">coleitra</tspan></text>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="1 Purple Card"
+     style="display:inline">
+    <g
+       id="g6042"
+       transform="matrix(1.0036484,0,0,1.0036484,51.817087,51.871814)"
+       style="fill:#d23be7;fill-opacity:1;filter:url(#filter20083)">
+      <path
+         id="path6032"
+         style="fill:#d23be7;fill-opacity:1;fill-rule:evenodd;stroke-width:0.264583"
+         d="M 0,7.7928821e-7 H 105 L 104.8189,16.570528 105,75 H 0 L 0.147184,16.570528 Z"
+         sodipodi:nodetypes="ccccccc" />
+      <path
+         style="fill:#d23be7;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 0,20.000001 H 105"
+         id="path6034"
+         sodipodi:nodetypes="cc" />
+      <path
+         style="fill:#d23be7;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 0,35.000001 H 105"
+         id="path6036"
+         sodipodi:nodetypes="cc" />
+      <path
+         style="fill:#d23be7;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 0,65.000001 H 105"
+         id="path6038"
+         sodipodi:nodetypes="cc" />
+      <path
+         style="fill:#d23be7;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 0,50.000001 H 105"
+         id="path6040"
+         sodipodi:nodetypes="cc" />
+    </g>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer11"
+     inkscape:label="1 Purple Cardtext"
+     style="display:none">
+    <text
+       xml:space="preserve"
+       style="font-size:12.3472px;line-height:1.25;font-family:FreeSerif;-inkscape-font-specification:FreeSerif;letter-spacing:0px;display:inline;stroke-width:0.264583"
+       x="21.172285"
+       y="62.972549"
+       id="text4608"
+       transform="translate(33.808326,20.002091)"><tspan
+         sodipodi:role="line"
+         style="font-size:12.3472px;stroke-width:0.264583"
+         x="21.172285"
+         y="62.972549"
+         id="tspan6942">Lore</tspan><tspan
+         sodipodi:role="line"
+         style="font-size:12.3472px;stroke-width:0.264583"
+         x="21.172285"
+         y="78.406548"
+         id="tspan12868">Ipsum...</tspan></text>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer10"
+     inkscape:label="1 Purple Logotext"
+     style="display:inline">
+    <text
+       xml:space="preserve"
+       style="font-size:25.4px;line-height:1.25;font-family:FreeSerif;-inkscape-font-specification:FreeSerif;display:inline;stroke-width:0.264583"
+       x="33.405819"
+       y="50.540646"
+       id="text15136"
+       transform="translate(33.808326,20.002091)"><tspan
+         sodipodi:role="line"
+         id="tspan15134"
+         style="font-size:25.4px;stroke-width:0.264583"
+         x="33.405819"
+         y="50.540646">coleitra</tspan></text>
+  </g>
+</svg>

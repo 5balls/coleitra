@@ -33,9 +33,10 @@ ColeitraPage {
         Column {
             width: parent.width
             Image {
-                width: parent.width
-                source: "logo.svg"
-                sourceSize.width: parent.width
+                height: parent.parent.parent.height/3.0
+                source: "logo.png"
+                fillMode: Image.PreserveAspectFit
+                anchors.horizontalCenter: parent.horizontalCenter
             }
             @<Coleitra label @'"Version"@' with value @'About.coleitraVersion@'@>
             @<Coleitra label @'"GIT commit:"@' with value @'About.gitVersion@'@>

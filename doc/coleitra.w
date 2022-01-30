@@ -50,6 +50,8 @@
 
 @i networkscheduler.w
 
+@i startupsequence.w
+
 @i gui.w
 
 @i levenshteindistance.w

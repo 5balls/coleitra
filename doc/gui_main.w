@@ -26,24 +26,42 @@ import QtQuick.Window 2.11
 
 ApplicationWindow {
     id: window
-    visible: true
-    visibility: Window.FullScreen
+    visibility: Window.Hidden
     title: qsTr("coleitra")
     //useSafeArea: false
 
     @<Main header@>
 
-    @<Main drawer@>
-
-    StackView {
+    Component {
         id: stackView
-        initialItem: "train.qml"
+        StackView {
+            initialItem: "splash.qml"
+            anchors.fill: parent
+            onCurrentItemChanged: {
+                currentItem.forceActiveFocus()
+            }
+        }
+    }
+    Loader {
+        id: loader
         anchors.fill: parent
-        onCurrentItemChanged: {
-            currentItem.forceActiveFocus()
+        asynchronous: true
+        opacity: 0
+        focus: true
+        sourceComponent: stackView
+        onLoaded: {
+            window.visibility = Window.FullScreen;
+            loader.opacity = 1;
+        }
+        Behavior on opacity {
+            NumberAnimation {
+                duration: 200
+                easing.type: Easing.OutQuad;
+            }
         }
     }
 
+    @<Main drawer@>
 }
 
 @}
@@ -53,19 +71,21 @@ ApplicationWindow {
 @d Main header
 @{
 header: ToolBar {
+    id: toolBar
+    visible: false
     contentHeight: toolButton.implicitHeight
     ToolButton {
         id: toolButton
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
         background: Image {
-            source: stackView.depth > 1 ? "back.svg" : "settings.svg"
+            source: loader.item.depth > 2 ? "back.svg" : "settings.svg"
             sourceSize.height: 50
             fillMode: Image.PreserveAspectFit
         }
         onClicked: {
-            if (stackView.depth > 1) {
-                stackView.pop()
+            if (loader.item.depth > 2) {
+                loader.item.pop()
             } else {
                 drawer.open()
             }
@@ -73,7 +93,7 @@ header: ToolBar {
     }
 
     Label {
-        text: stackView.currentItem.title
+        text: loader.item.currentItem.title
         anchors.centerIn: parent
     }
 }
@@ -88,8 +108,8 @@ ItemDelegate {
     text: "@1"
     width: parent.width
     onClicked: {
-        stackView.push("@2")
-        drawer.close()
+        loader.item.push("@2");
+        drawer.close();
     }
 }
 @}
@@ -101,6 +121,7 @@ Drawer {
     id: drawer
     width: window.width * 0.66
     height: window.height
+    visible: false
 
     Column {
         anchors.fill: parent

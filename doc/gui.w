@@ -18,6 +18,8 @@
 \chapter{GUI-Elements}
 \index{GUI}
 
+@i gui_splash.w
+
 @i gui_main.w
 
 @i gui_train.w
@@ -246,6 +248,7 @@ Row {
     Label {
         id: myLabel
         width: parent.width / 2.0
+        wrapMode: Text.WordWrap
     }
 
     Label {
