@@ -36,62 +36,7 @@ The definitions in the grammarprovider class are currently hardcoded. To make th
       ]
     },
     "language": {
-        "description": "Language name in english",
-        "type": "string",
-        "enum": [
-            "English",
-            "Mandarin Chinese",
-            "Hindi",
-            "Spanish",
-            "French",
-            "Standard Arabic",
-            "Bengali",
-            "Russian",
-            "Portuguese",
-            "Indonesian",
-            "Urdu",
-            "German",
-            "Japanese",
-            "Swahili",
-            "Marathi",
-            "Telugu",
-            "Turkish",
-            "Yue Chinese",
-            "Tamil",
-            "Punjabi",
-            "Wu Chinese",
-            "Korean",
-            "Vietnamese",
-            "Hausa",
-            "Javanese",
-            "Egyptian Arabic",
-            "Italian",
-            "Thai",
-            "Gujarati",
-            "Kannada",
-            "Persian",
-            "Bhojpuri",
-            "Southern Min",
-            "Filipino",
-            "Dutch",
-            "Danish",
-            "Greek",
-            "Finnish",
-            "Swedish",
-            "Czech",
-            "Estonian",
-            "Hungarian",
-            "Latvian",
-            "Lithuanian",
-            "Maltese",
-            "Polish",
-            "Slovak",
-            "Slovene",
-            "Bulgarian",
-            "Irish",
-            "Romanian",
-            "Croatian"
-        ]
+        "$ref": "#/$defs/language"
     },
     "base_url": {
       "description": "URL to base queries on",
@@ -118,8 +63,8 @@ The definitions in the grammarprovider class are currently hardcoded. To make th
             },
             "minItems": 1
           },
-          "cells": {
-            "description": "Array of instructions how to parse cells in table",
+          "forms": {
+            "description": "Array of instructions how to parse forms (can be cells in a table)",
             "type": "array",
             "items": {
               "description": "How to parse this particular cell",
@@ -127,16 +72,26 @@ The definitions in the grammarprovider class are currently hardcoded. To make th
               "additionalProperties": false,
               "properties": {
                 "index": {
-                  "description": "Index of cell, i.e. to describe in which order the forms are going to be processed. This is important if some cells depent on other cells in the same table. If no index is given, the next free index - starting from 1 is used which may not be what you want. Unless you don't do any reordering (in which case you can omit all indices) you should probably give all cells indices.",
+                  "description": "Index of cell, i.e. to describe in which order the forms are going to be processed. This is important if some forms depent on other forms. If no index is given, the next free index - starting from 1 is used which may not be what you want. Unless you don't do any reordering (in which case you can omit all indices) you should probably give all forms indices.",
                   "type": "number"
                 },
-                "row": {
-                  "description": "Row of cell in table",
-                  "type": "number"
-                },
-                "column": {
-                  "description": "Column of cell in table",
-                  "type": "number"
+                "source": {
+                    "description": "How to obtain the text string for later processing",
+                    "type": "object",
+                    "properties": {
+                        "row": {
+                            "description": "Row of cell in table",
+                            "type": "number"
+                        },
+                        "column": {
+                            "description": "Column of cell in table",
+                            "type": "number"
+                        },
+                        "xquery": {
+                            "description": "XQuery 1.0 expression to obtain information from xml",
+                            "type": "string"
+                        }
+                    }
                 },
                 "grammarexpressions": {
                   "$ref": "#/$defs/grammarexpressions"
@@ -193,7 +148,7 @@ The definitions in the grammarprovider class are currently hardcoded. To make th
         "required": [
           "tablename",
           "identifiers",
-          "cells"
+          "forms"
         ]
       }
     }
@@ -204,6 +159,64 @@ The definitions in the grammarprovider class are currently hardcoded. To make th
     "base_url"
   ],
   "$defs": {
+      "language": {
+          "description": "Language name in english",
+          "type": "string",
+          "enum": [
+              "English",
+              "Mandarin Chinese",
+              "Hindi",
+              "Spanish",
+              "French",
+              "Standard Arabic",
+              "Bengali",
+              "Russian",
+              "Portuguese",
+              "Indonesian",
+              "Urdu",
+              "German",
+              "Japanese",
+              "Swahili",
+              "Marathi",
+              "Telugu",
+              "Turkish",
+              "Yue Chinese",
+              "Tamil",
+              "Punjabi",
+              "Wu Chinese",
+              "Korean",
+              "Vietnamese",
+              "Hausa",
+              "Javanese",
+              "Egyptian Arabic",
+              "Italian",
+              "Thai",
+              "Gujarati",
+              "Kannada",
+              "Persian",
+              "Bhojpuri",
+              "Southern Min",
+              "Filipino",
+              "Dutch",
+              "Danish",
+              "Greek",
+              "Finnish",
+              "Swedish",
+              "Czech",
+              "Estonian",
+              "Hungarian",
+              "Latvian",
+              "Lithuanian",
+              "Maltese",
+              "Polish",
+              "Slovak",
+              "Slovene",
+              "Bulgarian",
+              "Irish",
+              "Romanian",
+              "Croatian"
+          ]
+    },
     "grammarexpressions": {
       "description": "Grammar expressions which fit the cell",
       "type": "object",
@@ -428,11 +441,13 @@ The definitions in the grammarprovider class are currently hardcoded. To make th
         "fi-conj-sanoa",
         "fi-conj-muistaa"
       ],
-      "cells": [
+      "forms": [
         {
           "index": 1,
-          "row": 5,
-          "column": 3,
+          "source": {
+              "row": 5,
+              "column": 3
+          },
           "grammarexpressions": {
             "format": "coleitra",
             "version": "0.1",
