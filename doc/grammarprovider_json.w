@@ -136,8 +136,7 @@ The definitions in the grammarprovider class are currently hardcoded. To make th
                 }
               },
               "required": [
-                "row",
-                "column",
+                "source",
                 "grammarexpressions"
               ]
             },
