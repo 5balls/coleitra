@@ -27,6 +27,7 @@ main.h
 train.h
 edit.h
 grammarprovider.h
+grammarprovider_wiktionary_word.h
 databaseedit.h
 levenshteindistance.h
 networkscheduler.h
@@ -45,6 +46,7 @@ startupsequence.h @}
 @1train.cpp
 @1edit.cpp
 @1grammarprovider.cpp 
+@1grammarprovider_wiktionary_word.cpp 
 @1databaseedit.cpp
 @1levenshteindistance.cpp
 @1networkscheduler.cpp

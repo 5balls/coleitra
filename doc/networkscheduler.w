@@ -59,10 +59,10 @@ private slots:
     networkRequestStatus checkReplyAndRetryIfNecessary(QNetworkReply* reply, QString& s_reply);
     QNetworkReply* repeatNetworkRequest(QUrl url);
 signals:
-    void processingStart(void);
+    void processingStart(QObject* caller);
     void replyError(QNetworkReply::NetworkError error);
     void requestFailed(QObject* caller, QString s_reason);
-    void processingStop(void);
+    void processingStop(QObject* caller);
 @<End of class and header @>
 @}
 
@@ -115,12 +115,12 @@ void networkscheduler::processNetworkAnswer(QNetworkReply* reply){
         case RETRYING_REQUEST:
             return;
         case PERMANENT_NETWORK_ERROR:
-            emit processingStop();
+            emit processingStop(m_request_list[url_request].caller);
             return;
     }
     m_request_list[url_request].s_answer = ms_network_answer;
     //qDebug() << QDateTime::currentMSecsSinceEpoch() - start_time << "ms for request";
-    emit processingStop();
+    emit processingStop(m_request_list[url_request].caller);
     (m_request_list[url_request].f_callback)(ms_network_answer);
 }
 @}
@@ -242,7 +242,7 @@ giveup:
 @{
 QNetworkReply* networkscheduler::requestNetworkReply(QObject* caller, QString s_url, std::function<void(QString)> slot){
     start_time = QDateTime::currentMSecsSinceEpoch();
-    emit processingStart();
+    emit processingStart(caller);
     QUrl url = QUrl(s_url);
     m_request_list[url] = {slot,"",caller};
     QNetworkRequest request(url);

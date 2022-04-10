@@ -22,6 +22,8 @@ This is an implementation of a grammar provider querying information from the AP
 
 @i grammarprovider_support_status.w
 
+@i grammarprovider_wiktionary_word.w
+
 \section{Helper scripts}
 \subsection{Get templates}
 
@@ -305,13 +307,16 @@ public:
                         l_inflection_tables.push_back(t_inflectiontable);
                     }
                 }
-                
             }
         database* p_database;
         int i_language_id;
         QString s_version;
         QString s_base_url;
         QList<t_grammarConfigurationInflectionTable> l_inflection_tables;
+    };
+    enum class e_wiktionaryRequestPurpose {
+        FLECTION,
+        ETYMOLOGY
     };
 public slots:
     Q_INVOKABLE void getGrammarInfoForWord(QObject* caller, int languageid, QString word);
@@ -322,7 +327,7 @@ private slots:
     QList<grammarprovider::compoundPart> getGrammarCompoundFormParts(QString compoundword, QList<QString> compoundstrings, int id_language);
     void getWiktionarySections(QObject *caller);
     void getWiktionarySection(QString reply, QObject* caller);
-    void getWiktionaryTemplate(QString reply, QObject* caller);
+    void getWiktionaryTemplate(QString reply, QObject* caller, e_wiktionaryRequestPurpose purpose);
     templatearguments parseTemplateArguments(QString templateString);
     void parseMediawikiTableToPlainText(QString wikitext, QList<grammarprovider::tablecell>& table);
     void parse_compoundform(QString reply, QObject* caller);
@@ -346,6 +351,7 @@ signals:
 
     void grammarInfoAvailable(QObject* caller, int numberOfObjects, bool silent);
     void grammarInfoNotAvailable(QObject* caller, bool silent);
+    void etymologyInfoNotAvailable(QObject* caller, bool silent);
     void gotGrammarInfoForWord(QObject* caller, int numberOfObjects, bool silent);
     void noGrammarInfoForWord(QObject* caller, bool silent);
     void formObtained(QObject* caller, bool silent, grammarform form);
@@ -382,6 +388,7 @@ private:
     templatearguments m_currentarguments;
     QList<grammarform> m_grammarforms;
     QList<grammarform> mi_grammarforms;
+    QList<t_grammarConfiguration> m_grammarConfigurations;
     QList<scheduled_lookup> m_scheduled_lookups;
     QMap<int, void (grammarprovider::*)(QObject*,int)> m_requirements_map;
     QMap<int, QList<QPair<QString,int> > (grammarprovider::*)(QObject* caller, int id, int lexeme_id, QList<int> compound_lexemes)> m_compound_parser_map;
@@ -669,6 +676,7 @@ void grammarprovider::getGrammarInfoForWord(QObject* caller, int languageid, QSt
             [&](QObject* caller, bool silent){
             if(caller == &waitloop){
             //qDebug() << "Got grammarInfoNotComplete signal in lambda function for getGrammarInfoForWord" << m_word << caller;
+            // FIXME handling of unknown templates
             disconnect(gia_con);
             disconnect(gina_con);
             disconnect(ne_con);
@@ -786,10 +794,10 @@ void grammarprovider::getWiktionarySection(QString s_reply, QObject* caller){
                                     waitloop.quit();
                                 }
                             });
-                    gina_con = connect(this, &grammarprovider::grammarInfoNotAvailable,
+                    gina_con = connect(this, &grammarprovider::etymologyInfoNotAvailable,
                             [&](QObject* caller, bool silent){
                                 if(caller == &waitloop){
-                                    //qDebug() << "Got grammarInfoNotAvailable signal in lambda function for etymology section" << m_word << caller;
+                                    //qDebug() << "Got etymologyInfoNotAvailable signal in lambda function for etymology section" << m_word << caller;
                                     disconnect(gic_con);
                                     disconnect(gina_con);
                                     disconnect(ne_con);
@@ -807,7 +815,7 @@ void grammarprovider::getWiktionarySection(QString s_reply, QObject* caller){
                                 }
                             });
                     best_bet_for_section = j_section["index"].toString().toInt();
-                    m_networkscheduler->requestNetworkReply(&waitloop,s_baseurl + "action=parse&page=" + m_word + "&section=" + QString::number(best_bet_for_section) + "&prop=wikitext&format=json", std::bind(&grammarprovider::getWiktionaryTemplate,this,std::placeholders::_1,&waitloop));
+                    m_networkscheduler->requestNetworkReply(&waitloop,s_baseurl + "action=parse&page=" + m_word + "&section=" + QString::number(best_bet_for_section) + "&prop=wikitext&format=json", std::bind(&grammarprovider::getWiktionaryTemplate,this,std::placeholders::_1,&waitloop,e_wiktionaryRequestPurpose::ETYMOLOGY));
                     //qDebug() << "Blocking waitloop for" << m_word << "...";
                     waitloop.exec();
                     //qDebug() << "... blocking waitloop for" << m_word << "finished.";
@@ -833,7 +841,7 @@ void grammarprovider::getWiktionarySection(QString s_reply, QObject* caller){
     finished:
     if(found_language){
         //qDebug() << "Found language section \"" + language + "\" for word \"" + m_word + "\"";
-        m_networkscheduler->requestNetworkReply(caller,s_baseurl + "action=parse&page=" + m_word + "&section=" + QString::number(best_bet_for_section) + "&prop=wikitext&format=json", std::bind(&grammarprovider::getWiktionaryTemplate,this,std::placeholders::_1,caller));
+        m_networkscheduler->requestNetworkReply(caller,s_baseurl + "action=parse&page=" + m_word + "&section=" + QString::number(best_bet_for_section) + "&prop=wikitext&format=json", std::bind(&grammarprovider::getWiktionaryTemplate,this,std::placeholders::_1,caller,e_wiktionaryRequestPurpose::FLECTION));
     }
     else{
         //qDebug() << "Could not find language section \"" + language + "\" for word \"" + m_word + "\"";
@@ -872,8 +880,7 @@ grammarprovider::templatearguments grammarprovider::parseTemplateArguments(QStri
 \cprotect\subsection{\verb#getWiktionaryTemplate#}
 @O ../src/grammarprovider.cpp -d
 @{
-void grammarprovider::getWiktionaryTemplate(QString s_reply, QObject* caller){
- 
+void grammarprovider::getWiktionaryTemplate(QString s_reply, QObject* caller, grammarprovider::e_wiktionaryRequestPurpose purpose){
     QJsonDocument j_document = QJsonDocument::fromJson(s_reply.toUtf8());
     QString wikitemplate_text = j_document.object()["parse"].toObject()["wikitext"].toObject()["*"].toString();
     QStringList wt_firsts = wikitemplate_text.split("{{");
@@ -930,10 +937,33 @@ void grammarprovider::getWiktionaryTemplate(QString s_reply, QObject* caller){
                 }
                 return;
             }
+            else{
+                // Not known yet:
+                m_currentarguments = parseTemplateArguments(wt_finished);
+//                m_networkscheduler->requestNetworkReply(caller,s_baseurl + "action=expandtemplates&text=" + QUrl::toPercentEncoding(wt_finished) + "&title=" + m_word + "&prop=wikitext&format=json", std::bind(parser.value(),this,std::placeholders::_1,caller));
+            }
         }
     }
-    //qDebug() << "Template(s)" << wt_finisheds << "not supported!";
-    emit grammarInfoNotAvailable(caller, m_silent);
+    for(auto& grammarConfiguration: m_grammarConfigurations){
+        for(auto& inflectionTable: grammarConfiguration.l_inflection_tables){
+            for(auto& s_identifier: inflectionTable.l_identifiers){
+                for(auto& wt_finished: wt_finisheds){
+                    m_currentarguments = parseTemplateArguments(wt_finished);
+                    //FIXME
+                }
+            }
+        }
+    }
+    switch(purpose){
+        case e_wiktionaryRequestPurpose::FLECTION:
+            emit grammarInfoNotAvailable(caller, m_silent);
+            qDebug() << "Template(s) for flection section " << wt_finisheds << "not supported!";
+            break;
+        case e_wiktionaryRequestPurpose::ETYMOLOGY:
+            emit etymologyInfoNotAvailable(caller, m_silent);
+            qDebug() << "Template(s) for etymology section " << wt_finisheds << "not supported!";
+            break;
+    }
 }
 @}
 
