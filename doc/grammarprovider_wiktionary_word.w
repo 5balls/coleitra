@@ -17,7 +17,6 @@
 
 \section{Wiktionary grammar provider}
 
-
 This class implements the lookup of a word in wiktionary. Each word lookup is an instance of this class and this class may create other objects of itself as dependencies (i.e. for compound words).
 
 \subsection{Interface}
