@@ -24,4 +24,6 @@
 *.lg
 *.tmp
 *.xref
+*.xml
+latexml*
 tags

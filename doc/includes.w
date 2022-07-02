@@ -21,7 +21,6 @@
 \usepackage[margin=3cm]{geometry}
 \usepackage[nottoc]{tocbibind}
 \usepackage{longtable}
-\usepackage{cprotect}
 \usepackage{verbatim}
 \usepackage{pgf-umlsd}
 \usepackage{tikz}

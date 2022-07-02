@@ -280,7 +280,7 @@ edit::~edit() {
 }
 @}
 
-\cprotect\subsection{\verb#createGrammarFormId#}
+\subsection{createGrammarFormId}
 @O ../src/edit.cpp -d
 @{
 int edit::createGrammarFormId(int language, QList<QList<QString> > grammarexpressions){
@@ -288,7 +288,7 @@ int edit::createGrammarFormId(int language, QList<QList<QString> > grammarexpres
 }
 @}
 
-\cprotect\subsection{\verb#addForm#}
+\subsection{addForm}
 @O ../src/edit.cpp -d
 @{
 void edit::addForm(int lexemeid, int formid, int grammarform, grammarprovider::grammarform m_form, int languageid, int translationid){
@@ -300,7 +300,7 @@ void edit::addForm(int lexemeid, int formid, int grammarform, grammarprovider::g
 }
 @}
 
-\cprotect\subsection{\verb#getCreateLexeme#}
+\subsection{getCreateLexeme}
 @O ../src/edit.cpp -d
 @{
 edit::lexeme& edit::getCreateLexeme(int lexemeid, int languageid, int translationid){
@@ -324,7 +324,7 @@ edit::lexeme& edit::getCreateLexeme(int lexemeid, int languageid, int translatio
 }
 @}
 
-\cprotect\subsection{\verb#addSentence#}
+\subsection{addSentence}
 @O ../src/edit.cpp -d
 @{
 void edit::addSentence(int lexemeid, int sentenceid, int grammarform, QList<QList<int> > parts, int languageid, int translationid){
@@ -352,7 +352,7 @@ void edit::addSentence(int lexemeid, int sentenceid, int grammarform, QList<QLis
 }
 @}
 
-\cprotect\subsection{\verb#lookupFormStringFromId#}
+\subsection{lookupFormStringFromId}
 @O ../src/edit.cpp -d
 @{
 QString edit::lookupFormStringFromId(int formid){
@@ -376,7 +376,7 @@ QString edit::lookupFormStringFromId(int formid){
 }
 @}
 
-\cprotect\subsection{\verb#lookupForm#}
+\subsection{lookupForm}
 @O ../src/edit.cpp -d
 @{
 int edit::lookupForm(int language, int lexemeid, QString string, QList<QList<QString> > grammarexpressions){
@@ -419,7 +419,7 @@ int edit::lookupForm(int language, int lexemeid, QString string, QList<QList<QSt
 }
 @}
 
-\cprotect\subsection{\verb#placeOfLexeme#}
+\subsection{placeOfLexeme}
 @O ../src/edit.cpp -d
 @{
 int edit::placeOfLexeme(int lexemeid){
@@ -451,7 +451,7 @@ int edit::placeOfLexeme(int lexemeid){
 }
 @}
 
-\cprotect\subsection{\verb#lookupLexeme#}
+\subsection{lookupLexeme}
 @O ../src/edit.cpp -d
 @{
 int edit::lookupLexeme(int formid){
@@ -476,7 +476,7 @@ int edit::lookupLexeme(int formid){
 }
 @}
 
-\cprotect\subsection{\verb#prettyPrintLexeme#}
+\subsection{prettyPrintLexeme}
 @O ../src/edit.cpp -d
 @{
 QString edit::prettyPrintLexeme(int lexeme_id){
@@ -524,7 +524,7 @@ QString edit::prettyPrintLexeme(int lexeme_id){
 }
 @}
 
-\cprotect\subsection{\verb#formIdToNewId#}
+\subsection{formIdToNewId}
 @O ../src/edit.cpp -d
 @{
 int edit::formIdToNewId(int id){
@@ -547,7 +547,7 @@ int edit::formIdToNewId(int id){
 }
 @}
 
-\cprotect\subsection{\verb#stringFromFormId#}
+\subsection{stringFromFormId}
 @O ../src/edit.cpp -d
 @{
 QString edit::stringFromFormId(int formid){
@@ -570,7 +570,7 @@ QString edit::stringFromFormId(int formid){
 }
 @}
 
-\cprotect\subsection{\verb#grammarIdFromFormId#}
+\subsection{grammarIdFromFormId}
 @O ../src/edit.cpp -d
 @{
 int edit::grammarIdFromFormId(int formid){
@@ -593,7 +593,7 @@ int edit::grammarIdFromFormId(int formid){
 }
 @}
 
-\cprotect\subsection{\verb#lookupFormLexeme#}
+\subsection{lookupFormLexeme}
 @O ../src/edit.cpp -d
 @{
 int edit::lookupFormLexeme(int language, int lexemeid, QString string, QList<QList<QString> > grammarexpressions){
@@ -638,7 +638,7 @@ int edit::lookupFormLexeme(int language, int lexemeid, QString string, QList<QLi
 }
 @}
 
-\cprotect\subsection{\verb#addLexeme#}
+\subsection{addLexeme}
 @O ../src/edit.cpp -d
 @{
 void edit::addLexeme(int lexemeid, int languageid, int translationid){
@@ -653,7 +653,7 @@ void edit::addLexeme(int lexemeid, int languageid, int translationid){
 }
 @}
 
-\cprotect\subsection{\verb#removeLexeme#}
+\subsection{removeLexeme}
 @O ../src/edit.cpp -d
 @{
 bool edit::removeLexeme(int lexemeid){
@@ -680,7 +680,7 @@ bool edit::removeLexeme(int lexemeid){
 }
 @}
 
-\cprotect\subsection{\verb#getLexeme#}
+\subsection{getLexeme}
 @O ../src/edit.cpp -d
 @{
 edit::lexeme edit::getLexeme(int lexeme_id){
@@ -706,7 +706,7 @@ edit::lexeme edit::getLexeme(int lexeme_id){
 }
 @}
 
-\cprotect\subsection{\verb#addScheduledLexemeHeuristically#}
+\subsection{addScheduledLexemeHeuristically}
 @O ../src/edit.cpp -d
 @{
 void edit::addScheduledLexemeHeuristically(void){
@@ -724,7 +724,7 @@ void edit::addScheduledLexemeHeuristically(void){
 }
 @}
 
-\cprotect\subsection{\verb#debugStatusCuedLexemes#}
+\subsection{debugStatusCuedLexemes}
 @O ../src/edit.cpp -d
 @{
 void edit::debugStatusCuedLexemes(){
@@ -746,7 +746,7 @@ void edit::debugStatusCuedLexemes(){
 }
 @}
 
-\cprotect\subsection{\verb#moveLexemeOutOfTranslation#}
+\subsection{moveLexemeOutOfTranslation}
 @O ../src/edit.cpp -d
 @{
 void edit::moveLexemeOutOfTranslation(int language, QString text){
@@ -773,7 +773,7 @@ void edit::moveLexemeOutOfTranslation(int language, QString text){
 }
 @}
 
-\cprotect\subsection{\verb#addLexemeHeuristically#}
+\subsection{addLexemeHeuristically}
 @O ../src/edit.cpp -d
 @{
 void edit::addLexemeHeuristically(QObject* caller, int languageid, QString lexemestring, int translationid, bool delayresult){
@@ -885,7 +885,7 @@ void edit::addLexemeHeuristically(QObject* caller, int languageid, QString lexem
 }
 @}
 
-\cprotect\subsection{\verb#networkErrorFromGrammarProvider#}
+\subsection{networkErrorFromGrammarProvider}
 @O ../src/edit.cpp -d
 @{
 void edit::networkErrorFromGrammarProvider(QObject* caller, bool silent, QString s_failure_reason){
@@ -895,7 +895,7 @@ void edit::networkErrorFromGrammarProvider(QObject* caller, bool silent, QString
 }
 @}
 
-\cprotect\subsection{\verb#noGrammarInfoForWordFromGrammarProvider#}
+\subsection{noGrammarInfoForWordFromGrammarProvider}
 @O ../src/edit.cpp -d
 @{
 void edit::noGrammarInfoForWordFromGrammarProvider(QObject* caller, bool silent){
@@ -907,7 +907,7 @@ void edit::noGrammarInfoForWordFromGrammarProvider(QObject* caller, bool silent)
 }
 @}
 
-\cprotect\subsection{\verb#gotGrammarInfoForWordFromGrammarProvider#}
+\subsection{gotGrammarInfoForWordFromGrammarProvider}
 @O ../src/edit.cpp -d
 @{
 void edit::gotGrammarInfoForWordFromGrammarProvider(QObject* caller, int numberOfObjects, bool silent){
@@ -918,7 +918,7 @@ void edit::gotGrammarInfoForWordFromGrammarProvider(QObject* caller, int numberO
 }
 @}
 
-\cprotect\subsection{\verb#formObtainedFromGrammarProvider#}
+\subsection{formObtainedFromGrammarProvider}
 @O ../src/edit.cpp -d
 @{
 void edit::formObtainedFromGrammarProvider(QObject* caller, bool silent, grammarprovider::grammarform form){
@@ -956,7 +956,7 @@ void edit::formObtainedFromGrammarProvider(QObject* caller, bool silent, grammar
 }
 @}
 
-\cprotect\subsection{\verb#compoundFormObtainedFromGrammarProvider#}
+\subsection{compoundFormObtainedFromGrammarProvider}
 @O ../src/edit.cpp -d
 @{
 void edit::compoundFormObtainedFromGrammarProvider(QObject* caller, QString form, bool silent){
@@ -965,7 +965,7 @@ void edit::compoundFormObtainedFromGrammarProvider(QObject* caller, QString form
 }
 @}
 
-\cprotect\subsection{\verb#sentenceAvailableFromGrammarProvider#}
+\subsection{sentenceAvailableFromGrammarProvider}
 @O ../src/edit.cpp -d
 @{
 void edit::sentenceAvailableFromGrammarProvider(QObject* caller, int parts, bool silent){
@@ -976,7 +976,7 @@ void edit::sentenceAvailableFromGrammarProvider(QObject* caller, int parts, bool
 }
 @}
 
-\cprotect\subsection{\verb#sentenceLookupFormFromGramarProvider#}
+\subsection{sentenceLookupFormFromGramarProvider}
 @O ../src/edit.cpp -d
 @{
 void edit::sentenceLookupFormFromGramarProvider(QObject* caller, QString form, QList<QList<QString> > grammarexpressions, bool silent){
@@ -990,7 +990,7 @@ void edit::sentenceLookupFormFromGramarProvider(QObject* caller, QString form, Q
 }
 @}
 
-\cprotect\subsection{\verb#sentenceLookupFormLexemeFromGrammarProvider#}
+\subsection{sentenceLookupFormLexemeFromGrammarProvider}
 @O ../src/edit.cpp -d
 @{
 void edit::sentenceLookupFormLexemeFromGrammarProvider(QObject* caller, QString form, QList<QList<QString> > grammarexpressions, bool silent){
@@ -1004,7 +1004,7 @@ void edit::sentenceLookupFormLexemeFromGrammarProvider(QObject* caller, QString 
 }
 @}
 
-\cprotect\subsection{\verb#sentenceAddAndUseFormFromGrammarProvider#}
+\subsection{sentenceAddAndUseFormFromGrammarProvider}
 @O ../src/edit.cpp -d
 @{
 void edit::sentenceAddAndUseFormFromGrammarProvider(QObject* caller, QString form, QList<QList<QString> > grammarexpressions, bool silent){
@@ -1016,7 +1016,7 @@ void edit::sentenceAddAndUseFormFromGrammarProvider(QObject* caller, QString for
 }
 @}
 
-\cprotect\subsection{\verb#sentenceAddAndIgnoreFormFromGrammerProvider#}
+\subsection{sentenceAddAndIgnoreFormFromGrammerProvider}
 @O ../src/edit.cpp -d
 @{
 void edit::sentenceAddAndIgnoreFormFromGrammerProvider(QObject* caller, QString form, QList<QList<QString> > grammarexpressions, bool silent){
@@ -1027,7 +1027,7 @@ void edit::sentenceAddAndIgnoreFormFromGrammerProvider(QObject* caller, QString 
 }
 @}
 
-\cprotect\subsection{\verb#sentenceCompleteFromGrammarProvider#}
+\subsection{sentenceCompleteFromGrammarProvider}
 @O ../src/edit.cpp -d
 @{
 void edit::sentenceCompleteFromGrammarProvider(QObject* caller, QList<QList<QString> > grammarexpressions, bool silent){
@@ -1047,7 +1047,7 @@ void edit::sentenceCompleteFromGrammarProvider(QObject* caller, QList<QList<QStr
 }
 @}
 
-\cprotect\subsection{\verb#grammarInfoCompleteFromGrammarProvider#}
+\subsection{grammarInfoCompleteFromGrammarProvider}
 @O ../src/edit.cpp -d
 @{
 void edit::grammarInfoCompleteFromGrammarProvider(QObject* caller, bool silent){
@@ -1074,7 +1074,7 @@ void edit::grammarInfoCompleteFromGrammarProvider(QObject* caller, bool silent){
 }
 @}
 
-\cprotect\subsection{\verb#resetEverything#}
+\subsection{resetEverything}
 @O ../src/edit.cpp -d
 @{
 void edit::resetEverything(void){
@@ -1088,7 +1088,7 @@ void edit::resetEverything(void){
 }
 @}
 
-\cprotect\subsection{\verb#isReadyToSave#}
+\subsection{isReadyToSave}
 @O ../src/edit.cpp -d
 @{
 bool edit::isReadyToSave(void){
@@ -1105,7 +1105,7 @@ bool edit::isReadyToSave(void){
 }
 @}
 
-\cprotect\subsection{\verb#saveToDatabase#}
+\subsection{saveToDatabase}
 @O ../src/edit.cpp -d
 @{
 void edit::saveToDatabase(void){

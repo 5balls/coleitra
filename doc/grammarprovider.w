@@ -436,7 +436,7 @@ private:
 
 @}
 
-\cprotect[om]\subsection[grammarprovider]{\verb#grammarprovider#}
+\subsection[grammarprovider]{grammarprovider}
 @O ../src/grammarprovider.cpp -d
 @{
 grammarprovider::grammarprovider(QObject *parent) : QObject(parent), m_busy(false)
@@ -585,14 +585,14 @@ grammarprovider::grammarprovider(QObject *parent) : QObject(parent), m_busy(fals
 }
 @}
 
-\cprotect\subsection{\verb#~grammarprovider#}
+\subsection{\~{}grammarprovider}
 @O ../src/grammarprovider.cpp -d
 @{
 grammarprovider::~grammarprovider() {
 }
 @}
 
-\cprotect\subsection{\verb#readGrammarConfiguration#}
+\subsection{readGrammarConfiguration}
 @O ../src/grammarprovider.cpp -d
 @{
 bool grammarprovider::readGrammarConfiguration(QString s_fileName, t_grammarConfiguration& t_config)
@@ -635,7 +635,7 @@ bool grammarprovider::readGrammarConfiguration(QString s_fileName, t_grammarConf
 }
 @}
 
-\cprotect\subsection{\verb#getGrammarInfoForWord#}
+\subsection{getGrammarInfoForWord}
 @O ../src/grammarprovider.cpp -d
 @{
 void grammarprovider::getGrammarInfoForWord(QObject* caller, int languageid, QString word){
@@ -709,7 +709,7 @@ void grammarprovider::getGrammarInfoForWord(QObject* caller, int languageid, QSt
 }
 @}
 
-\cprotect\subsection{\verb#getWiktionarySections#}
+\subsection{getWiktionarySections}
 
 \tododocument{Error handling for network requests}
 
@@ -731,7 +731,7 @@ void grammarprovider::getWiktionarySections(QObject* caller){
 }
 @}
 
-\cprotect\subsection{\verb#getWiktionarySection#}
+\subsection{getWiktionarySection}
 @O ../src/grammarprovider.cpp -d
 @{
 void grammarprovider::getWiktionarySection(QString s_reply, QObject* caller){
@@ -853,7 +853,7 @@ void grammarprovider::getWiktionarySection(QString s_reply, QObject* caller){
 }
 @}
 
-\cprotect\subsection{\verb#parseTemplateArguments#}
+\subsection{parseTemplateArguments}
 @O ../src/grammarprovider.cpp -d
 @{
 grammarprovider::templatearguments grammarprovider::parseTemplateArguments(QString templateString){
@@ -877,7 +877,7 @@ grammarprovider::templatearguments grammarprovider::parseTemplateArguments(QStri
 }
 @}
 
-\cprotect\subsection{\verb#getWiktionaryTemplate#}
+\subsection{getWiktionaryTemplate}
 @O ../src/grammarprovider.cpp -d
 @{
 void grammarprovider::getWiktionaryTemplate(QString s_reply, QObject* caller, grammarprovider::e_wiktionaryRequestPurpose purpose){
@@ -967,7 +967,7 @@ void grammarprovider::getWiktionaryTemplate(QString s_reply, QObject* caller, gr
 }
 @}
 
-\cprotect\subsection{\verb#parseMediawikiTableToPlainText#}
+\subsection{parseMediawikiTableToPlainText}
 @O ../src/grammarprovider.cpp -d
 @{
 void grammarprovider::parseMediawikiTableToPlainText(QString wikitext, QList<grammarprovider::tablecell>& table){
@@ -1078,7 +1078,7 @@ void grammarprovider::parseMediawikiTableToPlainText(QString wikitext, QList<gra
 }
 @}
 
-\cprotect\subsection{\verb#process_grammar#}
+\subsection{process\_grammar}
 @O ../src/grammarprovider.cpp -d
 @{
 void grammarprovider::process_grammar(QObject* caller, QList<grammarform> grammarforms, QList<tablecell> parsedTable, QList<QList<QString> > additional_grammarforms){
@@ -1160,7 +1160,7 @@ out:
 }
 @}
 
-\cprotect\subsection{\verb#getNextGrammarObject#}
+\subsection{getNextGrammarObject}
 @O ../src/grammarprovider.cpp -d
 @{
 void grammarprovider::getNextGrammarObject(QObject* caller){
@@ -1287,7 +1287,7 @@ void grammarprovider::getNextGrammarObject(QObject* caller){
 }
 @}
 
-\cprotect\subsection{\verb#getNextSentencePart#}
+\subsection{getNextSentencePart}
 @O ../src/grammarprovider.cpp -d
 @{
 void grammarprovider::getNextSentencePart(QObject* caller){
@@ -1340,7 +1340,7 @@ void grammarprovider::getNextSentencePart(QObject* caller){
 }
 @}
 
-\cprotect\subsection{\verb#getPlainTextTableFromReply#}
+\subsection{getPlainTextTableFromReply}
 @O ../src/grammarprovider.cpp -d
 @{
 void grammarprovider::getPlainTextTableFromReply(QString s_reply, QList<grammarprovider::tablecell>& parsedTable){
@@ -1351,7 +1351,7 @@ void grammarprovider::getPlainTextTableFromReply(QString s_reply, QList<grammarp
 }
 @}
 
-\cprotect\subsection{\verb#getPlainTextTableFromReply#}
+\subsection{getPlainTextTableFromReply}
 @O ../src/grammarprovider.cpp -d
 @{
 void grammarprovider::processNetworkError(QObject* caller, QString s_failure_reason){
@@ -1359,7 +1359,7 @@ void grammarprovider::processNetworkError(QObject* caller, QString s_failure_rea
 }
 @}
 
-\cprotect\subsection{\verb#getGrammarCompoundFormParts#}
+\subsection{getGrammarCompoundFormParts}
 @O ../src/grammarprovider.cpp -d
 @{
 QList<grammarprovider::compoundPart> grammarprovider::getGrammarCompoundFormParts(QString compoundword, QList<QString> compoundstrings, int id_language){
@@ -1431,7 +1431,7 @@ QList<grammarprovider::compoundPart> grammarprovider::getGrammarCompoundFormPart
 }
 @}
 
-\cprotect\subsection{\verb#parse_compoundform#}
+\subsection{parse\_compoundform}
 @O ../src/grammarprovider.cpp -d
 @{
 void grammarprovider::parse_compoundform(QString s_reply, QObject* caller){

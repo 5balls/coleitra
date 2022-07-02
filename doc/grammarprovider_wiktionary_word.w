@@ -127,7 +127,7 @@ private slots:
 @} 
 
 
-\cprotect[om]\subsubsection[grammarprovider]{\verb#grammarprovider#}
+[om]\subsubsection[grammarprovider]{grammarprovider}
 @O ../src/grammarprovider_wiktionary_word.cpp -d
 @{
 
@@ -219,7 +219,7 @@ grammarprovider_wiktionary_word::grammarprovider_wiktionary_word(QString ls_word
 @}
 
 
-\cprotect\subsubsection{\verb#sl_getSections#}
+\subsubsection{sl\_getSections}
 @O ../src/grammarprovider_wiktionary_word.cpp -d
 @{
 
@@ -228,7 +228,7 @@ void grammarprovider_wiktionary_word::sl_getSections(){
 }
 @}
 
-\cprotect\subsection{\verb#sl_evaluateSections#}
+\subsection{sl\_evaluateSections}
 @O ../src/grammarprovider_wiktionary_word.cpp -d
 @{
 void grammarprovider_wiktionary_word::sl_evaluateSections(QString s_reply, QObject* caller){
@@ -276,7 +276,7 @@ void grammarprovider_wiktionary_word::sl_evaluateSections(QString s_reply, QObje
 }
 @}
 
-\cprotect\subsection{\verb#sl_getRequiredSections#}
+\subsection{sl\_getRequiredSections}
 @O ../src/grammarprovider_wiktionary_word.cpp -d
 @{
 void grammarprovider_wiktionary_word::sl_getRequiredSections(void){
@@ -291,7 +291,7 @@ void grammarprovider_wiktionary_word::sl_getRequiredSections(void){
 }
 @}
 
-\cprotect\subsection{\verb#sl_networkQueryForRequiredSection#}
+\subsection{sl\_networkQueryForRequiredSection}
 @O ../src/grammarprovider_wiktionary_word.cpp -d
 @{
 void grammarprovider_wiktionary_word::sl_obtainedSection(QString s_reply, QObject* caller, QString s_currentSection){
@@ -302,7 +302,7 @@ void grammarprovider_wiktionary_word::sl_obtainedSection(QString s_reply, QObjec
 }
 @}
 
-\cprotect\subsection{\verb#sl_processRequiredSections#}
+\subsection{sl\_processRequiredSections}
 @O ../src/grammarprovider_wiktionary_word.cpp -d
 @{
 void grammarprovider_wiktionary_word::sl_processRequiredSections(void){
@@ -362,7 +362,7 @@ void grammarprovider_wiktionary_word::sl_processRequiredSections(void){
 }
 @}
 
-\cprotect\subsection{\verb#sl_processRequiredSections#}
+\subsection{sl\_processRequiredSections}
 @O ../src/grammarprovider_wiktionary_word.cpp -d
 @{
 grammarprovider_wiktionary_word::t_templateArguments grammarprovider_wiktionary_word::sl_parseTemplateArguments(QString s_templateString){

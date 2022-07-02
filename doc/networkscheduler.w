@@ -72,7 +72,7 @@ signals:
 #include "networkscheduler.h"
 @}
 
-\cprotect\subsection{\verb#networkscheduler#}
+\subsection{networkscheduler}
 @O ../src/networkscheduler.cpp -d
 @{
 networkscheduler::networkscheduler(QObject *parent) : QObject(parent),
@@ -84,7 +84,7 @@ m_timeout(1000)
 }
 @}
 
-\cprotect\subsection{\verb#~networkscheduler#}
+\subsection{\~{}networkscheduler}
 @O ../src/networkscheduler.cpp -d
 @{
 networkscheduler::~networkscheduler() {
@@ -94,7 +94,7 @@ networkscheduler::~networkscheduler() {
 @}
 
 
-\cprotect\subsection{\verb#setTimeout#}
+\subsection{setTimeout}
 @O ../src/networkscheduler.cpp -d
 @{
 void networkscheduler::setTimeout(int timeout){
@@ -103,7 +103,7 @@ void networkscheduler::setTimeout(int timeout){
 }
 @}
 
-\cprotect\subsection{\verb#processNetworkAnswer#}
+\subsection{processNetworkAnswer}
 @O ../src/networkscheduler.cpp -d
 @{
 void networkscheduler::processNetworkAnswer(QNetworkReply* reply){
@@ -126,7 +126,7 @@ void networkscheduler::processNetworkAnswer(QNetworkReply* reply){
 @}
 
 
-\cprotect\subsection{\verb#checkReplyAndRetryIfNecessary#}
+\subsection{checkReplyAndRetryIfNecessary}
 @O ../src/networkscheduler.cpp -d
 @{
 networkscheduler::networkRequestStatus networkscheduler::checkReplyAndRetryIfNecessary(QNetworkReply* reply, QString& s_reply){
@@ -237,7 +237,7 @@ giveup:
 @}
 
 
-\cprotect\subsection{\verb#requestNetworkReply#}
+\subsection{requestNetworkReply}
 @O ../src/networkscheduler.cpp -d
 @{
 QNetworkReply* networkscheduler::requestNetworkReply(QObject* caller, QString s_url, std::function<void(QString)> slot){
@@ -257,7 +257,7 @@ QNetworkReply* networkscheduler::requestNetworkReply(QObject* caller, QString s_
 @}
 
 
-\cprotect\subsection{\verb#repeatNetworkRequest#}
+\subsection{repeatNetworkRequest}
 @O ../src/networkscheduler.cpp -d
 @{
 QNetworkReply* networkscheduler::repeatNetworkRequest(QUrl url){

@@ -18,7 +18,7 @@
 \section{Language specific implementations}
 \subsection{Finnish}
 
-\cprotect\subsubsection{\verb#fi_requirements#}
+\subsubsection{fi\_requirements}
 @O ../src/grammarprovider.cpp -d
 @{
 void grammarprovider::fi_requirements(QObject* caller, int fi_id){
@@ -78,7 +78,7 @@ void grammarprovider::fi_requirements(QObject* caller, int fi_id){
 }
 @}
 
-\cprotect\subsubsection{\verb#fi_compound_parser#}
+\subsubsection{fi\_compound\_parser}
 @O ../src/grammarprovider.cpp -d
 @{
 QList<QPair<QString,int> > grammarprovider::fi_compound_parser(QObject* caller, int fi_id, int lexeme_id, QList<int> compound_lexemes){
@@ -86,7 +86,7 @@ QList<QPair<QString,int> > grammarprovider::fi_compound_parser(QObject* caller, 
 }
 @}
 
-\cprotect\subsubsection{\verb#parse_fi_verbs#}
+\subsubsection{parse\_fi\_verbs}
 @O ../src/grammarprovider.cpp -d
 @{
 void grammarprovider::parse_fi_verbs(QString reply, QObject* caller){
@@ -265,7 +265,7 @@ void grammarprovider::parse_fi_verbs(QString reply, QObject* caller){
 }
 @}
 
-\cprotect\subsubsection{\verb#parse_fi_nominals#}
+\subsubsection{parse\_fi\_nominals}
 @O ../src/grammarprovider.cpp -d
 @{
 void grammarprovider::parse_fi_nominals(QString reply, QObject* caller){
@@ -320,7 +320,7 @@ void grammarprovider::parse_fi_nominals(QString reply, QObject* caller){
 
 \subsection{German}
 
-\cprotect\subsubsection{\verb#de_requirements#}
+\subsubsection{de\_requirements}
 @O ../src/grammarprovider.cpp -d
 @{
 void grammarprovider::de_requirements(QObject* caller, int de_id){
@@ -380,7 +380,7 @@ void grammarprovider::de_requirements(QObject* caller, int de_id){
 }
 @}
 
-\cprotect\subsubsection{\verb#parse_de_noun_n#}
+\subsubsection{parse\_de\_noun\_n}
 @O ../src/grammarprovider.cpp -d
 @{
 void grammarprovider::parse_de_noun_n(QString reply, QObject* caller){
@@ -401,7 +401,7 @@ void grammarprovider::parse_de_noun_n(QString reply, QObject* caller){
 }
 @}
 
-\cprotect\subsubsection{\verb#parse_de_noun_m#}
+\subsubsection{parse\_de\_noun\_m}
 @O ../src/grammarprovider.cpp -d
 @{
 void grammarprovider::parse_de_noun_m(QString reply, QObject* caller){
@@ -423,7 +423,7 @@ void grammarprovider::parse_de_noun_m(QString reply, QObject* caller){
 }
 @}
 
-\cprotect\subsubsection{\verb#parse_de_noun_f#}
+\subsubsection{parse\_de\_noun\_f}
 @O ../src/grammarprovider.cpp -d
 @{
 void grammarprovider::parse_de_noun_f(QString reply, QObject* caller){
@@ -445,7 +445,7 @@ void grammarprovider::parse_de_noun_f(QString reply, QObject* caller){
 }
 @}
 
-\cprotect\subsubsection{\verb#parse_de_verb#}
+\subsubsection{parse\_de\_verb}
 @O ../src/grammarprovider.cpp -d
 @{
 void grammarprovider::parse_de_verb(QString reply, QObject* caller){
