@@ -263,20 +263,8 @@ edit::edit(QObject *parent) : QObject(parent), m_add_busy(false), m_current_sent
 @O ../src/edit.cpp -d
 @{
 edit::~edit() {
-    disconnect(m_grammarprovider,&grammarprovider::gotGrammarInfoForWord,this,&edit::gotGrammarInfoForWordFromGrammarProvider);
-    disconnect(m_grammarprovider,&grammarprovider::noGrammarInfoForWord,this,&edit::noGrammarInfoForWordFromGrammarProvider);
-    disconnect(m_grammarprovider,&grammarprovider::networkError, this, &edit::networkErrorFromGrammarProvider);
-    disconnect(m_grammarprovider,&grammarprovider::processingUpdate, this, &edit::processingUpdate);
-
-    disconnect(m_grammarprovider,&grammarprovider::formObtained,this,&edit::formObtainedFromGrammarProvider);
-    disconnect(m_grammarprovider,&grammarprovider::compoundFormObtained,this,&edit::compoundFormObtainedFromGrammarProvider);
-    disconnect(m_grammarprovider,&grammarprovider::sentenceAvailable,this,&edit::sentenceAvailableFromGrammarProvider);
-    disconnect(m_grammarprovider,&grammarprovider::sentenceLookupForm,this,&edit::sentenceLookupFormFromGramarProvider);
-    disconnect(m_grammarprovider,&grammarprovider::sentenceLookupFormLexeme,this,&edit::sentenceLookupFormLexemeFromGrammarProvider);
-    disconnect(m_grammarprovider,&grammarprovider::sentenceAddAndUseForm,this,&edit::sentenceAddAndUseFormFromGrammarProvider);
-    disconnect(m_grammarprovider,&grammarprovider::sentenceAddAndIgnoreForm,this,&edit::sentenceAddAndIgnoreFormFromGrammerProvider);
-    disconnect(m_grammarprovider,&grammarprovider::sentenceComplete,this,&edit::sentenceCompleteFromGrammarProvider);
-    disconnect(m_grammarprovider,&grammarprovider::grammarInfoComplete,this,&edit::grammarInfoCompleteFromGrammarProvider);
+    // Removed disconnects, because they are automatically called when 
+    // QObject's destructor is called
 }
 @}
 
