@@ -28,6 +28,8 @@
 
 @i gui_simpleedit.w
 
+@i gui_newtemplate.w
+
 @i gui_databaseedit.w
 
 @i gui_about.w

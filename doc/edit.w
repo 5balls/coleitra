@@ -193,6 +193,9 @@ private slots:
     void sentenceAddAndIgnoreFormFromGrammerProvider(QObject* caller, QString form, QList<QList<QString> > grammarexpressions, bool silent);
     void sentenceCompleteFromGrammarProvider(QObject* caller, QList<QList<QString> > grammarexpressions, bool silent);
     void grammarInfoCompleteFromGrammarProvider(QObject* caller, bool silent);
+public slots:
+    void possibleTemplateFromGrammarProvider(QObject* caller, bool silent, grammarprovider::templatearguments arguments, QObject* tableView);
+    void possibleTemplateAvailableFromGrammarProvider(QObject* caller, int numberOfObjects, bool silent);
 public:
     Q_INVOKABLE int createGrammarFormId(int language, QList<QList<QString> > grammarexpressions);
     Q_INVOKABLE void addForm(int lexemeid, int formid, int grammarform, grammarprovider::grammarform form, int languageid, int translationid=0);
@@ -212,6 +215,7 @@ public:
     Q_INVOKABLE void moveLexemeOutOfTranslation(int language, QString text);
     Q_INVOKABLE void addLexemeHeuristically(QObject* caller, int languageid, QString lexeme, int translationid, bool delayresult = false);
     Q_INVOKABLE void debugStatusCuedLexemes();
+    Q_INVOKABLE void getNextPossibleTemplate(QObject* caller);
     void addLexeme(int lexemeid, int languageid, int translationid=0);
     bool removeLexeme(int lexemeid);
     lexeme getLexeme(int lexeme_id);
@@ -221,6 +225,8 @@ signals:
     void processingUpdate(const QString &waitingString);
     void processingStop(void);
     void addLexemeHeuristicallyResult(QObject* caller, const QString &result);
+    void possibleTemplateEdit(QObject* caller, QList<QString> unnamed_arguments, QList<QList<QString> > named_arguments, QObject* tableView);
+    void possibleTemplateAvailable(QObject* caller, int numberOfObjects, bool silent);
     void currentPrettyStringUpdated(QObject* caller);
 @<End of class and header @>
 @}
@@ -244,6 +250,8 @@ edit::edit(QObject *parent) : QObject(parent), m_add_busy(false), m_current_sent
     // Connecions:
     connect(m_grammarprovider,&grammarprovider::gotGrammarInfoForWord,this,&edit::gotGrammarInfoForWordFromGrammarProvider);
     connect(m_grammarprovider,&grammarprovider::noGrammarInfoForWord,this,&edit::noGrammarInfoForWordFromGrammarProvider);
+    connect(m_grammarprovider,&grammarprovider::possibleTemplate,this,&edit::possibleTemplateFromGrammarProvider);
+    connect(m_grammarprovider,&grammarprovider::possibleTemplateAvailable,this,&edit::possibleTemplateAvailableFromGrammarProvider);
     connect(m_grammarprovider,&grammarprovider::networkError, this, &edit::networkErrorFromGrammarProvider);
     connect(m_grammarprovider,&grammarprovider::processingUpdate, this, &edit::processingUpdate);
 
@@ -259,7 +267,6 @@ edit::edit(QObject *parent) : QObject(parent), m_add_busy(false), m_current_sent
 }
 @}
 
-\todobug{Some disconnect in this destructor crashes the application. We should ensure the order of destruction of singleton classes in some way as m\_grammarprovider pointer is probably not valid anymore at this point (maybe we can send a signal in the grammarprovider destructor).}
 @O ../src/edit.cpp -d
 @{
 edit::~edit() {
@@ -892,6 +899,44 @@ void edit::noGrammarInfoForWordFromGrammarProvider(QObject* caller, bool silent)
     //qDebug() << __FILE__ << __FUNCTION__ << __LINE__;
     emit addLexemeHeuristicallyResult(m_caller, "<b>Warning:</b> Could not obtain grammar information for this word - could there be a spelling mistake or maybe the word is missing on en.wiktionary.org?");
     m_add_busy = false;
+}
+@}
+
+\subsection{possibleTemplateAvailableFromGrammarProvider}
+@O ../src/edit.cpp -d
+@{
+void edit::possibleTemplateAvailableFromGrammarProvider(QObject* caller, int numberOfObjects, bool silent){
+    // Replace caller with our own:
+    emit possibleTemplateAvailable(m_caller, numberOfObjects, silent);
+}
+@}
+
+\subsection{getNextPossibleTemplate}
+@O ../src/edit.cpp -d
+@{
+void edit::getNextPossibleTemplate(QObject* caller){
+    m_grammarprovider->getNextPossibleTemplate(caller);
+}
+@}
+
+\subsection{possibleTemplateFromGrammarProvider}
+@O ../src/edit.cpp -d
+@{
+void edit::possibleTemplateFromGrammarProvider(QObject* caller, bool silent, grammarprovider::templatearguments arguments, QObject* tableView){
+    qDebug() << "Hello from edit for possible template";
+    qDebug() << "* I got the following named template arguments";
+    QList<QList<QString> > named_arguments;
+    for(const auto& named_argument : arguments.named.toStdMap()){
+        qDebug() << "*" << named_argument.first << named_argument.second;
+        named_arguments.push_back({named_argument.first, named_argument.second});
+    }
+    qDebug() << "* and this unnamed arguments:";
+    for(const auto& unnamed_argument : arguments.unnamed){
+        qDebug() << "*" << unnamed_argument;
+    }
+    QList<QString> unnamed_arguments = arguments.unnamed;
+
+    emit possibleTemplateEdit(caller, unnamed_arguments, named_arguments, tableView);
 }
 @}
 

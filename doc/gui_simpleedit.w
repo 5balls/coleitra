@@ -70,12 +70,31 @@ FocusScope {
                 target: Edit
                 function onAddLexemeHeuristicallyResult(caller, result){
                     if(caller != simpleeditinput) return;
+                    console.log("onAddLexemeHeuristicallyResult","simpleeditinput",simpleeditinput);
                     searchresult.text = result;
                     simpleeditinput.parent.parent.readytosave = Edit.isReadyToSave();
                     progressPopup.close();
                 }
                 function onProcessingUpdate(progress_action){
                     progressPopup.popupAction = progress_action;
+                }
+                function onPossibleTemplateAvailable(caller, number_of_templates, silent){
+                    if(caller != simpleeditinput) return;
+                    console.log("Got",number_of_templates,"possible templates");
+                    loader.item.push("newtemplate.qml");
+                    Edit.getNextPossibleTemplate(simpleeditinput);
+                }
+                function onPossibleTemplateEdit(caller, unnamed_arguments, named_arguments, tableView){
+                    if(caller != simpleeditinput) return;
+                    loader.item.currentItem.addPossibleNewTemplate(unnamed_arguments, named_arguments, tableView);
+                    console.log("Hello from GUI for possible template");
+                    for(var i=0; i<unnamed_arguments.length; i++){
+                        console.log(unnamed_arguments[i]);
+                    }
+                    for(var i=0; i<named_arguments.length; i++){
+                        console.log(named_arguments[i][0], named_arguments[i][1]);
+                    }
+                    Edit.getNextPossibleTemplate(simpleeditinput);
                 }
             }
         }

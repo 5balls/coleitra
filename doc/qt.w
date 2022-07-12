@@ -79,6 +79,7 @@ Here are the files described, which are needed for compiling code for the Qt fra
         <file>ColeitraWidgetLicenseSelectId.qml</file>
         <file>ColeitraWidgetProgressPopup.qml</file>
         <file>ColeitraWidgetLabelValue.qml</file>
+        <file>ColeitraWidgetNewTemplateTabContent.qml</file>
         <file>main.qml</file>
         <file>splash.qml</file>
         <file alias="logo.png">android/res/drawable/logo_large.png</file>
@@ -103,6 +104,7 @@ Here are the files described, which are needed for compiling code for the Qt fra
         <file>simpleedit.qml</file>
         <file>databaseedit.qml</file>
         <file>settings.qml</file>
+        <file>newtemplate.qml</file>
         <file>grammarprovider_schema.json</file>
         <file>fi.json</file>
     </qresource>

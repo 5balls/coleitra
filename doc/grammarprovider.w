@@ -114,6 +114,7 @@ get_examples("Template:" + str(sys.argv[1]))
 #include <QTime>
 #include <QMetaMethod>
 #include <QDirIterator>
+#include <QAbstractTableModel>
 #include <nlohmann/json-schema.hpp>
 #include "settings.h"
 #include "database.h"
@@ -322,6 +323,7 @@ public slots:
     Q_INVOKABLE void getGrammarInfoForWord(QObject* caller, int languageid, QString word);
     Q_INVOKABLE void getNextGrammarObject(QObject* caller);
     Q_INVOKABLE void getNextSentencePart(QObject* caller);
+    Q_INVOKABLE void getNextPossibleTemplate(QObject* caller);
 private slots:
     bool readGrammarConfiguration(QString s_fileName, t_grammarConfiguration& t_config);
     QList<grammarprovider::compoundPart> getGrammarCompoundFormParts(QString compoundword, QList<QString> compoundstrings, int id_language);
@@ -351,6 +353,9 @@ signals:
 
     void grammarInfoAvailable(QObject* caller, int numberOfObjects, bool silent);
     void grammarInfoNotAvailable(QObject* caller, bool silent);
+    void possibleTemplateAvailable(QObject* caller, int numberOfObjects, bool silent);
+    void possibleTemplateFinished(QObject* caller);
+    void possibleTemplate(QObject* caller, bool silent, grammarprovider::templatearguments arguments, QObject* tableView);
     void etymologyInfoNotAvailable(QObject* caller, bool silent);
     void gotGrammarInfoForWord(QObject* caller, int numberOfObjects, bool silent);
     void noGrammarInfoForWord(QObject* caller, bool silent);
@@ -424,6 +429,61 @@ private:
             l_parent->m_current_compoundforms = l_current_compoundforms;
         }
     };
+    QStringList ms_possibleTemplates;
+    void processUnknownTemplate(QString s_reply, QObject* caller, grammarprovider::templatearguments arguments);
+};
+
+class grammarTableView : public QAbstractTableModel
+{
+    Q_OBJECT
+    QML_ELEMENT
+    QML_ADDED_IN_MINOR_VERSION(1)
+private:
+    int maxRows;
+    int maxColumns;
+    QString** tableContent;
+public:
+    grammarTableView(const QList<grammarprovider::tablecell> &parsedTable, QObject *parent = nullptr) : QAbstractTableModel(parent){
+        for(auto & tableCell: parsedTable){
+            if(tableCell.row+1>maxRows) maxRows = tableCell.row+1;
+            if(tableCell.column+1>maxColumns) maxColumns = tableCell.column+1;
+        }
+        tableContent = new QString*[maxRows];
+        for(int i = 0; i < maxRows; ++i)
+            tableContent[i] = new QString[maxColumns];
+        for(auto & tableCell: parsedTable){
+            tableContent[tableCell.row][tableCell.column] = tableCell.content;
+            //qDebug() << "Cellcontent:" << tableCell.content;
+        }
+        //qDebug() << "Got" << parsedTable.length() << "cells in constructor of grammarTableView (" << maxColumns << "x" << maxRows << ")";
+    }
+
+    int rowCount(const QModelIndex & = QModelIndex()) const override
+    {
+        return maxRows;
+    }
+
+    int columnCount(const QModelIndex & = QModelIndex()) const override
+    {
+        return maxColumns;
+    }
+
+    QVariant data(const QModelIndex &index, int role) const override
+    {
+        //qDebug() << "Ask for data for column" << index.column() << "and row" << index.row() << "(max" << maxRows << ")role" << role;
+        if((index.row() < maxRows) && (role < maxColumns))
+            return tableContent[index.row()][role];
+        else
+            return "";
+    }
+
+    QHash<int, QByteArray> roleNames() const override
+    {
+        QHash<int,QByteArray> l_roleNames;
+        for(int i=0; i<20; i++)
+            l_roleNames[i] = (QString("col") + QString::number(i)).toUtf8();
+        return l_roleNames;
+    }
 
 @<End of class and header @>
 @}
@@ -662,6 +722,7 @@ void grammarprovider::getGrammarInfoForWord(QObject* caller, int languageid, QSt
     QMetaObject::Connection gia_con;
     QMetaObject::Connection gina_con;
     QMetaObject::Connection ne_con;
+    QMetaObject::Connection temp_con;
     gia_con = connect(this, &grammarprovider::grammarInfoAvailable,
             [&](QObject* caller, int size, bool silent){
             if(caller == &waitloop){
@@ -683,6 +744,10 @@ void grammarprovider::getGrammarInfoForWord(QObject* caller, int languageid, QSt
             emit noGrammarInfoForWord(caller, m_silent);
             waitloop.quit();
             }
+            });
+    temp_con = connect(this, &grammarprovider::possibleTemplate,
+            [&](QObject* caller, bool silent, templatearguments arguments, QObject* tableView){
+            qDebug() << "--- possible template add ---";
             });
     ne_con = connect(m_networkscheduler, &networkscheduler::requestFailed,
             [&](QObject* caller, QString s_reason){
@@ -877,6 +942,32 @@ grammarprovider::templatearguments grammarprovider::parseTemplateArguments(QStri
 }
 @}
 
+\subsection{processUnknownTemplate}
+@O ../src/grammarprovider.cpp -d
+@{
+void grammarprovider::processUnknownTemplate(QString s_reply, QObject* caller, grammarprovider::templatearguments arguments){
+    qDebug() << "Got reply for unknown template:";
+    QList<grammarprovider::tablecell> parsedTable;
+    getPlainTextTableFromReply(s_reply, parsedTable);
+    if(parsedTable.length() > 0){
+        grammarTableView* m_view = new grammarTableView(parsedTable);
+        emit possibleTemplate(caller, m_silent, arguments, m_view);
+    }
+    else{
+        getNextPossibleTemplate(caller);
+    }
+    //qDebug() << s_reply;
+    /*qDebug() << "I got the following named template arguments";
+    for(const auto& named_argument : arguments.named.toStdMap()){
+        qDebug() << named_argument.first << named_argument.second;
+    }
+    qDebug() << "and this unnamed arguments:";
+    for(const auto& unnamed_argument : arguments.unnamed){
+        qDebug() << unnamed_argument;
+    }*/
+}
+@}
+
 \subsection{getWiktionaryTemplate}
 @O ../src/grammarprovider.cpp -d
 @{
@@ -938,17 +1029,18 @@ void grammarprovider::getWiktionaryTemplate(QString s_reply, QObject* caller, gr
                 return;
             }
             else{
-                // Not known yet:
-                m_currentarguments = parseTemplateArguments(wt_finished);
-//                m_networkscheduler->requestNetworkReply(caller,s_baseurl + "action=expandtemplates&text=" + QUrl::toPercentEncoding(wt_finished) + "&title=" + m_word + "&prop=wikitext&format=json", std::bind(parser.value(),this,std::placeholders::_1,caller));
+                // This template does not match this parser but it might match a different one
             }
         }
     }
+    // Ask the user to create template schema:
+    ms_possibleTemplates += wt_finisheds;
+    emit possibleTemplateAvailable(caller, wt_finisheds.length(), m_silent);
+    // TODO What was planned here?
     for(auto& grammarConfiguration: m_grammarConfigurations){
         for(auto& inflectionTable: grammarConfiguration.l_inflection_tables){
             for(auto& s_identifier: inflectionTable.l_identifiers){
                 for(auto& wt_finished: wt_finisheds){
-                    m_currentarguments = parseTemplateArguments(wt_finished);
                     //FIXME
                 }
             }
@@ -963,6 +1055,23 @@ void grammarprovider::getWiktionaryTemplate(QString s_reply, QObject* caller, gr
             emit etymologyInfoNotAvailable(caller, m_silent);
             qDebug() << "Template(s) for etymology section " << wt_finisheds << "not supported!";
             break;
+    }
+}
+@}
+
+\subsection{getNextPossibleTemplate}
+@O ../src/grammarprovider.cpp -d
+@{
+void grammarprovider::getNextPossibleTemplate(QObject* caller){
+    if(!ms_possibleTemplates.isEmpty()){
+        qDebug() << "getNextPossibleTemplate:" << ms_possibleTemplates;
+        QString s_possibleTemplate = ms_possibleTemplates.first();
+        ms_possibleTemplates.removeFirst();
+        m_currentarguments = parseTemplateArguments(s_possibleTemplate);
+        m_networkscheduler->requestNetworkReply(caller,s_baseurl + "action=expandtemplates&text=" + QUrl::toPercentEncoding(s_possibleTemplate) + "&title=" + m_word + "&prop=wikitext&format=json", std::bind(&grammarprovider::processUnknownTemplate,this,std::placeholders::_1,caller,m_currentarguments));
+    }
+    else {
+        emit possibleTemplateFinished(caller);
     }
 }
 @}
@@ -1351,7 +1460,7 @@ void grammarprovider::getPlainTextTableFromReply(QString s_reply, QList<grammarp
 }
 @}
 
-\subsection{getPlainTextTableFromReply}
+\subsection{processNetworkError}
 @O ../src/grammarprovider.cpp -d
 @{
 void grammarprovider::processNetworkError(QObject* caller, QString s_failure_reason){
