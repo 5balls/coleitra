@@ -444,6 +444,8 @@ private:
     QString** tableContent;
 public:
     grammarTableView(const QList<grammarprovider::tablecell> &parsedTable, QObject *parent = nullptr) : QAbstractTableModel(parent){
+        maxRows = 0;
+        maxColumns = 0;
         for(auto & tableCell: parsedTable){
             if(tableCell.row+1>maxRows) maxRows = tableCell.row+1;
             if(tableCell.column+1>maxColumns) maxColumns = tableCell.column+1;
@@ -452,8 +454,8 @@ public:
         for(int i = 0; i < maxRows; ++i)
             tableContent[i] = new QString[maxColumns];
         for(auto & tableCell: parsedTable){
-            tableContent[tableCell.row-1][tableCell.column-1] = tableCell.content;
-            //qDebug() << "Cellcontent:" << tableCell.content;
+            qDebug() << "Cellcontent[" << tableCell.row << "][" << tableCell.column << "]:" << tableCell.content;
+            tableContent[tableCell.row][tableCell.column] = tableCell.content;
         }
         //qDebug() << "Got" << parsedTable.length() << "cells in constructor of grammarTableView (" << maxColumns << "x" << maxRows << ")";
     }
@@ -1081,22 +1083,33 @@ void grammarprovider::getNextPossibleTemplate(QObject* caller){
 @{
 void grammarprovider::parseMediawikiTableToPlainText(QString wikitext, QList<grammarprovider::tablecell>& table){
     QStringList table_lines = wikitext.split("\n");
+    struct t_spanBlock {
+        int row1;
+        int column1;
+        int row2;
+        int column2;
+    };
+    QList<t_spanBlock> span_blocks;
     int column=0;
     int row=0;
-    int rowspan=0;
     foreach(QString table_line, table_lines){
-        int columnspan = 0;
-        auto process_line = [&columnspan,&rowspan](QString table_line){
+        auto process_line = [&row,&column,&span_blocks](QString table_line){
             //qDebug() << "__P 0 (input)" << table_line;
-            int colspan_i = table_line.indexOf("colspan=\"");
-            if(colspan_i != -1){
-                int colspan_j = table_line.indexOf("\"",colspan_i+9);
-                columnspan += table_line.midRef(colspan_i+9,colspan_j-colspan_i-9).toInt()-1;
-            }
-            int rowspan_i = table_line.indexOf("rowspan=\"");
-            if(rowspan_i != -1){
-                int rowspan_j = table_line.indexOf("\"",rowspan_i+9);
-                rowspan = table_line.midRef(rowspan_i+9,rowspan_j-rowspan_i-9).toInt()-1;
+            {
+                int columnspan=1, rowspan=1;
+                int colspan_i = table_line.indexOf("colspan=\"");
+                if(colspan_i != -1){
+                    int colspan_j = table_line.indexOf("\"",colspan_i+9);
+                    columnspan = table_line.midRef(colspan_i+9,colspan_j-colspan_i-9).toInt();
+                }
+                int rowspan_i = table_line.indexOf("rowspan=\"");
+                if(rowspan_i != -1){
+                    int rowspan_j = table_line.indexOf("\"",rowspan_i+9);
+                    rowspan = table_line.midRef(rowspan_i+9,rowspan_j-rowspan_i-9).toInt();
+                }
+                if((columnspan>1)||(rowspan>1)){
+                    span_blocks.push_back({row,column,row+rowspan-1,column+columnspan-1});
+                }
             }
             int formatting_i = table_line.indexOf("|");
             if(!table_line.left(formatting_i).contains("[[")){
@@ -1147,15 +1160,30 @@ void grammarprovider::parseMediawikiTableToPlainText(QString wikitext, QList<gra
         if(table_line.startsWith("|-")){
             row++;
             column=0;
-            if(rowspan>0){
-                column++;
-                rowspan--;
-            }
             continue;
         }
         if(table_line.startsWith("!")){
+            bool b_forwardJump = false;
+            do {
+                b_forwardJump = false;
+                for(const auto& span_block: span_blocks){
+                    qDebug() << "?[" << span_block.row1 << span_block.column1 << "] [" << row << column << "] [" << span_block.row2 << span_block.column2 << "]";
+                    if(row>=span_block.row1 && row<=span_block.row2
+                            && column >= span_block.column1 && column <= span_block.column2){
+                        if(row>span_block.row1 || column>span_block.column1){
+                            // We are not in the top left corner of the block,
+                            // so it has already been processed and we go to
+                            // the next block
+                            qDebug() << "[" << span_block.row1 << span_block.column1 << "] [" << row << column << "] [" << span_block.row2 << span_block.column2 << "]";
+                            column = span_block.column2+1;
+                            qDebug() << ">[" << span_block.row1 << span_block.column1 << "] [" << row << column << "] [" << span_block.row2 << span_block.column2 << "]";
+                            b_forwardJump = true;
+                        }
+                    }
+                }
+            } while(b_forwardJump);
+            qDebug() << "We are in row" << row << "column" << column;
             table_line.remove(0,2);
-            column++;
             table_line = process_line(table_line);
 	    QStringList table_entries = table_line.split(QLatin1Char(','));
             //qDebug() << "__P 10" << table_entries;
@@ -1165,12 +1193,31 @@ void grammarprovider::parseMediawikiTableToPlainText(QString wikitext, QList<gra
                     table.push_back({row,column,table_entry});
                 //qDebug() << row << column << table_entry;
             }
-            column += columnspan;
+            column++;
             continue;
         }
         if(table_line.startsWith("|")){
+            bool b_forwardJump = false;
+            do {
+                b_forwardJump = false;
+                for(const auto& span_block: span_blocks){
+                    qDebug() << "?[" << span_block.row1 << span_block.column1 << "] [" << row << column << "] [" << span_block.row2 << span_block.column2 << "]";
+                    if(row>=span_block.row1 && row<=span_block.row2
+                            && column >= span_block.column1 && column <= span_block.column2){
+                        if(row>span_block.row1 || column>span_block.column1){
+                            // We are not in the top left corner of the block,
+                            // so it has already been processed and we go to
+                            // the next block
+                            qDebug() << "[" << span_block.row1 << span_block.column1 << "] [" << row << column << "] [" << span_block.row2 << span_block.column2 << "]";
+                            column = span_block.column2+1;
+                            qDebug() << ">[" << span_block.row1 << span_block.column1 << "] [" << row << column << "] [" << span_block.row2 << span_block.column2 << "]";
+                            b_forwardJump = true;
+                        }
+                    }
+                }
+            } while(b_forwardJump);
+            qDebug() << "We are in row" << row << "column" << column;
             table_line.remove(0,2);
-            column++;
             table_line = process_line(table_line);
 	    QStringList table_entries = table_line.split(QLatin1Char(','));
             //qDebug() << "__P 10" << table_entries;
@@ -1180,7 +1227,7 @@ void grammarprovider::parseMediawikiTableToPlainText(QString wikitext, QList<gra
                     table.push_back({row,column,table_entry});
                 //qDebug() << row << column << table_entry;
             }
-            column += columnspan;
+            column++;
             continue;
         }
     }

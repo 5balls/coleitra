@@ -41,12 +41,17 @@ Column {
         id: tv
         width: parent.width
         height: parent.height - title.height - buttonrow.height - selectedview.height - grammaredit.height
+        rowDelegate: Rectangle{
+            width: childrenRect.width
+            height: 30
+        }
         itemDelegate: Rectangle {
             property var cellIsSelected: false
             color:  cellIsSelected ? "#DDFFFF" : (styleData.row % 2? "#FFFFFF": "#EEEEEE")
             Label {
                 width: parent.width
                 text: cellIsSelected ? "<b>" + styleData.value + "</b>" : styleData.value
+                font.pointSize: 14
             }
             MouseArea {
                 anchors.fill: parent
