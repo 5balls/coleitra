@@ -172,18 +172,18 @@ ColeitraPage {
             tabContent = Qt.createComponent("ColeitraWidgetNewTemplateTabContent.qml");
             tableViewModel = tableView;
             if(tabContent.status == Component.Ready) {
-                console.log("1 NO Problem with the creation of new template tab");
+                //console.log("1 NO Problem with the creation of new template tab");
                 finishNewTemplateTab();
             }
             else {
-                console.log("1 Problem with the creation of new template tab");
+                //console.log("1 Problem with the creation of new template tab");
                 tabContent.statusChanged.connect(finishNewTemplateTab);
             }
         };
     }
     property var finishNewTemplateTab: function(){
         if (tabContent.status == Component.Ready) {
-            console.log("2 NO Problem with the creation of new template tab");
+            //console.log("2 NO Problem with the creation of new template tab");
             var newObject = tabContent.createObject(templatecontent); 
             newObject.nttitle.text = tabContentWidgetString;
             for(var i=0; i<tableViewModel.columnCount(); i++){
@@ -202,7 +202,7 @@ import QtQuick.Controls 1.4;
             templatecontent.children.push(newObject);
         }
         else{
-            console.log("2 Problem with the creation of new template tab");
+            //console.log("2 Problem with the creation of new template tab");
         }
     }
     title: "New Template"

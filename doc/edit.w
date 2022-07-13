@@ -923,16 +923,9 @@ void edit::getNextPossibleTemplate(QObject* caller){
 @O ../src/edit.cpp -d
 @{
 void edit::possibleTemplateFromGrammarProvider(QObject* caller, bool silent, grammarprovider::templatearguments arguments, QObject* tableView){
-    qDebug() << "Hello from edit for possible template";
-    qDebug() << "* I got the following named template arguments";
     QList<QList<QString> > named_arguments;
     for(const auto& named_argument : arguments.named.toStdMap()){
-        qDebug() << "*" << named_argument.first << named_argument.second;
         named_arguments.push_back({named_argument.first, named_argument.second});
-    }
-    qDebug() << "* and this unnamed arguments:";
-    for(const auto& unnamed_argument : arguments.unnamed){
-        qDebug() << "*" << unnamed_argument;
     }
     QList<QString> unnamed_arguments = arguments.unnamed;
 

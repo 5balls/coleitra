@@ -454,7 +454,7 @@ public:
         for(int i = 0; i < maxRows; ++i)
             tableContent[i] = new QString[maxColumns];
         for(auto & tableCell: parsedTable){
-            qDebug() << "Cellcontent[" << tableCell.row << "][" << tableCell.column << "]:" << tableCell.content;
+            //qDebug() << "Cellcontent[" << tableCell.row << "][" << tableCell.column << "]:" << tableCell.content;
             tableContent[tableCell.row][tableCell.column] = tableCell.content;
         }
         //qDebug() << "Got" << parsedTable.length() << "cells in constructor of grammarTableView (" << maxColumns << "x" << maxRows << ")";
@@ -749,7 +749,6 @@ void grammarprovider::getGrammarInfoForWord(QObject* caller, int languageid, QSt
             });
     temp_con = connect(this, &grammarprovider::possibleTemplate,
             [&](QObject* caller, bool silent, templatearguments arguments, QObject* tableView){
-            qDebug() << "--- possible template add ---";
             });
     ne_con = connect(m_networkscheduler, &networkscheduler::requestFailed,
             [&](QObject* caller, QString s_reason){
@@ -948,7 +947,6 @@ grammarprovider::templatearguments grammarprovider::parseTemplateArguments(QStri
 @O ../src/grammarprovider.cpp -d
 @{
 void grammarprovider::processUnknownTemplate(QString s_reply, QObject* caller, grammarprovider::templatearguments arguments){
-    qDebug() << "Got reply for unknown template:";
     QList<grammarprovider::tablecell> parsedTable;
     getPlainTextTableFromReply(s_reply, parsedTable);
     if(parsedTable.length() > 0){
@@ -1066,7 +1064,6 @@ void grammarprovider::getWiktionaryTemplate(QString s_reply, QObject* caller, gr
 @{
 void grammarprovider::getNextPossibleTemplate(QObject* caller){
     if(!ms_possibleTemplates.isEmpty()){
-        qDebug() << "getNextPossibleTemplate:" << ms_possibleTemplates;
         QString s_possibleTemplate = ms_possibleTemplates.first();
         ms_possibleTemplates.removeFirst();
         m_currentarguments = parseTemplateArguments(s_possibleTemplate);
@@ -1157,6 +1154,10 @@ void grammarprovider::parseMediawikiTableToPlainText(QString wikitext, QList<gra
             //qDebug() << "__P 9" << table_line;
             return table_line;
         };
+        if(table_line.startsWith("<div class=\"NavContent")){
+            // Clear span blocks if a new <table> starts
+            span_blocks.clear();
+        }
         if(table_line.startsWith("|-")){
             row++;
             column=0;
@@ -1167,22 +1168,18 @@ void grammarprovider::parseMediawikiTableToPlainText(QString wikitext, QList<gra
             do {
                 b_forwardJump = false;
                 for(const auto& span_block: span_blocks){
-                    qDebug() << "?[" << span_block.row1 << span_block.column1 << "] [" << row << column << "] [" << span_block.row2 << span_block.column2 << "]";
                     if(row>=span_block.row1 && row<=span_block.row2
                             && column >= span_block.column1 && column <= span_block.column2){
                         if(row>span_block.row1 || column>span_block.column1){
                             // We are not in the top left corner of the block,
                             // so it has already been processed and we go to
                             // the next block
-                            qDebug() << "[" << span_block.row1 << span_block.column1 << "] [" << row << column << "] [" << span_block.row2 << span_block.column2 << "]";
                             column = span_block.column2+1;
-                            qDebug() << ">[" << span_block.row1 << span_block.column1 << "] [" << row << column << "] [" << span_block.row2 << span_block.column2 << "]";
                             b_forwardJump = true;
                         }
                     }
                 }
             } while(b_forwardJump);
-            qDebug() << "We are in row" << row << "column" << column;
             table_line.remove(0,2);
             table_line = process_line(table_line);
 	    QStringList table_entries = table_line.split(QLatin1Char(','));
@@ -1201,22 +1198,22 @@ void grammarprovider::parseMediawikiTableToPlainText(QString wikitext, QList<gra
             do {
                 b_forwardJump = false;
                 for(const auto& span_block: span_blocks){
-                    qDebug() << "?[" << span_block.row1 << span_block.column1 << "] [" << row << column << "] [" << span_block.row2 << span_block.column2 << "]";
+                    //qDebug() << "?[" << span_block.row1 << span_block.column1 << "] [" << row << column << "] [" << span_block.row2 << span_block.column2 << "]";
                     if(row>=span_block.row1 && row<=span_block.row2
                             && column >= span_block.column1 && column <= span_block.column2){
                         if(row>span_block.row1 || column>span_block.column1){
                             // We are not in the top left corner of the block,
                             // so it has already been processed and we go to
                             // the next block
-                            qDebug() << "[" << span_block.row1 << span_block.column1 << "] [" << row << column << "] [" << span_block.row2 << span_block.column2 << "]";
+                            //qDebug() << "[" << span_block.row1 << span_block.column1 << "] [" << row << column << "] [" << span_block.row2 << span_block.column2 << "]";
                             column = span_block.column2+1;
-                            qDebug() << ">[" << span_block.row1 << span_block.column1 << "] [" << row << column << "] [" << span_block.row2 << span_block.column2 << "]";
+                            //qDebug() << ">[" << span_block.row1 << span_block.column1 << "] [" << row << column << "] [" << span_block.row2 << span_block.column2 << "]";
                             b_forwardJump = true;
                         }
                     }
                 }
             } while(b_forwardJump);
-            qDebug() << "We are in row" << row << "column" << column;
+            //qDebug() << "We are in row" << row << "column" << column;
             table_line.remove(0,2);
             table_line = process_line(table_line);
 	    QStringList table_entries = table_line.split(QLatin1Char(','));
