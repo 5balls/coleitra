@@ -24,50 +24,42 @@ import QtQuick 2.14
 import QtQuick.Layouts 1.14
 import QtQuick.Controls 2.14
 import QtQuick.Controls 1.4
+import QtQml.Models 2.14
 
 Column {
     property var nttv: tv
-    property var nttitle: title
+    property alias nttitle: title
+    property alias ntism: ism
     width: parent? parent.width : 400
     ColeitraGridLabel {
         id: title
     }
+    ItemSelectionModel {
+        id: ism
+    }
     TableView {
+        id: tv
         width: parent.width
         height: parent.height - title.height
-        id: tv
-        itemDelegate: Label {
-            text: styleData.value
-        }
-        TableViewColumn {
-            role: "col0"
-        }
-        TableViewColumn {
-            role: "col1"
-        }
-        TableViewColumn {
-            role: "col2"
-        }
-        TableViewColumn {
-            role: "col3"
-        }
-        TableViewColumn {
-            role: "col4"
-        }
-        TableViewColumn {
-            role: "col5"
-        }
-        TableViewColumn {
-            role: "col6"
-        }
-        TableViewColumn {
-            role: "col7"
-        }
-        TableViewColumn {
-            role: "col8"
-        }
-        TableViewColumn {
-            role: "col9"
+        //selectionMode: SelectionMode.SingleSelection
+        //selectionModel: ism
+        itemDelegate: Rectangle {
+            property var cellIsSelected: false
+            color:  cellIsSelected ? "#DDFFFF" : "white"
+            Label {
+                text: styleData.value
+            }
+            MouseArea {
+                anchors.fill: parent
+                onClicked: { 
+                    ism.select(tv.model.index(styleData.row,styleData.column), ItemSelectionModel.Toggle);
+                    cellIsSelected = ism.isSelected(tv.model.index(styleData.row,styleData.column));
+                    console.log(ism.selectedIndexes);
+                    console.log(ism.hasSelection);
+                    console.log("Hello", styleData.value, styleData.row, styleData.role, styleData.column);
+                }
+            }
+
         }
     }
 }
@@ -141,8 +133,17 @@ ColeitraPage {
             console.log("2 NO Problem with the creation of new template tab");
             var newObject = tabContent.createObject(templatecontent); 
             newObject.nttitle.text = tabContentWidgetString;
+            for(var i=0; i<tableViewModel.columnCount(); i++){
+                var tableViewColumn = Qt.createQmlObject('
+import QtQuick.Controls 1.4;
+ TableViewColumn {
+ role: "col' + i.toString() + '"
+ } ', newObject.nttv);
+
+                newObject.nttv.addColumn(tableViewColumn);
+            }
             newObject.nttv.model = tableViewModel;
-            console.log("Test",tabPage.height);
+            newObject.ntism.model = tableViewModel;
             newObject.width = tabPage.width;
             newObject.height = tabPage.height-templateselection.height;
             templatecontent.children.push(newObject);
