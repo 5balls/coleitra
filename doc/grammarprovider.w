@@ -452,7 +452,7 @@ public:
         for(int i = 0; i < maxRows; ++i)
             tableContent[i] = new QString[maxColumns];
         for(auto & tableCell: parsedTable){
-            tableContent[tableCell.row][tableCell.column] = tableCell.content;
+            tableContent[tableCell.row-1][tableCell.column-1] = tableCell.content;
             //qDebug() << "Cellcontent:" << tableCell.content;
         }
         //qDebug() << "Got" << parsedTable.length() << "cells in constructor of grammarTableView (" << maxColumns << "x" << maxRows << ")";

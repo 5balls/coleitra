@@ -40,26 +40,74 @@ Column {
     TableView {
         id: tv
         width: parent.width
-        height: parent.height - title.height
-        //selectionMode: SelectionMode.SingleSelection
-        //selectionModel: ism
+        height: parent.height - title.height - buttonrow.height - selectedview.height - grammaredit.height
         itemDelegate: Rectangle {
             property var cellIsSelected: false
-            color:  cellIsSelected ? "#DDFFFF" : "white"
+            color:  cellIsSelected ? "#DDFFFF" : (styleData.row % 2? "#FFFFFF": "#EEEEEE")
             Label {
-                text: styleData.value
+                width: parent.width
+                text: cellIsSelected ? "<b>" + styleData.value + "</b>" : styleData.value
             }
             MouseArea {
                 anchors.fill: parent
                 onClicked: { 
                     ism.select(tv.model.index(styleData.row,styleData.column), ItemSelectionModel.Toggle);
-                    cellIsSelected = ism.isSelected(tv.model.index(styleData.row,styleData.column));
-                    console.log(ism.selectedIndexes);
-                    console.log(ism.hasSelection);
-                    console.log("Hello", styleData.value, styleData.row, styleData.role, styleData.column);
+                    if(ism.hasSelection){
+                        var selectedIndexesString = "<b>Selected:</b> ";
+                        for(const selectedIndex of ism.selectedIndexes){
+                            selectedIndexesString += tv.model.data(selectedIndex, selectedIndex.column) + " ";
+                        }
+                        selectedview.text = selectedIndexesString;
+                    }
+                    else{
+                        selectedview.text = "";
+                    }
+                }
+            }
+            Connections {
+                target: ism
+                function onSelectionChanged(selected, unselected) {
+                    var curIndex = tv.model.index(styleData.row,styleData.column);
+                    cellIsSelected = false;
+                    for(const selectedIndex of ism.selectedIndexes){
+                        if(selectedIndex == curIndex){
+                            cellIsSelected = true;
+                        }
+                    }
                 }
             }
 
+        }
+    }
+    ColeitraGridLabel {
+        id: selectedview
+    }
+    ColeitraWidgetEditGrammarFormComponentList {
+        id: grammaredit
+        visible: true
+        width: parent.width
+    }
+
+    Row {
+        width: parent.width
+        id: buttonrow
+        ColeitraGridRedButton {
+            id: resetButton
+            text: "Reset selection"
+            width: parent.width / 2
+            height: 80
+            onClicked: {
+                ism.clearSelection();
+                selectedview.text = "";
+            }
+        }
+        ColeitraGridGreenButton {
+            id: saveButton
+            text: "Save"
+            width: parent.width / 2
+            height: 80
+            onClicked: {
+            }
         }
     }
 }
