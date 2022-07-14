@@ -29,7 +29,10 @@ Row {
     height: 40
     property var gklabel: grammarkeylabel
     property var gvlabel: grammarvaluelabel
+    property var gk: grammarkey
+    property var gv: grammarvalue
     property var pbutton: plusbutton
+    property var mbutton: minusbutton
     ColeitraGridImageButton {
         visible: false
         id: minusbutton

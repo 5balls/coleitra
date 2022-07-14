@@ -25,6 +25,10 @@ import QtQuick.Layouts 1.14
 import QtQuick.Controls 2.14
 
 Column {
+    property var pbutton: piplusbutton
+    property var mbutton: piminusbutton
+    property var piinstruction: instruction
+    property var pigrammaredit: instructiongrammaredit
     id: piwidget
     height: instructiongrammaredit.visible? instructionselection.height + instructiongrammaredit.height : instructionselection.height
     Row {
@@ -98,7 +102,6 @@ Column {
         width: parent.width
         height: grammarscrollview.height < (parent.height - buttonrow.height)/ 2.0 ? grammarscrollview.height : (parent.height - buttonrow.height) / 2.0
         clip: true
-        //contentHeight: processinstructions.height + 40
         Column {
             id: grammarscrollview
             width: parent.width
@@ -135,7 +138,7 @@ Column {
         }
         itemDelegate: Rectangle {
             property var cellIsSelected: false
-            color:  cellIsSelected ? "#DDFFFF" : (styleData.row % 2? "#FFFFFF": "#EEEEEE")
+            color:  cellIsSelected ? (styleData.row % 2? "#DDFFFF" : "#CCEEEE") : (styleData.row % 2? "#FFFFFF": "#EEEEEE")
             Label {
                 width: parent.width
                 text: {
@@ -185,7 +188,7 @@ Column {
             }
         }
     }
-        Row {
+    Row {
         width: parent.width
         id: buttonrow
         ColeitraGridRedButton {
@@ -204,6 +207,35 @@ Column {
             width: parent.width / 4
             height: 80
             onClicked: {
+                for(var i = grammaredit.children.length; i > 0; i--){
+                    if(grammaredit.children[i-1].mbutton.visible){
+                        grammaredit.children[i-1].destroy();
+                    }
+                    else{
+                        grammaredit.children[i-1].gk.currentIndex = 0;
+                        grammaredit.children[i-1].gv.currentIndex = 0;
+                    }
+                }
+                grammaredit.height = 40;
+                for(var i = processinstructions.children.length; i > 0; i--){
+                    if(processinstructions.children[i-1].mbutton.visible){
+                        processinstructions.children[i-1].destroy();
+                    }
+                    else{
+                        for(var j = processinstructions.children[i-1].pigrammaredit.children.length; j > 0; j--){
+                            if(processinstructions.children[i-1].pigrammaredit.children[j-1].mbutton.visible){
+                                processinstructions.children[i-1].pigrammaredit.children[j-1].destroy();
+                            }
+                            else{
+                                processinstructions.children[i-1].pigrammaredit.children[j-1].gk.currentIndex = 0;
+                                processinstructions.children[i-1].pigrammaredit.children[j-1].gv.currentIndex = 0;
+                            }
+                        }
+                        processinstructions.children[i-1].pigrammaredit.height = 40;
+                        processinstructions.children[i-1].piinstruction.currentIndex = 0;
+                    }
+                }
+                content_type.currentIndex = 0;
             }
         }
         ColeitraGridGreenButton {
