@@ -20,6 +20,9 @@
 @{
 @<Start of @'GRAMMARCONFIGURATION@' header@>
 
+#include <nlohmann/json-schema.hpp>
+#include "database.h"
+
 using nlohmann::json;
 using nlohmann::json_schema::json_validator;
 
