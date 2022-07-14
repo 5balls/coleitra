@@ -1,0 +1,414 @@
+\section{Interface}
+@O ../src/grammarprovider.h -d
+@{
+@<Start of @'GRAMMARPROVIDER@' header@>
+#include <sstream>
+#include <iostream>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
+#include <QFile>
+#include <QQmlEngine>
+#include <QMap>
+#include <QMapIterator>
+#include <QTextDocument>
+#include <QThread>
+#include <QEventLoop>
+#include <QTime>
+#include <QMetaMethod>
+#include <QDirIterator>
+#include <QAbstractTableModel>
+#include <nlohmann/json-schema.hpp>
+#include "settings.h"
+#include "database.h"
+#include "levenshteindistance.h"
+#include "networkscheduler.h"
+
+#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY(x)
+
+using nlohmann::json;
+using nlohmann::json_schema::json_validator;
+
+class grammarconfiguration {
+public:
+    struct t_grammarConfigurationInflectionTableCell {
+        // "row", "column" and "grammarexpressions" required by schema
+        t_grammarConfigurationInflectionTableCell(json j_ini, database* lp_database, int li_language_id):
+            i_row(j_ini["row"]),
+            i_column(j_ini["column"]),
+            p_database(lp_database),
+            i_language_id(li_language_id){
+                // "index", "content_type" and "process" are optional
+                if(j_ini.contains("index") && j_ini["index"].is_number()){
+                    i_index = j_ini["index"];
+                }
+                if(j_ini.contains("grammarexpressions") && j_ini["grammarexpressions"].is_object()){
+                    if(j_ini["grammarexpressions"].contains("format")
+                            && j_ini["grammarexpressions"]["format"].is_string()
+                            && j_ini["grammarexpressions"].contains("version")
+                            && j_ini["grammarexpressions"]["version"].is_string()){
+                        QString s_format = QString::fromStdString(j_ini["grammarexpressions"]["format"]);
+                        QString s_version = QString::fromStdString(j_ini["grammarexpressions"]["version"]);
+                        if(j_ini["grammarexpressions"].contains("tags")
+                                && j_ini["grammarexpressions"]["tags"].is_object()){
+                            QList<QList<QString> > lls_grammarform;
+                            for(auto& [j_key, j_value] : j_ini["grammarexpressions"]["tags"].items())
+                                if(j_value.is_string())
+                                    lls_grammarform.push_back({QString::fromStdString(j_key),QString::fromStdString(j_value)});
+                            i_grammarid = p_database->grammarFormIdFromStrings(i_language_id,lls_grammarform);
+                        }
+                    }
+                }
+                if(j_ini.contains("content_type")){
+                }
+                if(j_ini.contains("process")){
+                }
+            }
+        database* p_database;
+        int i_language_id;
+        int i_index;
+        int i_row;
+        int i_column;
+        int i_grammarid;
+    };
+    struct t_grammarConfigurationInflectionTable {
+        // "tablename", "identifiers" and "cells" required by schema:
+        t_grammarConfigurationInflectionTable(json j_ini, database* lp_database, int li_language_id):
+            s_tablename(QString::fromStdString(j_ini["tablename"])),
+            p_database(lp_database),
+            i_language_id(li_language_id){
+                // We don't strictly need to check for existance here but do it anyway for robustness:
+                if(j_ini.contains("identifiers") && j_ini["identifiers"].is_array()){
+                    for(auto& j_identifier: j_ini["identifiers"]){
+                        if(j_identifier.is_string()){
+                            QString s_identifier = QString::fromStdString(j_identifier);
+                            l_identifiers.push_back(s_identifier);
+                        }
+                    }
+                }
+                // We don't strictly need to check for existance here but do it anyway for robustness:
+                if(j_ini.contains("cells") && j_ini["cells"].is_array()){
+                    for(auto& j_cell: j_ini["cells"]){
+                        t_grammarConfigurationInflectionTableCell t_cell(j_cell,p_database,i_language_id);
+                        l_grammar_cells.push_back(t_cell);
+                    }
+                }
+            }
+        database* p_database;
+        int i_language_id;
+        QString s_tablename;
+        QList<QString> l_identifiers;
+        QList<t_grammarConfigurationInflectionTableCell> l_grammar_cells;
+    };
+    // "version" and "base_url" required by schema:
+    grammarconfiguration(json j_ini, database* lp_database):
+        s_version(QString::fromStdString(j_ini["version"])),
+        s_base_url(QString::fromStdString(j_ini["base_url"])),
+        p_database(lp_database){
+            if(j_ini.contains("language") && j_ini["language"].is_string())
+                i_language_id = p_database->idfromlanguagename(QString::fromStdString(j_ini["language"]));
+            // Fill inflection tables if they are given:
+            if(j_ini.contains("inflectiontables") && j_ini.is_array()){
+                for(auto& j_inflectiontable: j_ini["inflectiontables"]){
+                    t_grammarConfigurationInflectionTable t_inflectiontable(j_inflectiontable,p_database,i_language_id);
+                    l_inflection_tables.push_back(t_inflectiontable);
+                }
+            }
+        };
+
+private:
+    database* p_database;
+    int i_language_id;
+    QString s_version;
+    QString s_base_url;
+    QList<t_grammarConfigurationInflectionTable> l_inflection_tables;
+};
+
+
+@<Start of class @'grammarprovider@'@>
+    Q_PROPERTY(int language MEMBER m_language)
+    Q_PROPERTY(QString word MEMBER m_word)
+public:
+    explicit grammarprovider(QObject *parent = nullptr);
+    ~grammarprovider(void);
+    @<Id property @'lexeme@'@>
+    @<Id property @'form@'@>
+// Another public needed as Id property messes with public and private:
+public:
+    struct tablecell {
+        int row;
+        int column;
+        QString content;
+    };
+    enum lexemePartType {
+        FORM,
+        FORM_WITH_IGNORED_PARTS,
+        COMPOUNDFORM,
+        SENTENCE,
+    };
+    enum lexemePartProcessInstruction {
+        IGNOREFORM,
+        LOOKUPFORM,
+        LOOKUPFORM_LEXEME, // Match lexeme to current lexeme when looking up form
+        ADDANDUSEFORM,
+        ADDANDIGNOREFORM,
+    };
+    struct lexemePartProcess {
+        lexemePartProcess(lexemePartProcessInstruction y_instruction):
+            instruction(y_instruction),
+            grammarexpressions({}){
+            }
+        lexemePartProcess(lexemePartProcessInstruction y_instruction,
+                QList<QList<QString> > y_grammarexpressions):
+            instruction(y_instruction),
+            grammarexpressions(y_grammarexpressions){
+            }
+        lexemePartProcessInstruction instruction;
+        QList<QList<QString> > grammarexpressions;
+    };
+    struct compoundPart {
+        int id;
+        bool capitalized;
+        QString string;
+    };
+    struct grammarform {
+        grammarform(){
+        }
+        grammarform(int y_index,
+                int y_row,
+                int y_column,
+                QList<QList<QString> > y_grammarexpressions): 
+            index(y_index), 
+            row(y_row),
+            column(y_column),
+            grammarexpressions(y_grammarexpressions),
+            type(FORM),
+            processList({}),
+            string(""){
+            }
+	grammarform(int y_index,
+                int y_row,
+                int y_column,
+                QList<QList<QString> > y_grammarexpressions,
+		lexemePartType y_type,
+		QList<lexemePartProcess> y_processList): 
+            index(y_index), 
+            row(y_row),
+            column(y_column),
+            grammarexpressions(y_grammarexpressions),
+            type(y_type),
+            processList(y_processList),
+            string(""){
+            }
+        int id;
+        int index;
+        int row;
+        int column;
+        QString string;
+        QList<QList<QString> > grammarexpressions;
+        lexemePartType type;
+        QList<lexemePartProcess> processList;
+        QList<compoundPart> compounds;
+        int lexeme_id; // used internal in grammarprovider class only
+        int language_id;
+        bool b_silent;
+    };
+    struct templatearguments {
+        QMap<QString, QString> named;
+        QList<QString> unnamed;
+    };
+    struct scheduled_lookup {
+        QObject* m_caller;
+        int m_languageid;
+        QString m_word;
+    };
+    
+
+    enum class e_wiktionaryRequestPurpose {
+        FLECTION,
+        ETYMOLOGY
+    };
+public slots:
+    Q_INVOKABLE void getGrammarInfoForWord(QObject* caller, int languageid, QString word);
+    Q_INVOKABLE void getNextGrammarObject(QObject* caller);
+    Q_INVOKABLE void getNextSentencePart(QObject* caller);
+    Q_INVOKABLE void getNextPossibleTemplate(QObject* caller);
+private slots:
+    bool readGrammarConfiguration(QString s_fileName, grammarconfiguration& t_config);
+    QList<grammarprovider::compoundPart> getGrammarCompoundFormParts(QString compoundword, QList<QString> compoundstrings, int id_language);
+    void getWiktionarySections(QObject *caller);
+    void getWiktionarySection(QString reply, QObject* caller);
+    void getWiktionaryTemplate(QString reply, QObject* caller, e_wiktionaryRequestPurpose purpose);
+    templatearguments parseTemplateArguments(QString templateString);
+    void parseMediawikiTableToPlainText(QString wikitext, QList<grammarprovider::tablecell>& table);
+    void parse_compoundform(QString reply, QObject* caller);
+    QList<QPair<QString,int> > fi_compound_parser(QObject* caller, int fi_id, int lexeme_id, QList<int> compound_lexemes);
+    void fi_requirements(QObject* caller, int fi_id);
+    void parse_fi_verbs(QString reply, QObject* caller);
+    void parse_fi_nominals(QString reply, QObject* caller);
+    void de_requirements(QObject* caller, int de_id);
+    void parse_de_noun_n(QString reply, QObject* caller);
+    void parse_de_noun_m(QString reply, QObject* caller);
+    void parse_de_noun_f(QString reply, QObject* caller);
+    void parse_de_verb(QString reply, QObject* caller);
+    void process_grammar(QObject* caller, QList<grammarform> grammarforms, QList<tablecell> parsedTable, QList<QList<QString> > additional_grammarforms = {});
+    void getPlainTextTableFromReply(QString reply, QList<grammarprovider::tablecell>& parsedTable);
+    void processNetworkError(QObject* caller, QString s_failure_reason);
+signals:
+    //void processingStart(const QString& waitingstring);
+    //void processingStop(void);
+    void processingUpdate(const QString& waitingstring);
+    void networkError(QObject* caller, bool silent, QString s_failure_reason);
+
+    void grammarInfoAvailable(QObject* caller, int numberOfObjects, bool silent);
+    void grammarInfoNotAvailable(QObject* caller, bool silent);
+    void possibleTemplateAvailable(QObject* caller, int numberOfObjects, bool silent);
+    void possibleTemplateFinished(QObject* caller);
+    void possibleTemplate(QObject* caller, bool silent, grammarprovider::templatearguments arguments, QObject* tableView);
+    void etymologyInfoNotAvailable(QObject* caller, bool silent);
+    void gotGrammarInfoForWord(QObject* caller, int numberOfObjects, bool silent);
+    void noGrammarInfoForWord(QObject* caller, bool silent);
+    void formObtained(QObject* caller, bool silent, grammarform form);
+    void compoundFormObtained(QObject* caller, QString form, bool silent);
+    void sentenceAvailable(QObject* caller, int parts, bool silent);
+    void sentenceLookupForm(QObject* caller, QString form, QList<QList<QString> > grammarexpressions, bool silent);
+    void sentenceLookupFormLexeme(QObject* caller, QString form, QList<QList<QString> > grammarexpressions, bool silent);
+    void sentenceAddAndUseForm(QObject* caller, QString form, QList<QList<QString> > grammarexpressions, bool silent);
+    void sentenceAddAndIgnoreForm(QObject* caller, QString form, QList<QList<QString> > grammarexpressions, bool silent);
+    void sentenceComplete(QObject* caller, QList<QList<QString> > grammarexpressions, bool silent);
+    
+    void processedGrammar(QObject* caller, bool silent);
+    void grammarInfoComplete(QObject* caller, bool silent);
+    //void grammarobtained(QObject* caller, QStringList expressions, QList<QList<QList<QString> > > grammarexpressions);
+public:
+private:
+    json j_grammarProviderSchema;
+    QString s_gpFilePath;
+    int m_language;
+    bool m_silent;
+    bool m_busy;
+    bool m_found_compoundform;
+    QList<QString> m_current_compoundforms;
+    QString ms_current_section;
+    QMap<QString, void (grammarprovider::*)(QString, QObject*)> m_parser_map; 
+    QString m_word;
+    QString s_baseurl;
+    QNetworkAccessManager* m_manager;
+    QList<QString> m_parsesections;
+    settings* m_settings;
+    database* m_database;
+    levenshteindistance* m_levenshteindistance;
+    networkscheduler* m_networkscheduler;
+    templatearguments m_currentarguments;
+    QList<grammarform> m_grammarforms;
+    QList<grammarform> mi_grammarforms;
+    QList<grammarconfiguration> m_grammarConfigurations;
+    QList<scheduled_lookup> m_scheduled_lookups;
+    QMap<int, void (grammarprovider::*)(QObject*,int)> m_requirements_map;
+    QMap<int, QList<QPair<QString,int> > (grammarprovider::*)(QObject* caller, int id, int lexeme_id, QList<int> compound_lexemes)> m_compound_parser_map;
+    struct context {
+        grammarprovider* l_parent;
+        int l_language;
+        bool l_silent;
+        bool l_busy;
+        bool l_found_compoundform;
+        QString l_word;
+        QMetaObject::Connection l_tmp_connection;
+        QMetaObject::Connection l_tmp_error_connection;
+        QObject* l_caller;
+        templatearguments l_currentarguments;
+        QList<QString> l_current_compoundforms;
+        context(grammarprovider* parent) :
+            l_parent(parent),
+            l_language(parent->m_language),
+            l_silent(parent->m_silent),
+            l_busy(parent->m_busy),
+            l_word(parent->m_word),
+            l_found_compoundform(parent->m_found_compoundform),
+            l_currentarguments(parent->m_currentarguments),
+            l_current_compoundforms(parent->m_current_compoundforms){
+            }
+        ~context(){
+            l_parent->m_language = l_language;
+            l_parent->m_silent = l_silent;
+            l_parent->m_busy = l_busy;
+            l_parent->m_word = l_word;
+            l_parent->m_found_compoundform = l_found_compoundform;
+            l_parent->m_currentarguments = l_currentarguments;
+            l_parent->m_current_compoundforms = l_current_compoundforms;
+        }
+    };
+    QStringList ms_possibleTemplates;
+    void processUnknownTemplate(QString s_reply, QObject* caller, grammarprovider::templatearguments arguments);
+};
+
+class grammarTableView : public QAbstractTableModel
+{
+    Q_OBJECT
+    QML_ELEMENT
+    QML_ADDED_IN_MINOR_VERSION(1)
+private:
+    int maxRows;
+    int maxColumns;
+    QStringList** tableContent;
+    QVector<QVector<QString> >** grammarContent;
+public:
+    grammarTableView(const QList<grammarprovider::tablecell> &parsedTable, QObject *parent = nullptr) : QAbstractTableModel(parent){
+        maxRows = 0;
+        maxColumns = 0;
+        for(auto & tableCell: parsedTable){
+            if(tableCell.row+1>maxRows) maxRows = tableCell.row+1;
+            if(tableCell.column+1>maxColumns) maxColumns = tableCell.column+1;
+        }
+        tableContent = new QStringList*[maxRows];
+        grammarContent = new QVector<QVector<QString> >*[maxRows];
+        for(int i = 0; i < maxRows; ++i){
+            tableContent[i] = new QStringList[maxColumns];
+            grammarContent[i] = new QVector<QVector<QString> >[maxColumns];
+        }
+        for(auto & tableCell: parsedTable){
+            //qDebug() << "Cellcontent[" << tableCell.row << "][" << tableCell.column << "]:" << tableCell.content;
+            tableContent[tableCell.row][tableCell.column].push_back(tableCell.content);
+        }
+        //qDebug() << "Got" << parsedTable.length() << "cells in constructor of grammarTableView (" << maxColumns << "x" << maxRows << ")";
+    }
+
+    int rowCount(const QModelIndex & = QModelIndex()) const override
+    {
+        return maxRows;
+    }
+
+    int columnCount(const QModelIndex & = QModelIndex()) const override
+    {
+        return maxColumns;
+    }
+
+    QVariant data(const QModelIndex &index, int role) const override
+    {
+        //qDebug() << "Ask for data for column" << index.column() << "and row" << index.row() << "(max" << maxRows << ")role" << role;
+        if((index.row() < maxRows) && (role < maxColumns))
+            return tableContent[index.row()][role];
+        else
+            return QStringList();
+    }
+
+    Q_INVOKABLE QVector<QVector<QString> > grammar(const QModelIndex &index, int role){
+        return grammarContent[index.row()][role];
+    }
+
+    Q_INVOKABLE void setGrammar(const QModelIndex &index, int role, QVector<QVector<QString> > grammarForms){
+        grammarContent[index.row()][role] = grammarForms;
+    }
+
+    QHash<int, QByteArray> roleNames() const override
+    {
+        QHash<int,QByteArray> l_roleNames;
+        for(int i=0; i<maxColumns+1; i++)
+            l_roleNames[i] = (QString("col") + QString::number(i)).toUtf8();
+        return l_roleNames;
+    }
+
+@<End of class and header @>
+@}
+
