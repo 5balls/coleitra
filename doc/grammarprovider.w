@@ -98,6 +98,28 @@ get_examples("Template:" + str(sys.argv[1]))
 @i grammarprovider_interface.w
 
 \section{Implementation}
+@o ../src/grammarconfiguration.cpp -d
+@{
+#include "grammarconfiguration.h"
+
+grammarconfiguration::grammarconfiguration(json j_ini, database* lp_database) :
+    s_version(QString::fromStdString(j_ini["version"])),
+    s_base_url(QString::fromStdString(j_ini["base_url"])),
+    p_database(lp_database)
+{
+    if(j_ini.contains("language") && j_ini["language"].is_string())
+        i_language_id = p_database->idfromlanguagename(QString::fromStdString(j_ini["language"]));
+    // Fill inflection tables if they are given:
+    if(j_ini.contains("inflectiontables") && j_ini.is_array()){
+        for(auto& j_inflectiontable: j_ini["inflectiontables"]){
+            t_grammarConfigurationInflectionTable t_inflectiontable(j_inflectiontable,p_database,i_language_id);
+            l_inflection_tables.push_back(t_inflectiontable);
+        }
+    }
+}
+
+@}
+
 @O ../src/grammarprovider.cpp -d
 @{
 #include "grammarprovider.h"

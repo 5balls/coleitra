@@ -1,31 +1,24 @@
-\section{Interface}
-@O ../src/grammarprovider.h -d
-@{
-@<Start of @'GRAMMARPROVIDER@' header@>
-#include <sstream>
-#include <iostream>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonArray>
-#include <QFile>
-#include <QQmlEngine>
-#include <QMap>
-#include <QMapIterator>
-#include <QTextDocument>
-#include <QThread>
-#include <QEventLoop>
-#include <QTime>
-#include <QMetaMethod>
-#include <QDirIterator>
-#include <QAbstractTableModel>
-#include <nlohmann/json-schema.hpp>
-#include "settings.h"
-#include "database.h"
-#include "levenshteindistance.h"
-#include "networkscheduler.h"
+% Copyright 2020, 2021, 2022 Florian Pesth
+%
+% This file is part of coleitra.
+%
+% coleitra is free software: you can redistribute it and/or modify
+% it under the terms of the GNU Affero General Public License as
+% published by the Free Software Foundation version 3 of the
+% License.
+%
+% coleitra is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU Affero General Public License for more details.
+%
+% You should have received a copy of the GNU Affero General Public License
+% along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#define STRINGIFY(x) #x
-#define TOSTRING(x) STRINGIFY(x)
+\section{Interface}
+@o ../src/grammarconfiguration.h -d
+@{
+@<Start of @'GRAMMARCONFIGURATION@' header@>
 
 using nlohmann::json;
 using nlohmann::json_schema::json_validator;
@@ -102,28 +95,49 @@ public:
         QList<t_grammarConfigurationInflectionTableCell> l_grammar_cells;
     };
     // "version" and "base_url" required by schema:
-    grammarconfiguration(json j_ini, database* lp_database):
-        s_version(QString::fromStdString(j_ini["version"])),
-        s_base_url(QString::fromStdString(j_ini["base_url"])),
-        p_database(lp_database){
-            if(j_ini.contains("language") && j_ini["language"].is_string())
-                i_language_id = p_database->idfromlanguagename(QString::fromStdString(j_ini["language"]));
-            // Fill inflection tables if they are given:
-            if(j_ini.contains("inflectiontables") && j_ini.is_array()){
-                for(auto& j_inflectiontable: j_ini["inflectiontables"]){
-                    t_grammarConfigurationInflectionTable t_inflectiontable(j_inflectiontable,p_database,i_language_id);
-                    l_inflection_tables.push_back(t_inflectiontable);
-                }
-            }
-        };
-
+    grammarconfiguration(json j_ini, database* lp_database);
 private:
     database* p_database;
     int i_language_id;
     QString s_version;
     QString s_base_url;
     QList<t_grammarConfigurationInflectionTable> l_inflection_tables;
-};
+
+@<End of class and header @>
+@}
+
+@o ../src/grammarprovider.h -d
+@{
+@<Start of @'GRAMMARPROVIDER@' header@>
+#include <sstream>
+#include <iostream>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
+#include <QFile>
+#include <QQmlEngine>
+#include <QMap>
+#include <QMapIterator>
+#include <QTextDocument>
+#include <QThread>
+#include <QEventLoop>
+#include <QTime>
+#include <QMetaMethod>
+#include <QDirIterator>
+#include <QAbstractTableModel>
+#include <nlohmann/json-schema.hpp>
+#include "settings.h"
+#include "database.h"
+#include "levenshteindistance.h"
+#include "networkscheduler.h"
+#include "grammarconfiguration.h"
+
+#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY(x)
+
+using nlohmann::json;
+using nlohmann::json_schema::json_validator;
+
 
 
 @<Start of class @'grammarprovider@'@>

@@ -26,6 +26,7 @@ databasefield.h
 main.h
 train.h
 edit.h
+grammarconfiguration.h
 grammarprovider.h
 grammarprovider_wiktionary_word.h
 databaseedit.h
@@ -45,6 +46,7 @@ startupsequence.h @}
 @1databasefield.cpp
 @1train.cpp
 @1edit.cpp
+@1grammarconfiguration.cpp 
 @1grammarprovider.cpp 
 @1grammarprovider_wiktionary_word.cpp 
 @1databaseedit.cpp
