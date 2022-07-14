@@ -17,12 +17,71 @@
 
 \section{New template}
 
+\subsection{ColeitraWidgetNewTemplateProcessInstructions}
+@o ../src/ColeitraWidgetNewTemplateProcessInstructions.qml
+@{
+import QtQuick 2.14
+import QtQuick.Layouts 1.14
+import QtQuick.Controls 2.14
+
+Column {
+    id: piwidget
+    height: instructiongrammaredit.visible? instructionselection.height + instructiongrammaredit.height : instructionselection.height
+    Row {
+        id: instructionselection
+        width: parent.width
+        height: 40
+        ColeitraGridImageButton {
+            visible: false
+            id: piminusbutton
+            imageid: "minus"
+            height: 40
+            clickhandler: function() { 
+                piwidget.destroy();
+            }
+        }
+        ColeitraGridLabel {
+            visible: false
+            id: instructionlabel
+            text: instruction.currentText
+            width: (piwidget.width - 40)
+            height: 40
+            @<Background yellow rounded control@>
+        }
+        ColeitraGridComboBox {
+            id: instruction
+            model: ["Ignore form", "Look up form", "Look up form (lexeme)", "Add and use form", "Add and ignore form"]
+            width: (piwidget.width - 40)
+            height: 40
+        }
+        ColeitraGridImageButton {
+            imageid: "plus"
+            id: piplusbutton
+            height: 40
+            clickhandler: function() { 
+                piminusbutton.visible = true;
+                instruction.visible = false;
+                instructionlabel.visible = true;
+                piplusbutton.visible = false;
+                piwidget.parent.addPart();
+            }
+        }
+    }
+    ColeitraWidgetEditGrammarFormComponentList {
+        id: instructiongrammaredit
+        visible: instruction.currentIndex != 0
+        width: parent.width
+        height: 40
+    }
+}
+@}
+
 \subsection{ColeitraWidgetNewTemplateTabContent}
 @o ../src/ColeitraWidgetNewTemplateTabContent.qml
 @{
 import QtQuick 2.14
 import QtQuick.Layouts 1.14
-import QtQuick.Controls 2.14
+import QtQuick.Controls 2.14 as QQC2
 import QtQuick.Controls 1.4
 import QtQml.Models 2.14
 
@@ -34,13 +93,42 @@ Column {
     ColeitraGridLabel {
         id: title
     }
+    QQC2.ScrollView {
+        id: scrollview_processinstructions
+        width: parent.width
+        height: grammarscrollview.height < (parent.height - buttonrow.height)/ 2.0 ? grammarscrollview.height : (parent.height - buttonrow.height) / 2.0
+        clip: true
+        //contentHeight: processinstructions.height + 40
+        Column {
+            id: grammarscrollview
+            width: parent.width
+            ColeitraGridLabel {
+                id: selectedview
+            }
+            ColeitraGridComboBox {
+                id: content_type
+                model: ["Form", "Form with ignored parts", "Compoundform", "Sentence"]
+                width: parent.width
+            }
+            ColeitraWidgetEditGrammarFormComponentList {
+                id: grammaredit
+                width: parent.width
+            }
+            ColeitraWidgetEditPartList {
+                partType: "ColeitraWidgetNewTemplateProcessInstructions"
+                id: processinstructions
+                width: parent.width
+                visible: content_type.currentIndex != 0
+            }
+        }
+    }
     ItemSelectionModel {
         id: ism
     }
     TableView {
         id: tv
         width: parent.width
-        height: parent.height - title.height - buttonrow.height - selectedview.height - grammaredit.height
+        height: parent.height - title.height - buttonrow.height - scrollview_processinstructions.height 
         rowDelegate: Rectangle{
             width: childrenRect.width
             height: 30
@@ -50,7 +138,21 @@ Column {
             color:  cellIsSelected ? "#DDFFFF" : (styleData.row % 2? "#FFFFFF": "#EEEEEE")
             Label {
                 width: parent.width
-                text: cellIsSelected ? "<b>" + styleData.value + "</b>" : styleData.value
+                text: {
+                    if(styleData.value.length > 0){
+                        var cellContent = "";
+                        if(cellIsSelected) cellContent += "<b>";
+                        for(const cellValue of styleData.value){
+                            cellContent += cellValue + ", ";
+                        }
+                        cellContent = cellContent.slice(0,-2);
+                        if(cellIsSelected) cellContent += "</b>";
+                        return cellContent;
+                    }
+                    else
+                        return "";
+                    //cellIsSelected ? "<b>" + styleData.value[0] + "</b>" : styleData.value[0]
+                }
                 font.pointSize: 14
             }
             MouseArea {
@@ -81,35 +183,41 @@ Column {
                     }
                 }
             }
-
         }
     }
-    ColeitraGridLabel {
-        id: selectedview
-    }
-    ColeitraWidgetEditGrammarFormComponentList {
-        id: grammaredit
-        visible: true
-        width: parent.width
-    }
-
-    Row {
+        Row {
         width: parent.width
         id: buttonrow
         ColeitraGridRedButton {
             id: resetButton
             text: "Reset selection"
-            width: parent.width / 2
+            width: parent.width / 4
             height: 80
             onClicked: {
                 ism.clearSelection();
                 selectedview.text = "";
             }
         }
+        ColeitraGridRedButton {
+            id: resetGrammarButton
+            text: "Reset grammar"
+            width: parent.width / 4
+            height: 80
+            onClicked: {
+            }
+        }
         ColeitraGridGreenButton {
-            id: saveButton
-            text: "Save"
-            width: parent.width / 2
+            id: saveGrammarButton
+            text: "Save grammar"
+            width: parent.width / 4
+            height: 80
+            onClicked: {
+            }
+        }
+        ColeitraGridGreenButton {
+            id: saveTemplateButton
+            text: "Save template"
+            width: parent.width / 4
             height: 80
             onClicked: {
             }

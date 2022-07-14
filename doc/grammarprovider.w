@@ -441,7 +441,8 @@ class grammarTableView : public QAbstractTableModel
 private:
     int maxRows;
     int maxColumns;
-    QString** tableContent;
+    QStringList** tableContent;
+    QVector<QVector<QString> >** grammarContent;
 public:
     grammarTableView(const QList<grammarprovider::tablecell> &parsedTable, QObject *parent = nullptr) : QAbstractTableModel(parent){
         maxRows = 0;
@@ -450,12 +451,15 @@ public:
             if(tableCell.row+1>maxRows) maxRows = tableCell.row+1;
             if(tableCell.column+1>maxColumns) maxColumns = tableCell.column+1;
         }
-        tableContent = new QString*[maxRows];
-        for(int i = 0; i < maxRows; ++i)
-            tableContent[i] = new QString[maxColumns];
+        tableContent = new QStringList*[maxRows];
+        grammarContent = new QVector<QVector<QString> >*[maxRows];
+        for(int i = 0; i < maxRows; ++i){
+            tableContent[i] = new QStringList[maxColumns];
+            grammarContent[i] = new QVector<QVector<QString> >[maxColumns];
+        }
         for(auto & tableCell: parsedTable){
             //qDebug() << "Cellcontent[" << tableCell.row << "][" << tableCell.column << "]:" << tableCell.content;
-            tableContent[tableCell.row][tableCell.column] = tableCell.content;
+            tableContent[tableCell.row][tableCell.column].push_back(tableCell.content);
         }
         //qDebug() << "Got" << parsedTable.length() << "cells in constructor of grammarTableView (" << maxColumns << "x" << maxRows << ")";
     }
@@ -476,13 +480,21 @@ public:
         if((index.row() < maxRows) && (role < maxColumns))
             return tableContent[index.row()][role];
         else
-            return "";
+            return QStringList();
+    }
+
+    Q_INVOKABLE QVector<QVector<QString> > grammar(const QModelIndex &index, int role){
+        return grammarContent[index.row()][role];
+    }
+
+    Q_INVOKABLE void setGrammar(const QModelIndex &index, int role, QVector<QVector<QString> > grammarForms){
+        grammarContent[index.row()][role] = grammarForms;
     }
 
     QHash<int, QByteArray> roleNames() const override
     {
         QHash<int,QByteArray> l_roleNames;
-        for(int i=0; i<20; i++)
+        for(int i=0; i<maxColumns+1; i++)
             l_roleNames[i] = (QString("col") + QString::number(i)).toUtf8();
         return l_roleNames;
     }
