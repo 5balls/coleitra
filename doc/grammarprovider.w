@@ -219,7 +219,6 @@ grammarconfiguration::grammarconfiguration(int li_language_id, QString ls_base_u
 \subsection{t\_grammarConfigurationInflectionTableCell}
 @o ../src/grammarconfiguration.cpp -d
 @{
-
 grammarconfiguration::t_grammarConfigurationInflectionTableForm::t_grammarConfigurationInflectionTableForm(json j_ini, database* lp_database, int li_language_id) :
     p_database(lp_database),
     i_language_id(li_language_id)
@@ -349,15 +348,17 @@ void grammarconfiguration::newInflectionTable(int i_language_id, QString s_table
 @}
 
 \subsection{tableHasIdentifier}
+@o ../src/grammarconfiguration.cpp -d
 @{
-bool tableHasIdentifier(QString s_tablename, QString s_identifier){
+bool grammarconfiguration::tableHasIdentifier(QString s_tablename, QString s_identifier){
     return tableIdentifiers(s_tablename).contains(s_identifier);
 }
 @}
 
 \subsection{tableIdentifiers}
+@o ../src/grammarconfiguration.cpp -d
 @{
-QList<QString> grammarconfiguration::tableIdentifiers(QString s_tablename){
+QVector<QString> grammarconfiguration::tableIdentifiers(QString s_tablename){
     int id = tableId(s_tablename); 
     if(id>-1)
         return l_inflection_tables.at(id).l_identifiers;
@@ -366,7 +367,82 @@ QList<QString> grammarconfiguration::tableIdentifiers(QString s_tablename){
 }
 @}
 
+\subsection{toJson}
+@o ../src/grammarconfiguration.cpp -d
+@{
+json grammarconfiguration::toJson(void){
+    json j_gc;
+    j_gc["language"] = p_database->languagenamefromid(i_language_id).toStdString();
+    j_gc["version"] = s_version.toStdString();
+    j_gc["base_url"] = s_base_url.toStdString();
+    for(const auto& l_inflection_table: l_inflection_tables){
+        json j_inflectiontable;
+        j_inflectiontable["tablename"] = l_inflection_table.s_tablename.toStdString();
+        for(const auto& l_identifier: l_inflection_table.l_identifiers)
+            j_inflectiontable["identifiers"] += l_identifier.toStdString();
+        for(const auto& l_grammar_form: l_inflection_table.l_grammar_forms){
+            json j_grammar_form;
+            j_grammar_form["index"] = l_grammar_form.i_index;
+            json j_source;
+            if(l_grammar_form.t_source.i_row>-1)
+                j_source["row"] = l_grammar_form.t_source.i_row;
+            if(l_grammar_form.t_source.i_column>-1)
+                j_source["column"] = l_grammar_form.t_source.i_column;
+            if(!l_grammar_form.t_source.s_xquery.isEmpty())
+                j_source["xquery"] = l_grammar_form.t_source.s_xquery.toStdString();
+            j_grammar_form["source"] = j_source;
+            {
+                json j_grammarexpressions;
+                j_grammarexpressions["format"] = "coleitra";
+                j_grammarexpressions["version"] = "0.1";
+                json j_grammarexpressions_tags;
+                QVector<QPair<QString,QString> > grammar_tags = p_database->getGrammarStringPairsFromGrammarFormId(l_grammar_form.i_grammarid);
+                for(const auto& grammar_tag: grammar_tags){
+                    j_grammarexpressions_tags[grammar_tag.first.toStdString()] = grammar_tag.second.toStdString();
+                }
+                j_grammarexpressions["tags"] = j_grammarexpressions_tags;
+                j_grammar_form["grammarexpressions"] = j_grammarexpressions;
+            }
+            QMap<e_cellContentType,QString> m_cellContentType = {
+                {e_cellContentType::FORM,"FORM"},
+                {e_cellContentType::FORM_WITH_IGNORED_PARTS,"FORM_WITH_IGNORED_PARTS"},
+                {e_cellContentType::COMPOUNDFORM,"COMPOUNDFORM"},
+                {e_cellContentType::SENTENCE,"SENTENCE"}
+            };
+            j_grammar_form["content_type"] = m_cellContentType[l_grammar_form.e_content_type].toStdString();
+            QMap<e_instructionType,QString> m_instructionType = {
+                {e_instructionType::IGNOREFORM,"IGNOREFORM"},
+                {e_instructionType::LOOKUPFORM,"LOOKUPFORM"},
+                {e_instructionType::LOOKUPFORM_LEXEME,"LOOKUPFORM_LEXEME"},
+                {e_instructionType::ADDANDUSEFORM,"ADDANDUSEFORM"},
+                {e_instructionType::ADDANDIGNOREFORM,"ADDANDIGNOREFORM"}
+            };
+            for(const auto& lt_instruction: l_grammar_form.t_instructions){
+                json j_instruction;
+                j_instruction["instruction"] = m_instructionType[lt_instruction.e_instruction].toStdString();
+                json j_grammarexpressions;
+                j_grammarexpressions["format"] = "coleitra";
+                j_grammarexpressions["version"] = "0.1";
+                json j_grammarexpressions_tags;
+                QVector<QPair<QString,QString> > grammar_tags = p_database->getGrammarStringPairsFromGrammarFormId(lt_instruction.i_grammarid);
+                for(const auto& grammar_tag: grammar_tags){
+                    j_grammarexpressions_tags[grammar_tag.first.toStdString()] = grammar_tag.second.toStdString();
+                }
+                j_grammarexpressions["tags"] = j_grammarexpressions_tags;
+                j_instruction["grammarexpressions"] = j_grammarexpressions;
+                j_inflectiontable["process"] += j_instruction;
+            }
+            j_inflectiontable["forms"] += j_grammar_form;
+        }
+        j_gc["inflectiontables"] += j_inflectiontable;
+    }
+    return j_gc;
+}
+@}
+
+
 \subsection{tableId}
+@o ../src/grammarconfiguration.cpp -d
 @{
 int grammarconfiguration::tableId(QString s_tablename){
     int id=-1;

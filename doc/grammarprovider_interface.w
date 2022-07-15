@@ -45,6 +45,7 @@ public:
         ADDANDIGNOREFORM
     };
     struct t_cellSource {
+        t_cellSource() : i_row(-1), i_column(-1), s_xquery(){};
         int i_row;
         int i_column;
         QString s_xquery;
@@ -76,7 +77,8 @@ public:
     };
     void newInflectionTable(int i_language_id, QString s_tablename, QVector<QString> l_identifiers);
     bool tableHasIdentifier(QString s_tablename, QString s_identifier);
-    QList<QString> tableIdentifiers(QString s_tablename);
+    QVector<QString> tableIdentifiers(QString s_tablename);
+    json toJson(void);
 private:
     int tableId(QString s_tablename);
     int i_language_id;

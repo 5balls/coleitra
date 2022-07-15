@@ -91,6 +91,7 @@ public:
     Q_INVOKABLE int languageOfLexeme(int lexeme_id);
     Q_INVOKABLE int grammarFormIdFromStrings(int language_id, QList<QList<QString> > grammarform);
     Q_INVOKABLE QList<int> searchGrammarFormsFromStrings(int language_id, QList<QList<QString> > grammarform);
+    Q_INVOKABLE QVector<QPair<QString,QString> > getGrammarStringPairsFromGrammarFormId(int grammarForm_id);
 private:
     QSqlDatabase vocableDatabase;
     QList < databasetable* > tables;
@@ -1248,6 +1249,24 @@ QString database::prettyPrintTranslation(int translation_id){
     }
     pretty_string.chop(6);
     return pretty_string;
+}
+
+QVector<QPair<QString,QString> > database::getGrammarStringPairsFromGrammarFormId(int grammarForm_id){
+    QVector<QPair<QString,QString> > l_result;
+    databasetable* grammarformcomponenttable = getTableByName("grammarformcomponent");
+    databasetable* grammarexpressiontable = getTableByName("grammarexpression");
+    databasetable* grammarkeytable = getTableByName("grammarkey");
+    QSqlQuery result = grammarformcomponenttable->select({"grammarexpression"},{"grammarform",grammarForm_id});
+    while(result.next()){
+        QSqlQuery result2 = grammarexpressiontable->select({"value","key"},{"id",result.value("grammarexpression").toInt()});
+        if(result2.next()){
+            QSqlQuery result3 = grammarkeytable->select({"string"},{"id",result2.value("key").toInt()});
+            if(result3.next()){
+                l_result.push_back({result3.value("string").toString(),result2.value("value").toString()});
+            }
+        }
+    }
+    return l_result;
 }
 
 QString database::prettyPrintGrammarForm(int grammarForm_id){
