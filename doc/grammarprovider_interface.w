@@ -28,39 +28,11 @@ using nlohmann::json_schema::json_validator;
 
 class grammarconfiguration {
 public:
+    // "version" and "base_url" required by schema:
+    grammarconfiguration(json j_ini, database* lp_database);
     struct t_grammarConfigurationInflectionTableCell {
         // "row", "column" and "grammarexpressions" required by schema
-        t_grammarConfigurationInflectionTableCell(json j_ini, database* lp_database, int li_language_id):
-            i_row(j_ini["row"]),
-            i_column(j_ini["column"]),
-            p_database(lp_database),
-            i_language_id(li_language_id){
-                // "index", "content_type" and "process" are optional
-                if(j_ini.contains("index") && j_ini["index"].is_number()){
-                    i_index = j_ini["index"];
-                }
-                if(j_ini.contains("grammarexpressions") && j_ini["grammarexpressions"].is_object()){
-                    if(j_ini["grammarexpressions"].contains("format")
-                            && j_ini["grammarexpressions"]["format"].is_string()
-                            && j_ini["grammarexpressions"].contains("version")
-                            && j_ini["grammarexpressions"]["version"].is_string()){
-                        QString s_format = QString::fromStdString(j_ini["grammarexpressions"]["format"]);
-                        QString s_version = QString::fromStdString(j_ini["grammarexpressions"]["version"]);
-                        if(j_ini["grammarexpressions"].contains("tags")
-                                && j_ini["grammarexpressions"]["tags"].is_object()){
-                            QList<QList<QString> > lls_grammarform;
-                            for(auto& [j_key, j_value] : j_ini["grammarexpressions"]["tags"].items())
-                                if(j_value.is_string())
-                                    lls_grammarform.push_back({QString::fromStdString(j_key),QString::fromStdString(j_value)});
-                            i_grammarid = p_database->grammarFormIdFromStrings(i_language_id,lls_grammarform);
-                        }
-                    }
-                }
-                if(j_ini.contains("content_type")){
-                }
-                if(j_ini.contains("process")){
-                }
-            }
+        t_grammarConfigurationInflectionTableCell(json j_ini, database* lp_database, int li_language_id);
         database* p_database;
         int i_language_id;
         int i_index;
@@ -70,35 +42,13 @@ public:
     };
     struct t_grammarConfigurationInflectionTable {
         // "tablename", "identifiers" and "cells" required by schema:
-        t_grammarConfigurationInflectionTable(json j_ini, database* lp_database, int li_language_id):
-            s_tablename(QString::fromStdString(j_ini["tablename"])),
-            p_database(lp_database),
-            i_language_id(li_language_id){
-                // We don't strictly need to check for existance here but do it anyway for robustness:
-                if(j_ini.contains("identifiers") && j_ini["identifiers"].is_array()){
-                    for(auto& j_identifier: j_ini["identifiers"]){
-                        if(j_identifier.is_string()){
-                            QString s_identifier = QString::fromStdString(j_identifier);
-                            l_identifiers.push_back(s_identifier);
-                        }
-                    }
-                }
-                // We don't strictly need to check for existance here but do it anyway for robustness:
-                if(j_ini.contains("cells") && j_ini["cells"].is_array()){
-                    for(auto& j_cell: j_ini["cells"]){
-                        t_grammarConfigurationInflectionTableCell t_cell(j_cell,p_database,i_language_id);
-                        l_grammar_cells.push_back(t_cell);
-                    }
-                }
-            }
+        t_grammarConfigurationInflectionTable(json j_ini, database* lp_database, int li_language_id);
         database* p_database;
         int i_language_id;
         QString s_tablename;
         QList<QString> l_identifiers;
         QList<t_grammarConfigurationInflectionTableCell> l_grammar_cells;
     };
-    // "version" and "base_url" required by schema:
-    grammarconfiguration(json j_ini, database* lp_database);
 private:
     database* p_database;
     int i_language_id;
