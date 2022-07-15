@@ -104,11 +104,93 @@ get_examples("Template:" + str(sys.argv[1]))
 @{
 #include "grammarconfiguration.h"
 
-grammarconfiguration::grammarconfiguration(json j_ini, database* lp_database) :
-    s_version(QString::fromStdString(j_ini["version"])),
-    s_base_url(QString::fromStdString(j_ini["base_url"])),
+grammarconfiguration::grammarconfiguration(QString s_fileName, database* lp_database) :
     p_database(lp_database)
 {
+    QString s_gpFilePath;
+#ifdef Q_OS_ANDROID
+    s_gpFilePath = QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).at(1) + "/grammarprovider";
+#else
+    s_gpFilePath = QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0) + "/.coleitra/grammarprovider";
+#endif
+
+    {
+        if(!QDir(s_gpFilePath).exists()){
+            QDir().mkdir(s_gpFilePath);
+        }
+    }
+
+#ifdef Q_OS_ANDROID
+    // In case of android copy over files from assets to directory:
+    QDirIterator it_assetFiles("assets:/grammarprovider",QDirIterator::Subdirectories);
+    while(it_assetFiles.hasNext()){
+        QFile f_currentFile(it_assetFiles.next());
+        QFileInfo fi_currentFile(f_currentFile);
+        if(!fi_currentFile.filePath().isEmpty()){
+            QString s_relativePath = fi_currentFile.filePath().remove("assets:/grammarprovider");
+            QString s_gpDFilePath = s_gpFilePath + "/" + s_relativePath;
+            if(fi_currentFile.isDir()){
+                if(!QDir(s_gpDFilePath).exists()){
+                    QDir().mkdir(s_gpDFilePath);
+                }
+            }
+            else{
+                if(!QFile(s_gpDFilePath).exists()){
+                    f_currentFile.copy(s_gpDFilePath);
+                }
+                else{
+                    s_gpDFilePath = s_gpFilePath + "/" + fi_currentFile.dir().path().remove("assets:/grammarprovider") + "/" + fi_currentFile.baseName() + ".coleitra." + QString::fromStdString(TOSTRING(COLEITRA_VERSION)) + "." + fi_currentFile.completeSuffix();
+                    if(!QFile(s_gpDFilePath).exists()){
+                        f_currentFile.copy(s_gpDFilePath);
+                    }
+                }
+            }
+        }
+    }
+#endif
+
+    json j_grammarProviderSchema;
+
+    QFile f_grammarProviderSchema(s_gpFilePath + "/schemas/main.json");
+    if(f_grammarProviderSchema.open(QIODevice::ReadOnly)) {
+        j_grammarProviderSchema = json::parse(f_grammarProviderSchema.readAll().toStdString());
+        f_grammarProviderSchema.close();
+    }
+
+    json j_ini;
+    QFile f_language(s_fileName);
+
+    if(f_language.open(QIODevice::ReadOnly)) {
+        j_ini = json::parse(f_language.readAll().toStdString());
+        f_language.close();
+    }
+
+    json_validator validator;
+    try {
+        validator.set_root_schema(j_grammarProviderSchema);
+    }
+    catch (const std::exception &e) {
+        qDebug() << "grammarconfiguration: Setting the root schema failed, here is why: " << e.what();
+        qDebug() << QString::fromStdString(j_grammarProviderSchema.dump());
+        return;
+    }
+    catch (...){
+        qDebug() << "grammarconfiguration: Setting the root schema failed.";
+    }
+
+    try {
+        validator.validate(j_ini);
+    }
+    catch (const std::exception &e) {
+        qDebug() << "grammarconfiguration: Validation failed, here is why: " << e.what();
+        return;
+    }
+    catch (...) {
+        qDebug() << "grammarconfiguration: Validation failed.";
+        return;
+    }
+    s_version = QString::fromStdString(j_ini["version"]);
+    s_base_url = QString::fromStdString(j_ini["base_url"]);
     if(j_ini.contains("language") && j_ini["language"].is_string())
         i_language_id = p_database->idfromlanguagename(QString::fromStdString(j_ini["language"]));
     // Fill inflection tables if they are given:
@@ -118,17 +200,27 @@ grammarconfiguration::grammarconfiguration(json j_ini, database* lp_database) :
             l_inflection_tables.push_back(t_inflectiontable);
         }
     }
-}
 
+}
+@}
+
+@o ../src/grammarconfiguration.cpp -d
+@{
+
+grammarconfiguration::grammarconfiguration(int li_language_id, QString ls_base_url, database* lp_database) :
+    i_language_id(li_language_id),
+    s_version("0.1"),
+    s_base_url(ls_base_url),
+    p_database(lp_database)
+{
+}
 @}
 
 \subsection{t\_grammarConfigurationInflectionTableCell}
 @o ../src/grammarconfiguration.cpp -d
 @{
 
-grammarconfiguration::t_grammarConfigurationInflectionTableCell::t_grammarConfigurationInflectionTableCell(json j_ini, database* lp_database, int li_language_id) :
-    i_row(j_ini["row"]),
-    i_column(j_ini["column"]),
+grammarconfiguration::t_grammarConfigurationInflectionTableForm::t_grammarConfigurationInflectionTableForm(json j_ini, database* lp_database, int li_language_id) :
     p_database(lp_database),
     i_language_id(li_language_id)
 {
@@ -153,9 +245,57 @@ grammarconfiguration::t_grammarConfigurationInflectionTableCell::t_grammarConfig
             }
         }
     }
-    if(j_ini.contains("content_type")){
+    if(j_ini.contains("index") && j_ini["index"].is_object()){
+        if(j_ini["index"].contains("row") && j_ini["index"]["row"].is_number())
+            t_source.i_row = j_ini["index"]["row"];
+        if(j_ini["index"].contains("column") && j_ini["index"]["column"].is_number())
+            t_source.i_column = j_ini["index"]["column"];
+        if(j_ini["index"].contains("xquery") && j_ini["index"]["xquery"].is_string())
+            t_source.s_xquery = QString::fromStdString(j_ini["index"]["xquery"]);
     }
-    if(j_ini.contains("process")){
+    if(j_ini.contains("content_type") && j_ini["content_type"].is_string()){
+        QMap<QString, e_cellContentType> m_cellContentType = {
+            {"FORM",e_cellContentType::FORM},
+            {"FORM_WITH_IGNORED_PARTS",e_cellContentType::FORM_WITH_IGNORED_PARTS},
+            {"COMPOUNDFORM",e_cellContentType::COMPOUNDFORM},
+            {"SENTENCE",e_cellContentType::SENTENCE}
+        };
+        e_content_type = m_cellContentType[QString::fromStdString(j_ini["content_type"])];
+    }
+    if(j_ini.contains("process") && j_ini["process"].is_array()){
+        for(auto& j_process: j_ini["process"]){
+            if(j_process.is_object()){
+                t_instruction t_currentInstruction;
+                if(j_process.contains("instruction") && j_process["instruction"].is_string()){
+                    QMap<QString, e_instructionType> m_instructionType = {
+                        {"IGNOREFORM",e_instructionType::IGNOREFORM},
+                        {"LOOKUPFORM",e_instructionType::LOOKUPFORM},
+                        {"LOOKUPFORM_LEXEME",e_instructionType::LOOKUPFORM_LEXEME},
+                        {"ADDANDUSEFORM",e_instructionType::ADDANDUSEFORM},
+                        {"ADDANDIGNOREFORM",e_instructionType::ADDANDIGNOREFORM}
+                    };
+                    t_currentInstruction.e_instruction = m_instructionType[QString::fromStdString(j_process["instruction"])];
+                }
+                if(j_process.contains("grammarexpressions") && j_process["grammarexpressions"].is_object()){
+                    if(j_process["grammarexpressions"].contains("format")
+                            && j_process["grammarexpressions"]["format"].is_string()
+                            && j_process["grammarexpressions"].contains("version")
+                            && j_process["grammarexpressions"]["version"].is_string()){
+                        QString s_format = QString::fromStdString(j_process["grammarexpressions"]["format"]);
+                        QString s_version = QString::fromStdString(j_process["grammarexpressions"]["version"]);
+                        if(j_process["grammarexpressions"].contains("tags")
+                                && j_process["grammarexpressions"]["tags"].is_object()){
+                            QList<QList<QString> > lls_grammarform;
+                            for(auto& [j_key, j_value] : j_process["grammarexpressions"]["tags"].items())
+                                if(j_value.is_string())
+                                    lls_grammarform.push_back({QString::fromStdString(j_key),QString::fromStdString(j_value)});
+                            t_currentInstruction.i_grammarid = p_database->grammarFormIdFromStrings(i_language_id,lls_grammarform);
+                        }
+                    }
+                }
+                t_instructions.push_back(t_currentInstruction);
+            }
+        }
     }
 }
 
@@ -179,12 +319,62 @@ grammarconfiguration::t_grammarConfigurationInflectionTable::t_grammarConfigurat
         }
     }
     // We don't strictly need to check for existance here but do it anyway for robustness:
-    if(j_ini.contains("cells") && j_ini["cells"].is_array()){
-        for(auto& j_cell: j_ini["cells"]){
-            t_grammarConfigurationInflectionTableCell t_cell(j_cell,p_database,i_language_id);
-            l_grammar_cells.push_back(t_cell);
+    if(j_ini.contains("forms") && j_ini["forms"].is_array()){
+        for(auto& j_form: j_ini["forms"]){
+            t_grammarConfigurationInflectionTableForm t_form(j_form,p_database,i_language_id);
+            l_grammar_forms.push_back(t_form);
         }
     }
+}
+@}
+
+@o ../src/grammarconfiguration.cpp -d
+@{
+grammarconfiguration::t_grammarConfigurationInflectionTable::t_grammarConfigurationInflectionTable(int li_language_id, QString ls_tablename, QVector<QString> ll_identifiers, database* lp_database) :
+    i_language_id(li_language_id),
+    s_tablename(ls_tablename),
+    l_identifiers(ll_identifiers),
+    p_database(lp_database)
+{
+}
+@}
+
+\subsection{newInflectionTable}
+@o ../src/grammarconfiguration.cpp -d
+@{
+void grammarconfiguration::newInflectionTable(int i_language_id, QString s_tablename, QVector<QString> l_identifiers){
+    t_grammarConfigurationInflectionTable newTable(i_language_id, s_tablename, l_identifiers, p_database);
+    l_inflection_tables.push_back(newTable);
+}
+@}
+
+\subsection{tableHasIdentifier}
+@{
+bool tableHasIdentifier(QString s_tablename, QString s_identifier){
+    return tableIdentifiers(s_tablename).contains(s_identifier);
+}
+@}
+
+\subsection{tableIdentifiers}
+@{
+QList<QString> grammarconfiguration::tableIdentifiers(QString s_tablename){
+    int id = tableId(s_tablename); 
+    if(id>-1)
+        return l_inflection_tables.at(id).l_identifiers;
+    else
+        return {};
+}
+@}
+
+\subsection{tableId}
+@{
+int grammarconfiguration::tableId(QString s_tablename){
+    int id=-1;
+    for(const auto& inflectionTable: l_inflection_tables){
+        id++;
+        if(inflectionTable.s_tablename == s_tablename) break;
+    }
+    return id;
 }
 @}
 
@@ -242,11 +432,6 @@ grammarprovider::grammarprovider(QObject *parent) : QObject(parent), m_busy(fals
     }
 #endif
 
-    QFile f_grammarProviderSchema(s_gpFilePath + "/schemas/main.json");
-    if(f_grammarProviderSchema.open(QIODevice::ReadOnly)) {
-        j_grammarProviderSchema = json::parse(f_grammarProviderSchema.readAll().toStdString());
-        f_grammarProviderSchema.close();
-    }
     
     s_baseurl = "https://en.wiktionary.org/w/api.php?";
     QQmlEngine* engine = qobject_cast<QQmlEngine*>(parent);
@@ -348,49 +533,6 @@ grammarprovider::grammarprovider(QObject *parent) : QObject(parent), m_busy(fals
 @O ../src/grammarprovider.cpp -d
 @{
 grammarprovider::~grammarprovider() {
-}
-@}
-
-\subsection{readGrammarConfiguration}
-@O ../src/grammarprovider.cpp -d
-@{
-bool grammarprovider::readGrammarConfiguration(QString s_fileName, grammarconfiguration& t_config)
-{
-    json j_language;
-    QFile f_language(s_fileName);
-
-    if(f_language.open(QIODevice::ReadOnly)) {
-        j_language = json::parse(f_language.readAll().toStdString());
-        f_language.close();
-    }
-
-    json_validator validator;
-    try {
-        validator.set_root_schema(j_grammarProviderSchema);
-    }
-    catch (const std::exception &e) {
-        qDebug() << "Setting the root schema failed, here is why: " << e.what();
-        std::cout << j_grammarProviderSchema.dump();
-        return false;
-    }
-    catch (...){
-        qDebug() << "Setting the root schema failed.";
-    }
-
-    try {
-        validator.validate(j_language);
-        std::cout << "Validation succeeded\n";
-        return false;
-    }
-    catch (const std::exception &e) {
-        qDebug() << "Validation failed, here is why: " << e.what();
-        return false;
-    }
-    catch (...) {
-        qDebug() << "Validation failed.";
-        return false;
-    }
-    t_config = grammarconfiguration(j_language,m_database);
 }
 @}
 

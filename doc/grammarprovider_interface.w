@@ -29,32 +29,61 @@ using nlohmann::json_schema::json_validator;
 class grammarconfiguration {
 public:
     // "version" and "base_url" required by schema:
-    grammarconfiguration(json j_ini, database* lp_database);
-    struct t_grammarConfigurationInflectionTableCell {
+    grammarconfiguration(QString s_fileName, database* lp_database);
+    grammarconfiguration(int li_language_id, QString ls_base_url, database* lp_database); 
+    enum class e_cellContentType {
+        FORM,
+        FORM_WITH_IGNORED_PARTS,
+        COMPOUNDFORM,
+        SENTENCE
+    };
+    enum class e_instructionType {
+        IGNOREFORM,
+        LOOKUPFORM,
+        LOOKUPFORM_LEXEME,
+        ADDANDUSEFORM,
+        ADDANDIGNOREFORM
+    };
+    struct t_cellSource {
+        int i_row;
+        int i_column;
+        QString s_xquery;
+    };
+    struct t_instruction {
+        e_instructionType e_instruction;
+        int i_grammarid;
+    };
+    struct t_grammarConfigurationInflectionTableForm {
         // "row", "column" and "grammarexpressions" required by schema
-        t_grammarConfigurationInflectionTableCell(json j_ini, database* lp_database, int li_language_id);
+        t_grammarConfigurationInflectionTableForm(json j_ini, database* lp_database, int li_language_id);
         database* p_database;
         int i_language_id;
         int i_index;
-        int i_row;
-        int i_column;
         int i_grammarid;
+        t_cellSource t_source;
+        e_cellContentType e_content_type;
+        QVector<t_instruction> t_instructions;
     };
     struct t_grammarConfigurationInflectionTable {
         // "tablename", "identifiers" and "cells" required by schema:
         t_grammarConfigurationInflectionTable(json j_ini, database* lp_database, int li_language_id);
+        t_grammarConfigurationInflectionTable(int i_language_id, QString s_tablename, QVector<QString> l_identifiers, database* lp_database);
         database* p_database;
         int i_language_id;
         QString s_tablename;
-        QList<QString> l_identifiers;
-        QList<t_grammarConfigurationInflectionTableCell> l_grammar_cells;
+        QVector<QString> l_identifiers;
+        QVector<t_grammarConfigurationInflectionTableForm> l_grammar_forms;
     };
+    void newInflectionTable(int i_language_id, QString s_tablename, QVector<QString> l_identifiers);
+    bool tableHasIdentifier(QString s_tablename, QString s_identifier);
+    QList<QString> tableIdentifiers(QString s_tablename);
 private:
-    database* p_database;
+    int tableId(QString s_tablename);
     int i_language_id;
     QString s_version;
     QString s_base_url;
     QList<t_grammarConfigurationInflectionTable> l_inflection_tables;
+    database* p_database;
 
 @<End of class and header @>
 @}
@@ -202,7 +231,6 @@ public slots:
     Q_INVOKABLE void getNextSentencePart(QObject* caller);
     Q_INVOKABLE void getNextPossibleTemplate(QObject* caller);
 private slots:
-    bool readGrammarConfiguration(QString s_fileName, grammarconfiguration& t_config);
     QList<grammarprovider::compoundPart> getGrammarCompoundFormParts(QString compoundword, QList<QString> compoundstrings, int id_language);
     void getWiktionarySections(QObject *caller);
     void getWiktionarySection(QString reply, QObject* caller);

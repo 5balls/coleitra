@@ -107,7 +107,7 @@ The definitions in the grammarprovider class are currently hardcoded. To make th
                   ]
                 },
                 "process": {
-                  "description": "List of instructions how to process contents of this cell. If given, content_type also is required.",
+                  "description": "List of instructions how to process contents of this form. If given, content_type also is required.",
                   "type": "array",
                   "minItems": 1,
                   "items": {
