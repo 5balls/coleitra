@@ -43,7 +43,7 @@ Rectangle {
             }
             ColeitraGridLabel {
                 id: stringLabel
-                text: "<b>Form</b>"
+                text: "Form"
             }
             Item {
                 width: 10
@@ -76,6 +76,48 @@ Rectangle {
 }
 @}
 
+\subsection{ColeitraWidgetNewTemplateLanguageEditLexemeAdd}
+@o ../src/ColeitraWidgetNewTemplateLanguageEditLexemeAdd.qml
+@{
+import QtQuick 2.14
+
+Column {
+    id: lexemeAdd
+    width: parent? parent.width : 400
+    Row {
+        width: parent.width
+        ColeitraGridImageButton {
+            visible: false
+            id: laminusbutton
+            imageid: "minus"
+            height: 40
+            clickhandler: function() { 
+                lexemeAdd.destroy();
+            }
+        }
+        ColeitraGridLabel {
+            text: "Lexeme:"
+            width: parent.width - 40
+        }
+        ColeitraGridImageButton {
+            visible: true
+            id: laplusbutton
+            imageid: "plus"
+            height: 40
+            clickhandler: function() { 
+                laplusbutton.visible = false;
+                laminusbutton.visible = true;
+                lexemeAdd.parent.addPart();
+            }
+        }
+    }
+    ColeitraWidgetEditPartList {
+        partType: "ColeitraWidgetNewTemplateLanguageEditFormAdd"
+        width: parent.width
+    }
+}
+@}
+
 \subsection{ColeitraWidgetNewTemplateLanguageEditTabContent}
 @o ../src/ColeitraWidgetNewTemplateLanguageEditTabContent.qml
 @{
@@ -83,17 +125,46 @@ import QtQuick 2.14
 
 Column {
     property alias nltitle : title
-    width: parent? parent.width : 400
     ColeitraGridLabel {
         id: title
     }
-    ColeitraGridLabel {
-        text: "Default lexemes entered into the database:"
+    Column {
+        width: parent? parent.width : 400
+        height: parent.height - buttonrow.height - title.height
+        ColeitraGridLabel {
+            text: "<b>Default lexemes to add to the database:</b>"
+        }
+        ColeitraWidgetEditPartList {
+            partType: "ColeitraWidgetNewTemplateLanguageEditLexemeAdd"
+            width: parent.width
+        }
+        ColeitraGridLabel {
+            text: "<b>Forms to look up to add to the database:</b>"
+        }
+        ColeitraWidgetEditPartList {
+            partType: "ColeitraWidgetNewTemplateLanguageEditFormAdd"
+            width: parent.width
+        }
     }
-    ColeitraWidgetEditPartList {
-        partType: "ColeitraWidgetNewTemplateLanguageEditFormAdd"
-        id: processinstructions
+    Row {
         width: parent.width
+        id: buttonrow
+        ColeitraGridRedButton {
+            id: resetButton
+            text: "Reset"
+            width: parent.width / 2
+            height: 80
+            onClicked: {
+            }
+        }
+        ColeitraGridGreenButton {
+            id: saveConfigButton
+            text: "Save config"
+            width: parent.width / 2
+            height: 80
+            onClicked: {
+            }
+        }
     }
 }
 @}
