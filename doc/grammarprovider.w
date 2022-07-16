@@ -952,16 +952,15 @@ void grammarprovider::getWiktionaryTemplate(QString s_reply, QObject* caller, gr
     ms_possibleTemplates += wt_finisheds;
     emit possibleTemplateAvailable(caller, wt_finisheds.length(), m_silent);
     // TODO Check if we have a valid json config here
-    for(auto& grammarConfiguration: m_grammarConfigurations){
-/*
+/*    for(auto& grammarConfiguration: m_grammarConfigurations){
         for(auto& inflectionTable: grammarConfiguration.l_inflection_tables){
             for(auto& s_identifier: inflectionTable.l_identifiers){
                 for(auto& wt_finished: wt_finisheds){
                     //FIXME
                 }
             }
-        }*/
-    }
+        }
+    }*/
     switch(purpose){
         case e_wiktionaryRequestPurpose::FLECTION:
             emit grammarInfoNotAvailable(caller, m_silent);

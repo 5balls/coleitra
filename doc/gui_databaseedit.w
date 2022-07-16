@@ -88,7 +88,6 @@ ColeitraWidgetRoundedRectangle {
 }
 @}
 
-
 @O ../src/ColeitraWidgetLanguageComboBox.qml
 @{
 import DatabaseLib 1.0
@@ -205,7 +204,6 @@ Popup {
     @<Background grey rounded control@>
 }
 @}
-
 
 @O ../src/ColeitraWidgetSearchPopupLexeme.qml
 @{
@@ -836,5 +834,4 @@ ColeitraPage {
     }
 }
 @}
-
 

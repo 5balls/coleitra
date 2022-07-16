@@ -81,6 +81,8 @@ Here are the files described, which are needed for compiling code for the Qt fra
         <file>ColeitraWidgetLabelValue.qml</file>
         <file>ColeitraWidgetNewTemplateTabContent.qml</file>
         <file>ColeitraWidgetNewTemplateProcessInstructions.qml</file>
+        <file>ColeitraWidgetNewTemplateLanguageEditTabContent.qml</file>
+        <file>ColeitraWidgetNewTemplateLanguageEditFormAdd.qml</file>
         <file>main.qml</file>
         <file>splash.qml</file>
         <file alias="logo.png">android/res/drawable/logo_large.png</file>

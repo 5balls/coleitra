@@ -80,6 +80,7 @@ FocusScope {
                 function onPossibleTemplateAvailable(caller, number_of_templates, silent){
                     if(caller != simpleeditinput) return;
                     loader.item.push("newtemplate.qml");
+                    loader.item.currentItem.addLanguageTab(language);
                     Edit.getNextPossibleTemplate(simpleeditinput);
                 }
                 function onPossibleTemplateEdit(caller, unnamed_arguments, named_arguments, tableView){

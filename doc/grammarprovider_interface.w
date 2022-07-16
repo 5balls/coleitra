@@ -26,7 +26,7 @@
 using nlohmann::json;
 using nlohmann::json_schema::json_validator;
 
-class grammarconfiguration {
+@<Start of class @'grammarconfiguration@'@>
 public:
     // "version" and "base_url" required by schema:
     grammarconfiguration(QString s_fileName, database* lp_database);

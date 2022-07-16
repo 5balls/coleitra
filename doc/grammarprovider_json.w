@@ -150,7 +150,31 @@ The definitions in the grammarprovider class are currently hardcoded. To make th
           "forms"
         ]
       }
-    }
+    },
+    "default_lexemes": {
+      "description": "This entries are put into the database before any us of inflectiontables. They should only contain entries which can not be looked up just by themselfes",
+      "type": "array",
+      "items": {
+          "type": "object",
+          "properties": {
+              "forms": {
+                  "type": "array",
+                  "items": {
+                      "$ref": "#/$defs/form"
+                  }
+              },
+              "required": [
+                  "forms"
+              ]
+          }
+      }
+  },
+  "lookup_forms": {
+      "description": "Look up this forms. This is done after default lexemes are put in the database but before any other form from the user is looked up. Should ony contain forms needed for the lookup of other forms",
+      "type": "array",
+      "items": {
+          "$ref": "#/$defs/form"
+      }
   },
   "required": [
     "version",
@@ -216,212 +240,227 @@ The definitions in the grammarprovider class are currently hardcoded. To make th
               "Croatian"
           ]
     },
-    "grammarexpressions": {
-      "description": "Grammar expressions which fit the cell",
-      "type": "object",
-      "properties": {
-        "format": {
-          "type": "string",
-          "enum": [
-            "coleitra",
-            "Universal Dependencies"
+      "form": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+              "content": {
+                  "description": "UTF-8 string for this word form. This should be a single word."
+              },
+              "grammarexpressions": {
+                  "$ref": "#/$defs/grammarexpressions"
+              }
+          },
+          "required": [
+              "content"
           ]
-        },
-        "version": {
-          "type": "string"
-        },
-        "tags": {
-          "type": "object"
-        }
       },
-      "allOf": [
-        {
-          "if": {
-            "properties": {
+      "grammarexpressions": {
+          "description": "Grammar expressions which fit the cell",
+          "type": "object",
+          "properties": {
               "format": {
-                "const": "coleitra"
-              }
-            }
-          },
-          "then": {
-            "properties": {
+                  "type": "string",
+                  "enum": [
+                      "coleitra",
+                  "Universal Dependencies"
+                  ]
+              },
               "version": {
-                "enum": [
-                  "0.1"
-                ]
+                  "type": "string"
+              },
+              "tags": {
+                  "type": "object"
               }
-            },
-            "if": {
-              "properties": {
-                "version": {
-                  "const": "0.1"
-                }
-              }
-            },
-            "then": {
-              "properties": {
-                "tags": {
-                  "additionalProperties": false,
+          },
+          "allOf": [
+          {
+              "if": {
                   "properties": {
-                    "Case": {
-                      "type": "string",
-                      "enum": [
-                        "Ablative",
-                        "Accusative",
-                        "Abessive",
-                        "Adessive",
-                        "Allative",
-                        "Causal-final",
-                        "Comitative",
-                        "Dative",
-                        "Delative",
-                        "Elative",
-                        "Essive",
-                        "Genitive",
-                        "Illative",
-                        "Inessive",
-                        "Infinitive",
-                        "Instructive",
-                        "Instrumental",
-                        "Locative",
-                        "Nominative",
-                        "Partitive",
-                        "Possessive",
-                        "Prolative",
-                        "Sociative",
-                        "Sublative",
-                        "Superessive",
-                        "Terminative",
-                        "Translative",
-                        "Vocative"
-                      ]
-                    },
-                    "Voice": {
-                      "type": "string",
-                      "enum": [
-                        "Active",
-                        "Passive"
-                      ]
-                    },
-                    "Gender": {
-                      "type": "string",
-                      "enum": [
-                        "Feminine",
-                        "Masculine",
-                        "Neuter"
-                      ]
-                    },
-                    "Number": {
-                      "type": "string",
-                      "enum": [
-                        "Singular",
-                        "Plural"
-                      ]
-                    },
-                    "Tense": {
-                      "type": "string",
-                      "enum": [
-                        "Future",
-                        "Future 1",
-                        "Future 2",
-                        "Past",
-                        "Perfect",
-                        "Plusquamperfect",
-                        "Present",
-                        "Preterite",
-                        "Agent"
-                      ]
-                    },
-                    "Mood": {
-                      "type": "string",
-                      "enum": [
-                        "Imperative",
-                        "Indicative",
-                        "Potential",
-                        "Subjunctive",
-                        "Subjunctive 1",
-                        "Subjunctive 2",
-                        "Optative"
-                      ]
-                    },
-                    "Part of speech": {
-                      "type": "string",
-                      "enum": [
-                        "Noun",
-                        "Verb",
-                        "Adjective",
-                        "Adverb",
-                        "Pronoun",
-                        "Preposition",
-                        "Conjunction",
-                        "Interjection",
-                        "Numeral",
-                        "Article",
-                        "Determiner",
-                        "Postposition"
-                      ]
-                    },
-                    "Person": {
-                      "type": "string",
-                      "enum": [
-                        "First",
-                        "Second",
-                        "Third"
-                      ]
-                    },
-                    "Polarity": {
-                      "type": "string",
-                      "enum": [
-                        "Negative",
-                        "Positive"
-                      ]
-                    },
-                    "Infinitive": {
-                      "type": "string",
-                      "enum": [
-                        "First",
-                        "Long first",
-                        "Second",
-                        "Third",
-                        "Fourth",
-                        "Fifth"
-                      ]
-                    },
-                    "Verbform": {
-                      "type": "string",
-                      "enum": [
-                        "Participle",
-                        "Auxiliary",
-                        "Connegative"
-                      ]
-                    }
+                      "format": {
+                          "const": "coleitra"
+                      }
                   }
-                }
+              },
+              "then": {
+                  "properties": {
+                      "version": {
+                          "enum": [
+                              "0.1"
+                          ]
+                      }
+                  },
+                  "if": {
+                      "properties": {
+                          "version": {
+                              "const": "0.1"
+                          }
+                      }
+                  },
+                  "then": {
+                      "properties": {
+                          "tags": {
+                              "additionalProperties": false,
+                              "properties": {
+                                  "Case": {
+                                      "type": "string",
+                                      "enum": [
+                                          "Ablative",
+                                      "Accusative",
+                                      "Abessive",
+                                      "Adessive",
+                                      "Allative",
+                                      "Causal-final",
+                                      "Comitative",
+                                      "Dative",
+                                      "Delative",
+                                      "Elative",
+                                      "Essive",
+                                      "Genitive",
+                                      "Illative",
+                                      "Inessive",
+                                      "Infinitive",
+                                      "Instructive",
+                                      "Instrumental",
+                                      "Locative",
+                                      "Nominative",
+                                      "Partitive",
+                                      "Possessive",
+                                      "Prolative",
+                                      "Sociative",
+                                      "Sublative",
+                                      "Superessive",
+                                      "Terminative",
+                                      "Translative",
+                                      "Vocative"
+                                          ]
+                                  },
+                                  "Voice": {
+                                      "type": "string",
+                                      "enum": [
+                                          "Active",
+                                      "Passive"
+                                      ]
+                                  },
+                                  "Gender": {
+                                      "type": "string",
+                                      "enum": [
+                                          "Feminine",
+                                      "Masculine",
+                                      "Neuter"
+                                      ]
+                                  },
+                                  "Number": {
+                                      "type": "string",
+                                      "enum": [
+                                          "Singular",
+                                      "Plural"
+                                      ]
+                                  },
+                                  "Tense": {
+                                      "type": "string",
+                                      "enum": [
+                                          "Future",
+                                      "Future 1",
+                                      "Future 2",
+                                      "Past",
+                                      "Perfect",
+                                      "Plusquamperfect",
+                                      "Present",
+                                      "Preterite",
+                                      "Agent"
+                                      ]
+                                  },
+                                  "Mood": {
+                                      "type": "string",
+                                      "enum": [
+                                          "Imperative",
+                                      "Indicative",
+                                      "Potential",
+                                      "Subjunctive",
+                                      "Subjunctive 1",
+                                      "Subjunctive 2",
+                                      "Optative"
+                                      ]
+                                  },
+                                  "Part of speech": {
+                                      "type": "string",
+                                      "enum": [
+                                          "Noun",
+                                      "Verb",
+                                      "Adjective",
+                                      "Adverb",
+                                      "Pronoun",
+                                      "Preposition",
+                                      "Conjunction",
+                                      "Interjection",
+                                      "Numeral",
+                                      "Article",
+                                      "Determiner",
+                                      "Postposition"
+                                      ]
+                                  },
+                                  "Person": {
+                                      "type": "string",
+                                      "enum": [
+                                          "First",
+                                      "Second",
+                                      "Third"
+                                      ]
+                                  },
+                                  "Polarity": {
+                                      "type": "string",
+                                      "enum": [
+                                          "Negative",
+                                      "Positive"
+                                      ]
+                                  },
+                                  "Infinitive": {
+                                      "type": "string",
+                                      "enum": [
+                                          "First",
+                                      "Long first",
+                                      "Second",
+                                      "Third",
+                                      "Fourth",
+                                      "Fifth"
+                                      ]
+                                  },
+                                  "Verbform": {
+                                      "type": "string",
+                                      "enum": [
+                                          "Participle",
+                                      "Auxiliary",
+                                      "Connegative"
+                                      ]
+                                  }
+                              }
+                          }
+                      }
+                  }
               }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "format": {
-                "const": "Universal Dependencies"
-              }
-            }
           },
-          "then": {
-            "properties": {
-              "version": {
-                "enum": [
-                  "2"
-                ]
+          {
+              "if": {
+                  "properties": {
+                      "format": {
+                          "const": "Universal Dependencies"
+                      }
+                  }
+              },
+              "then": {
+                  "properties": {
+                      "version": {
+                          "enum": [
+                              "2"
+                          ]
+                      }
+                  }
               }
-            }
           }
-        }
-      ],
-      "additionalProperties": false
-    }
+          ],
+          "additionalProperties": false
+      }
   }
 }
 @}

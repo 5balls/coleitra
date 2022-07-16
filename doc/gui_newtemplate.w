@@ -17,6 +17,87 @@
 
 \section{New template}
 
+\subsection{ColeitraWidgetNewTemplateLanguageEditFormAdd}
+@o ../src/ColeitraWidgetNewTemplateLanguageEditFormAdd.qml
+@{
+import QtQuick 2.14
+
+Rectangle {
+    property bool modifiedIndex: stringValue.text != ""
+    id: formEdit
+    width: parent.width
+    color: formEdit.modifiedIndex? "#FFFFDD" : "#FFFFFF"
+    height: feplusbutton.height + formGrammarEdit.height
+    Column {
+        width: parent.width
+        Row {
+            width: parent.width
+            ColeitraGridImageButton {
+                visible: false
+                id: feminusbutton
+                imageid: "minus"
+                height: 40
+                clickhandler: function() { 
+                    formEdit.destroy();
+                }
+            }
+            ColeitraGridLabel {
+                id: stringLabel
+                text: "<b>Form</b>"
+            }
+            Item {
+                width: 10
+                height: 10
+            }
+            ColeitraGridTextInput {
+                id: stringValue
+                width: parent.width - stringLabel.width - 10 - 40
+                background: ColeitraWidgetRoundedRectangle { 
+                    color: formEdit.modifiedIndex?  "#FFFFDD" : "#DDFFFF"
+                }
+            }
+            ColeitraGridImageButton {
+                visible: true
+                id: feplusbutton
+                imageid: "plus"
+                height: 40
+                clickhandler: function() { 
+                    feplusbutton.visible = false;
+                    feminusbutton.visible = true;
+                    formEdit.parent.addPart();
+                }
+            }
+        }
+        ColeitraWidgetEditGrammarFormComponentList {
+            id: formGrammarEdit
+            width: parent.width
+        }
+    }
+}
+@}
+
+\subsection{ColeitraWidgetNewTemplateLanguageEditTabContent}
+@o ../src/ColeitraWidgetNewTemplateLanguageEditTabContent.qml
+@{
+import QtQuick 2.14
+
+Column {
+    property alias nltitle : title
+    width: parent? parent.width : 400
+    ColeitraGridLabel {
+        id: title
+    }
+    ColeitraGridLabel {
+        text: "Default lexemes entered into the database:"
+    }
+    ColeitraWidgetEditPartList {
+        partType: "ColeitraWidgetNewTemplateLanguageEditFormAdd"
+        id: processinstructions
+        width: parent.width
+    }
+}
+@}
+
 \subsection{ColeitraWidgetNewTemplateProcessInstructions}
 @o ../src/ColeitraWidgetNewTemplateProcessInstructions.qml
 @{
@@ -274,10 +355,39 @@ import GrammarProviderLib 1.0
 ColeitraPage {
     id: tabPage
     property var tabContent;
+    property var tabContentLanguage;
     property var tabContentWidgetString;
     property var tableViewModel;
+    property var language;
+    property var addLanguageTab: function(l_language){
+        language = l_language;
+        var tabItem = Qt.createQmlObject('import QtQuick.Controls 2.14; TabButton { text: "Language ' + Database.languagenamefromid(language) + '" }', templateselection);
+        templateselection.addItem(tabItem);
+        tabContentLanguage = Qt.createComponent("ColeitraWidgetNewTemplateLanguageEditTabContent.qml");
+        if(tabContentLanguage.status == Component.Ready) {
+            //console.log("1 NO Problem with the creation of language tab");
+            finishLanguageTab();
+        }
+        else {
+            //console.log("1 Problem with the creation of language tab");
+            tabContentLanguage.statusChanged.connect(finishLanguageTab);
+        }
+    }
+    property var finishLanguageTab: function(){
+        if (tabContentLanguage.status == Component.Ready) {
+            //console.log("2 NO Problem with the creation of language tab");
+            var newObject = tabContentLanguage.createObject(templatecontent); 
+            newObject.nltitle.text = "<b>" + Database.languagenamefromid(language) + "</b>";
+            newObject.width = tabPage.width;
+            newObject.height = tabPage.height-templateselection.height;
+            templatecontent.children.push(newObject);
+        }
+        else{
+            //console.log("2 Problem with the creation of language tab");
+        }
+    }
     property var addPossibleNewTemplate: function(unnamed_arguments, named_arguments, tableView){
-        var tabItem = Qt.createQmlObject('import QtQuick.Controls 2.14; TabButton { text: "' + unnamed_arguments[0] + '" }', templateselection);
+        var tabItem = Qt.createQmlObject('import QtQuick.Controls 2.14; TabButton { text: "Template ' + unnamed_arguments[0] + '" }', templateselection);
         templateselection.addItem(tabItem);
         if(unnamed_arguments.length>0){
             tabContentWidgetString = '<b>' + unnamed_arguments[0] + '</b> ';
