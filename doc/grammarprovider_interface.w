@@ -75,17 +75,28 @@ public:
         QVector<QString> l_identifiers;
         QVector<t_grammarConfigurationInflectionTableForm> l_grammar_forms;
     };
+    struct t_formAndGrammarId {
+        t_formAndGrammarId(json j_form, database* p_database, int i_language_id);
+        QString s_form;
+        int i_grammarid;
+    };
     void newInflectionTable(int i_language_id, QString s_tablename, QVector<QString> l_identifiers);
     bool tableHasIdentifier(QString s_tablename, QString s_identifier);
     QVector<QString> tableIdentifiers(QString s_tablename);
     json toJson(void);
+    int languageId(void){return i_language_id;};
+    bool isValid(void){return b_valid;};
 private:
+    bool b_valid;
     int tableId(QString s_tablename);
     int i_language_id;
     QString s_version;
     QString s_base_url;
     QList<t_grammarConfigurationInflectionTable> l_inflection_tables;
+    QList<QList<t_formAndGrammarId> > l_default_lexemes;
+    QList<t_formAndGrammarId> l_lookup_forms;
     database* p_database;
+    static int getGrammarIdFromJson(json j_input, database* p_database, int i_language_id);
 
 @<End of class and header @>
 @}
@@ -221,8 +232,6 @@ public:
         int m_languageid;
         QString m_word;
     };
-    
-
     enum class e_wiktionaryRequestPurpose {
         FLECTION,
         ETYMOLOGY
@@ -280,6 +289,7 @@ signals:
     //void grammarobtained(QObject* caller, QStringList expressions, QList<QList<QList<QString> > > grammarexpressions);
 public:
 private:
+    QMap<int, QPointer<grammarconfiguration> > m_grammarConfigurations;
     json j_grammarProviderSchema;
     QString s_gpFilePath;
     int m_language;
@@ -300,7 +310,6 @@ private:
     templatearguments m_currentarguments;
     QList<grammarform> m_grammarforms;
     QList<grammarform> mi_grammarforms;
-    QList<grammarconfiguration> m_grammarConfigurations;
     QList<scheduled_lookup> m_scheduled_lookups;
     QMap<int, void (grammarprovider::*)(QObject*,int)> m_requirements_map;
     QMap<int, QList<QPair<QString,int> > (grammarprovider::*)(QObject* caller, int id, int lexeme_id, QList<int> compound_lexemes)> m_compound_parser_map;
@@ -349,7 +358,6 @@ private:
     int maxRows;
     int maxColumns;
     QStringList** tableContent;
-    QVector<QVector<QString> >** grammarContent;
 public:
     grammarTableView(const QList<grammarprovider::tablecell> &parsedTable, QObject *parent = nullptr) : QAbstractTableModel(parent){
         maxRows = 0;
@@ -359,10 +367,8 @@ public:
             if(tableCell.column+1>maxColumns) maxColumns = tableCell.column+1;
         }
         tableContent = new QStringList*[maxRows];
-        grammarContent = new QVector<QVector<QString> >*[maxRows];
         for(int i = 0; i < maxRows; ++i){
             tableContent[i] = new QStringList[maxColumns];
-            grammarContent[i] = new QVector<QVector<QString> >[maxColumns];
         }
         for(auto & tableCell: parsedTable){
             //qDebug() << "Cellcontent[" << tableCell.row << "][" << tableCell.column << "]:" << tableCell.content;
@@ -388,14 +394,6 @@ public:
             return tableContent[index.row()][role];
         else
             return QStringList();
-    }
-
-    Q_INVOKABLE QVector<QVector<QString> > grammar(const QModelIndex &index, int role){
-        return grammarContent[index.row()][role];
-    }
-
-    Q_INVOKABLE void setGrammar(const QModelIndex &index, int role, QVector<QVector<QString> > grammarForms){
-        grammarContent[index.row()][role] = grammarForms;
     }
 
     QHash<int, QByteArray> roleNames() const override

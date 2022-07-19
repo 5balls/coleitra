@@ -688,7 +688,7 @@ use the speech synthesizer with this code.
             QMap<QString,QVariant> add_language;
             QMap<QString,QVariant> add_language_name;
             QList< QList< QString> > languages = {
-                {"cmn","Mandarin Chinese"},
+                {"cmn","Mandarin"},
                 {"hi","Hindi"},
                 {"es","Spanish"},
                 {"fr","French"},
