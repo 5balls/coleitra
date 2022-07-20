@@ -122,16 +122,18 @@ grammarconfiguration::grammarconfiguration(QString s_fileName, database* lp_data
             l_inflection_tables.push_back(t_inflectiontable);
         }
     }
-    if(j_ini.contains("default_lexemes") && j_ini["default_lexemes"].is_array()){
-        for(auto& j_lexeme: j_ini["default_lexemes"]){
+    if(j_ini.contains("default_lexemes") && j_ini["default_lexemes"].is_array())
+        for(const auto& j_lexeme: j_ini["default_lexemes"])
             if(j_lexeme.contains("forms") && j_lexeme["forms"].is_array()){
                 QList<t_formAndGrammarId> lexeme_forms;
-                for(auto& j_form: j_lexeme["forms"]){
+                for(const auto& j_form: j_lexeme["forms"])
                     lexeme_forms.push_back(t_formAndGrammarId(j_form,p_database,i_language_id));
-                }
+                l_default_lexemes.push_back(lexeme_forms);
             }
-        }
-    }
+    if(j_ini.contains("lookup_forms") && j_ini["lookup_forms"].is_array())
+        for(const auto& j_form: j_ini["lookup_forms"])
+            l_lookup_forms.push_back(t_formAndGrammarId(j_form,p_database,i_language_id));
+    qDebug() << "Summary:" << l_inflection_tables.size() << "inflection tables" << l_default_lexemes.size() << "default lexemes and" << l_lookup_forms.size() << "lookup forms";
     b_valid = true;
 }
 @}
