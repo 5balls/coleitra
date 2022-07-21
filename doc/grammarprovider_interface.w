@@ -97,6 +97,7 @@ private:
     QList<t_formAndGrammarId> l_lookup_forms;
     database* p_database;
     static int getGrammarIdFromJson(json j_input, database* p_database, int i_language_id);
+    static json grammarIdToJson(int i_grammarid, database* p_database);
 
 @<End of class and header @>
 @}

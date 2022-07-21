@@ -326,18 +326,7 @@ json grammarconfiguration::toJson(void){
             if(!l_grammar_form.t_source.s_xquery.isEmpty())
                 j_source["xquery"] = l_grammar_form.t_source.s_xquery.toStdString();
             j_grammar_form["source"] = j_source;
-            {
-                json j_grammarexpressions;
-                j_grammarexpressions["format"] = "coleitra";
-                j_grammarexpressions["version"] = "0.1";
-                json j_grammarexpressions_tags;
-                QVector<QPair<QString,QString> > grammar_tags = p_database->getGrammarStringPairsFromGrammarFormId(l_grammar_form.i_grammarid);
-                for(const auto& grammar_tag: grammar_tags){
-                    j_grammarexpressions_tags[grammar_tag.first.toStdString()] = grammar_tag.second.toStdString();
-                }
-                j_grammarexpressions["tags"] = j_grammarexpressions_tags;
-                j_grammar_form["grammarexpressions"] = j_grammarexpressions;
-            }
+            j_grammar_form["grammarexpressions"] = grammarIdToJson(l_grammar_form.i_grammarid, p_database);
             QMap<e_cellContentType,QString> m_cellContentType = {
                 {e_cellContentType::FORM,"FORM"},
                 {e_cellContentType::FORM_WITH_IGNORED_PARTS,"FORM_WITH_IGNORED_PARTS"},
@@ -355,26 +344,53 @@ json grammarconfiguration::toJson(void){
             for(const auto& lt_instruction: l_grammar_form.t_instructions){
                 json j_instruction;
                 j_instruction["instruction"] = m_instructionType[lt_instruction.e_instruction].toStdString();
-                json j_grammarexpressions;
-                j_grammarexpressions["format"] = "coleitra";
-                j_grammarexpressions["version"] = "0.1";
-                json j_grammarexpressions_tags;
-                QVector<QPair<QString,QString> > grammar_tags = p_database->getGrammarStringPairsFromGrammarFormId(lt_instruction.i_grammarid);
-                for(const auto& grammar_tag: grammar_tags){
-                    j_grammarexpressions_tags[grammar_tag.first.toStdString()] = grammar_tag.second.toStdString();
-                }
-                j_grammarexpressions["tags"] = j_grammarexpressions_tags;
-                j_instruction["grammarexpressions"] = j_grammarexpressions;
+                j_instruction["grammarexpressions"] = grammarIdToJson(lt_instruction.i_grammarid, p_database);
                 j_inflectiontable["process"] += j_instruction;
             }
             j_inflectiontable["forms"] += j_grammar_form;
         }
         j_gc["inflectiontables"] += j_inflectiontable;
     }
+    for(const auto& default_lexeme: l_default_lexemes){
+        json j_lexeme;
+        for(const auto& form_and_grammar_id: default_lexeme){
+            json j_form_and_grammar_id;
+            json j_form;
+            j_form["content"] = form_and_grammar_id.s_form.toStdString();
+            j_form["grammarexpressions"] = grammarIdToJson(form_and_grammar_id.i_grammarid,p_database);
+            j_form_and_grammar_id["form"] = j_form;
+            j_lexeme["forms"] += j_form_and_grammar_id;
+        }
+        j_gc["default_lexemes"] += j_lexeme;
+    }
+    for(const auto& lookup_form: l_lookup_forms){
+        json j_form_and_grammar_id;
+        json j_form;
+        j_form["content"] = lookup_form.s_form.toStdString();
+        j_form["grammarexpressions"] = grammarIdToJson(lookup_form.i_grammarid,p_database);
+        j_form_and_grammar_id["form"] = j_form;
+        j_gc["lookup_forms"] += j_form_and_grammar_id;
+    }
     return j_gc;
 }
 @}
 
+\subsection{grammarIdToJson}
+@o ../src/grammarconfiguration.cpp -d
+@{
+json grammarconfiguration::grammarIdToJson(int i_grammarid, database* p_database){
+    json j_grammarexpressions;
+    j_grammarexpressions["format"] = "coleitra";
+    j_grammarexpressions["version"] = "0.1";
+    json j_grammarexpressions_tags;
+    QVector<QPair<QString,QString> > grammar_tags = p_database->getGrammarStringPairsFromGrammarFormId(i_grammarid);
+    for(const auto& grammar_tag: grammar_tags){
+        j_grammarexpressions_tags[grammar_tag.first.toStdString()] = grammar_tag.second.toStdString();
+    }
+    j_grammarexpressions["tags"] = j_grammarexpressions_tags;
+    return j_grammarexpressions;
+}
+@}
 
 \subsection{tableId}
 @o ../src/grammarconfiguration.cpp -d
