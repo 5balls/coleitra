@@ -86,6 +86,8 @@ public:
     json toJson(void);
     int languageId(void){return i_language_id;};
     bool isValid(void){return b_valid;};
+    const QList<QList<t_formAndGrammarId> >& defaultLexemes(void){return l_default_lexemes;};
+    const QList<t_formAndGrammarId>& lookupForms(void){return l_lookup_forms;};
 private:
     bool b_valid;
     int tableId(QString s_tablename);
