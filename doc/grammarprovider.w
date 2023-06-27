@@ -663,6 +663,17 @@ void grammarprovider::getNextPossibleTemplate(QObject* caller){
 }
 @}
 
+
+\subsection{getGrammarLookupForms}
+@O ../src/grammarprovider.cpp -d
+@{
+const QList<t_formAndGrammarId>& grammarprovider::getGrammarLookupForms(QObject* caller, int languageid){
+    if(m_grammarConfigurations.contains(languageid))
+        return m_grammarConfigurations[languageid]->lookupForms();
+    return {};
+}
+@}
+
 \subsection{parseMediawikiTableToPlainText}
 @O ../src/grammarprovider.cpp -d
 @{

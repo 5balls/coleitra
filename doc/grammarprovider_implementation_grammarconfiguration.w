@@ -140,10 +140,10 @@ grammarconfiguration::grammarconfiguration(QString s_fileName, database* lp_data
 
 @o ../src/grammarconfiguration.cpp -d
 @{
-grammarconfiguration::t_formAndGrammarId::t_formAndGrammarId(json j_form, database* p_database, int i_language_id){
+t_formAndGrammarId::t_formAndGrammarId(json j_form, database* p_database, int i_language_id){
     if(j_form.contains("content") && j_form["content"].is_string())
         s_form = QString::fromStdString(j_form["content"]);
-    i_grammarid = getGrammarIdFromJson(j_form,p_database,i_language_id);
+    i_grammarid = grammarconfiguration::getGrammarIdFromJson(j_form,p_database,i_language_id);
 }
 @}
 

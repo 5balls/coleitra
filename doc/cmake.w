@@ -166,8 +166,8 @@ else()
     )
 endif()
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -ggdb")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -ggdb")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -ggdb -no-pie")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -ggdb -no-pie")
 
 target_link_libraries(coleitra PUBLIC ${QT_LIBS} ${LIBS} nlohmann_json_schema_validator)
 

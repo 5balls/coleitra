@@ -26,6 +26,17 @@
 using nlohmann::json;
 using nlohmann::json_schema::json_validator;
 
+    struct t_formAndGrammarId {
+        Q_GADGET
+        Q_PROPERTY(QString form MEMBER s_form);
+        Q_PROPERTY(int grammarid MEMBER i_grammarid);
+        public:
+        t_formAndGrammarId(json j_form, database* p_database, int i_language_id);
+        QString s_form;
+        int i_grammarid;
+    };
+
+
 @<Start of class @'grammarconfiguration@'@>
 public:
     // "version" and "base_url" required by schema:
@@ -75,11 +86,6 @@ public:
         QVector<QString> l_identifiers;
         QVector<t_grammarConfigurationInflectionTableForm> l_grammar_forms;
     };
-    struct t_formAndGrammarId {
-        t_formAndGrammarId(json j_form, database* p_database, int i_language_id);
-        QString s_form;
-        int i_grammarid;
-    };
     void newInflectionTable(int i_language_id, QString s_tablename, QVector<QString> l_identifiers);
     bool tableHasIdentifier(QString s_tablename, QString s_identifier);
     QVector<QString> tableIdentifiers(QString s_tablename);
@@ -88,6 +94,7 @@ public:
     bool isValid(void){return b_valid;};
     const QList<QList<t_formAndGrammarId> >& defaultLexemes(void){return l_default_lexemes;};
     const QList<t_formAndGrammarId>& lookupForms(void){return l_lookup_forms;};
+    static int getGrammarIdFromJson(json j_input, database* p_database, int i_language_id);
 private:
     bool b_valid;
     int tableId(QString s_tablename);
@@ -98,7 +105,6 @@ private:
     QList<QList<t_formAndGrammarId> > l_default_lexemes;
     QList<t_formAndGrammarId> l_lookup_forms;
     database* p_database;
-    static int getGrammarIdFromJson(json j_input, database* p_database, int i_language_id);
     static json grammarIdToJson(int i_grammarid, database* p_database);
 
 @<End of class and header @>
@@ -244,6 +250,7 @@ public slots:
     Q_INVOKABLE void getNextGrammarObject(QObject* caller);
     Q_INVOKABLE void getNextSentencePart(QObject* caller);
     Q_INVOKABLE void getNextPossibleTemplate(QObject* caller);
+    Q_INVOKABLE const QList<t_formAndGrammarId>& getGrammarLookupForms(QObject* caller, int languageid);
 private slots:
     QList<grammarprovider::compoundPart> getGrammarCompoundFormParts(QString compoundword, QList<QString> compoundstrings, int id_language);
     void getWiktionarySections(QObject *caller);

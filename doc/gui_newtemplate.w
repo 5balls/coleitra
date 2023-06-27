@@ -24,6 +24,7 @@ import QtQuick 2.14
 
 Rectangle {
     property bool modifiedIndex: stringValue.text != ""
+    property alias ntlefasv: stringValue
     id: formEdit
     width: parent.width
     color: formEdit.modifiedIndex? "#FFFFDD" : "#FFFFFF"
@@ -112,6 +113,7 @@ Column {
         }
     }
     ColeitraWidgetEditPartList {
+        id: languageedit
         partType: "ColeitraWidgetNewTemplateLanguageEditFormAdd"
         width: parent.width
     }
@@ -125,6 +127,8 @@ import QtQuick 2.14
 
 Column {
     property alias nltitle : title
+    property alias nldefaultlexemelist: defaultlexemelist
+    property alias nldefaultformlist: defaultformlist
     ColeitraGridLabel {
         id: title
     }
@@ -135,6 +139,7 @@ Column {
             text: "<b>Default lexemes to add to the database:</b>"
         }
         ColeitraWidgetEditPartList {
+            id: defaultlexemelist
             partType: "ColeitraWidgetNewTemplateLanguageEditLexemeAdd"
             width: parent.width
         }
@@ -142,6 +147,7 @@ Column {
             text: "<b>Forms to look up to add to the database:</b>"
         }
         ColeitraWidgetEditPartList {
+            id: defaultformlist
             partType: "ColeitraWidgetNewTemplateLanguageEditFormAdd"
             width: parent.width
         }
@@ -452,6 +458,10 @@ ColeitraPage {
             newObject.width = tabPage.width;
             newObject.height = tabPage.height-templateselection.height;
             templatecontent.children.push(newObject);
+            var formlist = GrammarProvider.getGrammarLookupForms(tabPage, language);
+            console.log("Number of lookup forms", typeof(formlist));
+            newObject.nldefaultformlist.children[0].ntlefasv.text = "Hello";
+            newObject.nldefaultformlist.addPart();
         }
         else{
             //console.log("2 Problem with the creation of language tab");
