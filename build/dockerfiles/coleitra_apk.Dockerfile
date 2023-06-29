@@ -64,12 +64,12 @@ RUN echo "3779dd92ff45db8b08855e2a2d7eec2c  2.1.0.tar.gz" > md5sum.txt
 RUN md5sum -c md5sum.txt
 RUN tar xfz 2.1.0.tar.gz
 RUN mv json-schema-validator-2.1.0 src
-RUN wget https://github.com/nlohmann/json/releases/download/v3.10.5/json-3.10.5.tar.xz
+RUN wget https://github.com/nlohmann/json/releases/download/v3.11.2/json.tar.xz
 #RUN echo "3a2f6a51df913f8d16f531844c232051  json-3.10.5.tar.xz" > md5sum.txt
 RUN md5sum -c md5sum.txt
 RUN mkdir -p /home/coleitra/json
-RUN tar xf json-3.10.5.tar.xz -C json
-RUN mv json /home/coleitra/src
+RUN tar xf json.tar.xz -C json
+RUN mv json/json /home/coleitra/src
 RUN wget https://www.openssl.org/source/openssl-1.1.1m.tar.gz
 RUN echo "8ec70f665c145c3103f6e330f538a9db  openssl-1.1.1m.tar.gz" > md5sum.txt
 RUN md5sum -c md5sum.txt
